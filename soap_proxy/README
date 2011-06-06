@@ -3,32 +3,15 @@ $Id$
 Summary
 ------------------------------------------------------------------------
 
+Copyright (C) 2011 ANF DATA spol. s r.o., Prague.
+Author: Milan Novacek
+
 This software is named soap_proxy, and is intended to be used
 together with EOxServer <http://www.eoxserver.org>.
 
 More information is available at <http://www.eoxserver.org>.
 
 ------------------------------------------------------------------------
-License (see also file named COPYING)
-------------------------------------------------------------------------
-
- Copyright (C) 2011 ANF DATA spol. s r.o., Prague.
- Author: Milan Novacek
-
- This file is part of EOxServer <http://www.eoxserver.org>.
-
-    soap_proxy is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published
-    by the Free Software Foundation, either version 3 of the License,
-    or (at your option) any later version.
-
-    soap_proxy is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with soap_proxy. If not, see <http://www.gnu.org/licenses/>.
-
-
+For licensing terms and conditions, see 'LICENSE'
+For installation instructions, see 'INSTALL'.
 ------------------------------------------------------------------------
