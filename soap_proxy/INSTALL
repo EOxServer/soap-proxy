@@ -2,13 +2,13 @@
  $Id$
 
  This software is named soap_proxy, and is intended to be used together
- with EOxServer <http://www.eoxserver.org>.
+ with EOxServer <http://eoxserver.org>.
 
  Copyright (C) 2011 ANF DATA spol. s r.o., Prague.
  Author: Milan Novacek
 
  This file is part of soap_proxy, available from the EOxServer repository
-<http://www.eoxserver.org>.
+ <http://eoxserver.org>.
 
     soap_proxy is free software: you can redistribute it and/or modify
     it under the EoXServer-SoapProxy Open License.
