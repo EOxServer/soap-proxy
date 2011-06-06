@@ -21,17 +21,3 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-                  --   END OF LICENSE TEXT  --
-
-Recommendation for Applying An Open License to Your Software:
-
-To apply a license, each file should include a copyright notice and 
-a reference to where the full license text is located, such as:
-
-    <one line containing the program's name and a description of its function.>
-    Copyright (C) <year>  <name of author>
-
-    This program is licensed under <license name>.
-    See <license reference> for the full text.
-
-
