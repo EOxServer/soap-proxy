@@ -1,0 +1,25 @@
+<service name="soapProxy">
+    <!-- enableMTOM must be enabled globally in ../../axis2.xml -->
+    <parameter name="enableMTOM" locked="xsd:false">true</parameter>
+    <parameter name="ServiceClass" locked="xsd:false">soapProxy</parameter>
+    
+    <!-- Absolute path to the mapfile used for configuring mapserver -->
+    <!-- May be defined globally in ../../axis2.xml instead.         -->
+    <parameter name="MapFile">/path/to/mapfile.map</parameter>
+    
+    <!-- Absolute path to the mapservser executable                  -->
+    <!-- May be defined globally in ../../axis2.xml instead.         -->
+    <parameter name="MapServ">/path/to/mapserv</parameter>
+    
+    <description>
+       This proxy service accepts O3S WCS 2.0 SOAP requests, and invokes a corresponding
+       POST operation on a connected mapserver.
+       The operation GetMsVersion is a debugging information operation for this service,
+       and is not a O3S WCS operation.  It reports the version of the mapserver connected 
+       to this service. 
+    </description>
+    <operation name="DescribeCoverage"/>
+    <operation name="GetCapabilities"/>
+    <operation name="GetCoverage"/>
+    <operation name="GetMsVersion"/>
+</service>
