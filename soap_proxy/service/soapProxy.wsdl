@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--                                                              -->
+<!-- Soap Proxy                                                   -->
+<!--                                                              -->
+<!-- Copyright (c) 2011, ANF DATA Spol. s r.o.                    -->
+<!--                                                              -->
+<!-- File:    soapProxy.wsdl                                      -->
+<!-- Version: 2.0                                                 -->
+<!-- Date:    June 08, 2011                                       -->
+<!--                                                              -->
+<!-- This functionality is meant to be used as part of eoxserver. -->
+<!-- See the file soap_proxy/LICENSE for terms of use.            -->
+<!-- There is absolutely no warranty of any kind for this         -->
+<!-- sofware.                                                     -->
+<!--                                                              -->
+<wsdl:definitions
+    targetNamespace="http://www.eoxserver.org/soap_proxy/wcsProxy" 
+    xmlns:impl="http://www.eoxserver.org/soap_proxy/wcsProxy"
+    xmlns:wcs="http://www.opengis.net/wcs/2.0" 
+    xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" 
+    xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" 
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:gmlcov="http://www.opengis.net/gmlcov/1.0" 
+    xsi:schemaLocation="http://www.opengis.net/gmlcov/1.0 http://schemas.opengis.net/gmlcov/1.0/gmlcovAll.xsd">
+
+  <wsdl:types>
+    <schema targetNamespace="http://www.eoxserver.org/soap_proxy/wcsProxy"
+            xmlns="http://www.w3.org/2001/XMLSchema" 
+            xmlns:impl="http://www.eoxserver.org/soap_proxy/wcsProxy"
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+      
+      <import namespace="http://www.opengis.net/wcs/2.0" 
+              schemaLocation="http://schemas.opengis.net/wcs/2.0/wcsAll.xsd"/>
+      
+      <!-- Used for debugging: allows to query the version of Mapserver -->
+      <element name="GetMsVersion">
+        <complexType/>
+      </element>
+      <element name="MapServerVersion">
+        <complexType mixed="true"/>
+      </element>
+
+    </schema>
+  </wsdl:types>
+     
+  <wsdl:message name="getCapRequest">
+      <wsdl:part name="Body" element="wcs:GetCapabilities"/>
+  </wsdl:message>
+  <wsdl:message name="getCapResponse">
+      <wsdl:part name="Body" element="wcs:Capabilities"/>
+  </wsdl:message>
+
+  <wsdl:message name="descrCovRequest">
+      <wsdl:part name="Body" element="wcs:DescribeCoverage"/>
+  </wsdl:message>
+  <wsdl:message name="descrCovResponse">
+      <wsdl:part name="Body" element="wcs:CoverageDescriptions"/>
+  </wsdl:message>
+
+  <wsdl:message name="getCovRequest">
+      <wsdl:part name="Body" element="wcs:GetCoverage"/>
+  </wsdl:message>
+  <wsdl:message name="getCovResponse">
+      <wsdl:part name="Body" element="gmlcov:AbstractCoverage"/>
+  </wsdl:message>
+
+  <wsdl:message name="debugRequest">
+      <wsdl:part name="Body" element="impl:GetMsVersion"/>
+  </wsdl:message>
+  <wsdl:message name="debugResponse">
+      <wsdl:part name="Body" element="impl:MapServerVersion"/>
+  </wsdl:message>
+  
+  <wsdl:portType name="spPortType">
+      <wsdl:operation name="GetCapabilities">
+          <wsdl:input  message="impl:getCapRequest"  name="GetCapabilities"/>
+          <wsdl:output message="impl:getCapResponse" name="Capabilities"/>
+      </wsdl:operation>
+      <wsdl:operation name="DescribeCoverage">
+          <wsdl:input  message="impl:descrCovRequest"  name="DescribeCoverage"/>
+          <wsdl:output message="impl:descrCovResponse" name="CoverageDescriptions"/>
+      </wsdl:operation>
+      <wsdl:operation name="GetCoverage">
+          <wsdl:input  message="impl:getCovRequest"  name="GetCoverage"/>
+          <wsdl:output message="impl:getCovResponse" name="CoverageData"/>
+      </wsdl:operation>
+      <wsdl:operation name="GetMsVersion">
+          <wsdl:input  message="impl:debugRequest"  name="GetMsVersion"/>
+          <wsdl:output message="impl:debugResponse" name="msVersionInfo"/>
+      </wsdl:operation>
+  </wsdl:portType>
+
+  <wsdl:binding name="spSoapBinding" type="impl:spPortType">
+      <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+
+      <wsdl:operation name="GetCapabilities">
+          <soap:operation soapAction="soapProxy#GetCapabilities"/>
+          <wsdl:input name="GetCapabilities">
+              <soap:body use="literal"/>
+          </wsdl:input>
+          <wsdl:output name="Capabilities">
+              <soap:body use="literal"/>
+          </wsdl:output>
+      </wsdl:operation>
+
+      <wsdl:operation name="DescribeCoverage">
+          <soap:operation soapAction="soapProxy#DescribeCoverage"/>
+          <wsdl:input name="DescribeCoverage">
+              <soap:body use="literal"/>
+          </wsdl:input>
+          <wsdl:output name="CoverageDescriptions">
+              <soap:body use="literal"/>
+          </wsdl:output>
+      </wsdl:operation>
+
+      <wsdl:operation name="GetCoverage">
+          <soap:operation soapAction="soapProxy#GetCoverage"/>
+          <wsdl:input name="GetCoverage">
+              <soap:body use="literal"/>
+          </wsdl:input>
+          <wsdl:output name="CoverageData">
+              <soap:body use="literal"/>
+          </wsdl:output>
+      </wsdl:operation>
+
+      <wsdl:operation name="GetMsVersion">
+          <soap:operation soapAction="soapProxy#GetMsVersion"/>
+          <wsdl:input name="GetMsVersion">
+              <soap:body use="literal"/>
+          </wsdl:input>
+          <wsdl:output name="msVersionInfo">
+              <soap:body use="literal"/>
+          </wsdl:output>
+      </wsdl:operation>
+
+  </wsdl:binding>
+
+  <wsdl:service name="soapProxy">
+      <wsdl:port binding="impl:spSoapBinding" name="spSOAPport_http">
+          <soap:address location="http://www.your.server/o3s_wcs"/>
+      </wsdl:port>
+  </wsdl:service>
+
+</wsdl:definitions>
