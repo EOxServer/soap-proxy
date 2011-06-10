@@ -10,16 +10,17 @@
  This file is part of soap_proxy, available from the EOxServer repository
  <http://eoxserver.org>.
 
-    soap_proxy is free software: you can redistribute it and/or modify
-    it under the EOxServer-SoapProxy Open License.
+Soap_proxy is free software: you can redistribute it and/or modify
+it under the EOxServer-SoapProxy Open License.
+See the file LICENSE for the full license terms and conditions.
 
-    SOAP_PROXY IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS
-    OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-    MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-    IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
-    CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
-    TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
-    SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+SOAP_PROXY IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS
+OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ------------------------------------------------------------------------
 
@@ -27,9 +28,208 @@
 # Quick installation guide for the impatient: #
 ###############################################
 
-TBD.  But so far there is nothing to install.
+TBD.  
+For now, see the full installation instructions below.
+
+0. Prerequisite: mapserver installed & configured.
+
+1. Install and configure axis2/c.
+   Downloaad from
+     http://ws.apache.org/axis2/c/download.cgi
+
+   cd someplace
+   mkdir axis2c
+   setenv AXIS2C_HOME /path/to/someplace/axis2c
+
+   # Follow the instructions in 'doc' to compile- but
+   # use something like the following configure line to get the
+   #  mod_axis2 configured for compiling at the same time:
+
+   ./configure --with-apache2="/usr/include/apache2" \
+     --with-apr="/usr/include/apr-1" --prefix=${AXIS2C_HOME}
+   make
+   make install
+
+   Copy lib/libmod_axis2.so.0.6.0  to "<apache2 modules directory>" 
+   as mod_axis2.so
+
+   Edit the file '${AXIS2C_HOME}/axis2.xml' and ensure that the parameter
+   enableMTOM has the value true.
+
+   Check that the following dir exits, if not create it:
+   ${AXIS2C_HOME}/services
+
+   Configure mod_axis2 in the apache server config files - see the 
+   coresponding section in the detailed instructions below.
+
+   Resart the webserver and open the following page:
+     http://127.0.0.1/sp_axis/services
+   You should get a page that says "Deployed Services" and is otherwise blank.
+
+2. Configure and Compile Soap Proxy:
+    In services/soapProxy.wsdl set '<soap:address location=.../>'.
+    In services.xml set the paths for 'MapFile' and 'MapServ'.
+
+   cd src
+    -->  in Makefile set AXIS2C_HOME appropriately
+    make inst
+
+   Check that 
+     http://127.0.0.1/sp_axis/services
+   shows the four operations (three WCS operations and GetMsVersion).
+
+3. Optionally run tests described in the testing instuctions below.
 
 ###############################################
 # Installation guide:                         #
 ###############################################
-A comprehensive installation guide will be provided separately.
+
+0. Mapserver
+============
+A running mapserver with the wcs-1.1_post patch is a prerequisite for
+running the service.
+
+
+1. Download / {compile?} /  install axis2/c.
+============================================
+
+   http://ws.apache.org/axis2/c/download.cgi
+
+On a 32-bit machine the binary distribution is probably ok, no
+compilation required.
+
+On a 64-bit machine you need to download the source and compile.
+Note: if using a 32-bit httpd2 server, then the 32-bit binary distribution
+should be ok - just make sure to use -m32 when compiling the o3s prototype
+code.
+
+Download the source dist.
+
+It is recommended to create the required directories (below) as a regular
+user (i.e. not root).
+Make a directory to install to:
+cd someplace
+mkdir axis2c
+setenv AXIS2C_HOME <...>/someplace/axis2c
+
+Follow the instructions in 'doc' to compile- but
+use something like the following configure line to get the mod_axis2
+configured for compiling at the same time:
+
+./configure --with-apache2="/usr/include/apache2" \
+   --with-apr="/usr/include/apr-1" --prefix=${AXIS2C_HOME}
+make
+make install
+
+Copy lib/libmod_axis2.so.0.6.0  to "<apache2 modules directory>" 
+as mod_axis2.so
+   
+Edit the file '${AXIS2C_HOME}/axis2.xml' and ensure that the parameter
+enableMTOM has the value true.
+
+Check that the following dir exits, if not create it:
+  ${AXIS2C_HOME}/services
+
+Optional hello service:
+-----------------------
+  This step should not be required unless you are debugging the
+  installation. You can install the 'hello' service from the distribution.
+  See the downloaded axis2 documentation for details.
+
+
+Configure mod_axis2 in the apache server config files.
+------------------------------------------------------
+NOTE:  set paths below as appropriate for your system. 
+       In particular, Axis2RepoPath is AXIS2C_HOME from above.
+Edit
+ /etc/apache2/default-server.conf
+   to add:
+
+        LoadModule axis2_module  /lib64/apache2/mod_axis2.so
+        Axis2RepoPath /home/xxx/yyy/axis2c
+        Axis2LogFile /zzz/yyy/ax2logs
+        Axis2MaxLogFileSize 204800
+        Axis2LogLevel debug
+        <Location /sp_axis>
+            SetHandler axis2_module
+        </Location>
+
+NOTE 2: In theory one should use <IfModule mod_axis2> .. </IfModule>
+
+Also set a proxy for the service, in the same file:
+    <IfModule mod_proxy.c>
+       ProxyRequests Off
+       ProxyPass         /sp_wcs http://127.0.0.1/sp_axis/services/soapProxy
+     ...
+
+First check the syntax of the config files:
+    httpd2 -t
+To restart it may suffice to send USR1 to the parent httpd process.
+
+NOTE for SUSE linux:
+  Instead of the LoadModule line, you can also edit the file 
+   /etc/sysconfig/apache2 to add axis2 to APACHE_MODULES.
+
+  In this case we cannot just send the USR1 signal to the httpd process,
+  because the /etc/sysconfig/apache2 file is parsed into httpd conf files
+  only by running /etc/init.d/apache2.  The restart procedure is then:
+    httpd2 -t
+    /etc/init.d/apache2 restart
+
+
+Test the installation:
+----------------------
+
+  Open a browser to the page http://127.0.0.1/sp_axis/services.
+You should get a page that says "Deployed Services".  Unless you
+performed the optional installation of the 'hello' service, there should
+not be any further details listed.
+
+
+2. Configure and Compile Soap Proxy
+====================================
+
+ a. configure the soapProxy service
+ ----------------------------------
+
+ cd service
+  <edit> the file soapProxy.wsdl:
+     At the bottom of the file, set '<soap:address location=.../>' 
+
+  <edit> services.xml:
+     Set correct paths for the parameters 'MapFile' and 'MapServ'.
+     
+
+ b. configure the development environment, compile and install
+ -------------------------------------------------------------
+
+ cd src
+ <edit> Makefile:
+    set AXIS2C_HOME appropriately
+
+ make inst
+
+
+If all went well this should install everything for the soapProxy service in
+  ${AXIS2C_HOME}/services
+
+
+3. Test the installation
+========================
+
+ a. Check the Service is up and running
+ --------------------------------------
+  Open a browser to the page http://127.0.0.1/sp_axis/services.
+You should get the page with "Deployed Services", and soapProxy listed
+as providing the four operations (three WCS operations and GetMsVersion).
+
+
+ b. Testing with SOAPUI
+ ----------------------
+
+Download and install from www.sopaui.org.
+After start-up, create a new project. 
+Use the wsdl supplied by the soapProxy service.
+  http://your.server/sp_wcs?wsdl
+
+Further details TBD.
