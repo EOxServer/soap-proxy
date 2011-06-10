@@ -1,4 +1,5 @@
 $Id$
+
 ------------------------------------------------------------------------
 Summary
 ------------------------------------------------------------------------
@@ -12,6 +13,15 @@ together with EOxServer <http://eoxserver.org>.
 More information is available at <http://eoxserver.org>.
 
 ------------------------------------------------------------------------
-For licensing terms and conditions, see 'LICENSE'
-For installation instructions, see 'INSTALL'.
+Licensing
 ------------------------------------------------------------------------
+
+For licensing terms and conditions, see 'LICENSE'
+
+
+------------------------------------------------------------------------
+Installing
+------------------------------------------------------------------------
+
+For installation instructions, see 'INSTALL'.
+

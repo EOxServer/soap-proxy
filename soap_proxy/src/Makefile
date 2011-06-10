@@ -7,8 +7,19 @@
 #
 #  There is absolutely no warranty of any kind for this sofware.
 #
-#  AXIS2C_HOME must be set in the environment before running make.
+
 #
+#  AXIS2C_HOME may be set in the environment before running make,
+#   or you can define it here.
+#
+export AXIS2C_HOME ?= /path/to/framework
+
+SERVICE_NAME    = soapProxy
+SERVICE_LIB     = lib${SERVICE_NAME}.so
+SERVICE_PATH    = ${AXIS2C_HOME}/services/${SERVICE_NAME}
+export SERVICE_PATH
+
+CONFIG_SRC_DIR  = ../service
 
 C_FLAGS = -fPIC -shared
 I_FLAGS = -I${AXIS2C_HOME}/include/axis2-1.6.0/
@@ -16,31 +27,32 @@ L_FLAGS = -L${AXIS2C_HOME}/lib -laxutil -laxis2_axiom -laxis2_parser \
   -laxis2_engine -lpthread -laxis2_http_sender -laxis2_http_receiver
 
 SP_INCLUDES = soap_proxy.h sp_svc.h
-SP_SOURCES = sp_ctype.c sp_svc.c sp_dispatch.c sp_exec_ms.c \
-             sp_props.c sp_util.c sp_image.c sp_fault.c \
-             sp_wcs20.c sp_wcs11.c sp_ms_version.c sp_process_mime.c
+SP_SOURCES  = sp_ctype.c sp_svc.c sp_dispatch.c sp_exec_ms.c \
+              sp_props.c sp_util.c sp_image.c sp_fault.c \
+              sp_wcs20.c sp_wcs11.c sp_ms_version.c sp_process_mime.c
              
-SERVICE_NAME = soapProxy
-SERVICE_LIB  = lib${SERVICE_NAME}.so
-SERVICE_PATH = ${AXIS2C_HOME}/services/${SERVICE_NAME}
+.PHONY: 	all configs inst install
 
-.PHONY: 	check_env all
-
-all:		check_env ${SERVICE_LIB}
+all:		${SERVICE_LIB}
 
 install:	inst
 
-check_env:	
-ifndef AXIS2C_HOME
-	@echo '  *** AXIS2C_HOME is not set.' ; exit 1
-endif
+${AXIS2C_HOME}:
+	@ if [ ! -d $@ ] ; \
+	then echo "$@ is not a dir, check AXIS2C_HOME setting." ; fi ;\
+	exit 1
 
+${SERVICE_PATH}:
+	if [ ! -d $@ ] ; then mkdir $@ ; fi
+	
+configs:	${AXIS2C_HOME} ${SERVICE_PATH}
+	@ $(MAKE) -C ${CONFIG_SRC_DIR}
 
-${SERVICE_LIB}:	${SP_INCLUDES} ${SP_SOURCES}
+${SERVICE_LIB}:	${AXIS2C_HOME} ${SP_INCLUDES} ${SP_SOURCES} 
 	gcc ${C_FLAGS} -o $@ ${I_FLAGS} ${L_FLAGS}  ${SP_SOURCES}
 
-${SERVICE_PATH}/${SERVICE_LIB}:  ${SERVICE_LIB}
+${SERVICE_PATH}/${SERVICE_LIB}:  ${SERVICE_LIB} ${SERVICE_PATH}
 	cp $< ${SERVICE_PATH}
 
-inst:	check_env ${SERVICE_PATH}/${SERVICE_LIB}
+inst:	configs ${SERVICE_PATH}/${SERVICE_LIB}
 	
