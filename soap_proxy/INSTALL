@@ -28,7 +28,6 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 # Quick installation guide for the impatient: #
 ###############################################
 
-TBD.  
 For now, see the full installation instructions below.
 
 0. Prerequisite: mapserver installed & configured.
@@ -78,11 +77,19 @@ For now, see the full installation instructions below.
      http://127.0.0.1/sp_axis/services
    shows the four operations (three WCS operations and GetMsVersion).
 
-3. Optionally run tests described in the testing instuctions below.
+3. Optionally run tests described in testing/README.txt.
 
 ###############################################
 # Installation guide:                         #
 ###############################################
+
+Contents
+=========
+    0. Mapserver
+    1. Download / {compile?} /  install axis2/c.
+    2. Configure and Compile Soap Proxy
+    3. Test the installation
+
 
 0. Mapserver
 ============
@@ -227,9 +234,4 @@ as providing the four operations (three WCS operations and GetMsVersion).
  b. Testing with SOAPUI
  ----------------------
 
-Download and install from www.sopaui.org.
-After start-up, create a new project. 
-Use the wsdl supplied by the soapProxy service.
-  http://your.server/sp_wcs?wsdl
-
-Further details TBD.
+See test/README.txt for testing instructions.
