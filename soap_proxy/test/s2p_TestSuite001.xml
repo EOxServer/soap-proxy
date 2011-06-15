@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:testSuite name="s2p_TestSuite001" xmlns:con="http://eviware.com/soapui/config">
+  <con:description>Test Suite 0.0.1 used to explore capabilites of the test suite toos.</con:description>
+  <con:settings/>
+  <con:runType>SEQUENTIAL</con:runType>
+  <con:testCase failOnError="true" failTestCaseOnErrors="true" keepSession="false" maxResults="0" name="GetCapabilities TestCase" searchProperties="true"><con:settings/><con:testStep type="request" name="GetCapabilities"><con:settings/><con:config xsi:type="con:RequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:interface>rpSoapBinding</con:interface><con:operation>GetCapabilities</con:operation><con:request name="GetCapabilities"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding><con:endpoint>http://127.0.0.1/o3s_wcs</con:endpoint><con:request><![CDATA[<soapenv:Envelope 
+  xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" 
+  xmlns:ns="http://www.opengis.net/wcs/2.0" 
+  xmlns:ns1="http://www.opengis.net/ows/2.0">
+   <soapenv:Header/>
+   <soapenv:Body>
+      <ns:GetCapabilities updateSequence="u2001" service="WCS">
+         <ns1:AcceptVersions>
+            <ns1:Version>2.0.0</ns1:Version>
+         </ns1:AcceptVersions>
+      </ns:GetCapabilities>
+      </ns:GetCapabilities>
+   </soapenv:Body>
+</soapenv:Envelope>]]></con:request><con:assertion type="SOAP Fault Assertion" name="Not SOAP Fault"/><con:assertion type="Schema Compliance" name="Schema Compliance"><con:configuration><definition/></con:configuration></con:assertion><con:assertion type="XQuery Match" name="Profile-wcs-soap"><con:configuration><path>declare namespace ogc='http://www.opengis.net/ogc';
+declare namespace swe='http://www.opengis.net/swe/2.0';
+declare namespace gml='http://www.opengis.net/gml/3.2';
+declare namespace ows='http://www.opengis.net/ows/2.0';
+declare namespace wcs='http://www.opengis.net/wcs/2.0';
+declare namespace xlink='http://www.w3.org/1999/xlink';
+declare namespace soapenv='http://schemas.xmlsoap.org/soap/envelope/';
+declare namespace gmlcov='http://www.opengis.net/gmlcov/1.0';
+//ows:Profile[2]</path><content>&lt;ows:Profile xmlns:ows="http://www.opengis.net/ows/2.0">http://www.opengis.net/spec/WCS_protocol-binding_soap/1.0&lt;/ows:Profile></content><allowWildcards>false</allowWildcards></con:configuration></con:assertion><con:assertion type="GroovyScriptAssertion" name="OperationsMetadata  SOAP"><con:configuration><scriptText>/*
+ *  SOAPUI script to check GetCapabilities response againtst OGC 09-149r requirement 2,
+ *  "[...] shall specify the HTTP POST request encodings accepted by including an
+ * ows:Constraint element, with “PostEncoding” as the value of the name attribute and
+ * with a value of “SOAP” to indicate that SOAP encoding is allowed."
+ *
+ *  Copyright (C) 2011 ANF DATA spol. s r.o. 
+ */
+def constrSelect = "ows:Post/ows:Constraint[@name='PostEncoding']/ows:AllowedValues"
+def checkString  = "SOAP"
+log.info "Checking that every node matching " + constrSelect +" contains an ows:Value '"+checkString+"'."
+def groovyUtils = new com.eviware.soapui.support.GroovyUtils( context )
+def holder = groovyUtils.getXmlHolder( "GetCapabilities#Response" )
+
+holder.namespaces["ows"] = "http://www.opengis.net/ows/2.0"
+import com.eviware.soapui.support.xml.XmlUtils
+
+def nodeCount = holder.getDomNodes("//ows:Operation/*/*/"+constrSelect).length
+
+for (def nodeIndex = 1; nodeIndex &lt;= nodeCount; nodeIndex++) {
+	def node =  holder.getDomNodes("//ows:Operation["+nodeIndex+"]/*/*/"+constrSelect+"/ows:Value")
+	def nStrings = 0
+	node.each {
+		if (it.firstChild.nodeValue ==checkString) {
+			nStrings++
+			log.info "Found: " + it.getQName()+" = "+it.firstChild.nodeValue
+		}
+	}
+	assert nStrings>0
+}
+log.info "OK"</scriptText></con:configuration></con:assertion><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:wsaConfig action="ooosRP#GetCapabilities" mustUnderstand="NONE" version="200508"/><con:wsrmConfig version="1.2"/></con:request></con:config></con:testStep><con:testStep type="delay" name="Delay" disabled="true"><con:settings/><con:config><delay>300</delay></con:config></con:testStep><con:properties/></con:testCase>
+<con:testCase failOnError="true" failTestCaseOnErrors="true" keepSession="false" maxResults="0" name="DescribeCoverage TestCase" searchProperties="true"><con:settings/>
+  <con:testStep type="request" name="DescribeCoverage">
+    <con:settings/><con:config xsi:type="con:RequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:interface>rpSoapBinding</con:interface><con:operation>DescribeCoverage</con:operation><con:request name="DescribeCoverage">
+    <con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding>
+    <con:endpoint>http://127.0.0.1/o3s_wcs</con:endpoint>
+    <con:request><![CDATA[<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" 
+xmlns:ns="http://www.opengis.net/wcs/2.0">
+   <soapenv:Header/>
+   <soapenv:Body>
+      <ns:DescribeCoverage service="WCS" version="2.0.0">
+         <ns:CoverageId>a</ns:CoverageId>
+      </ns:DescribeCoverage>
+   </soapenv:Body>
+</soapenv:Envelope>]]></con:request><con:assertion type="SOAP Fault Assertion" name="Not SOAP Fault"/><con:assertion type="GroovyScriptAssertion" name="Schema compliance via  xmllint"><con:configuration><scriptText>/*
+ *  SOAPUI script to check DescribeCoverage response againtst the proposed
+ *  WCS 2.0 schema.  
+ *  Checking is done by runing xmllint externally. 
+ *  The schema definition must be available via a catalog, defined by the 
+ *   XML_CATALOG_FILES env variable. This varaible must be availabe in 
+ *  bash upon startup (i.e. set in .bashrc)
+ *
+ *  Copyright (C) 2011 ANF DATA spol. s r.o. 
+ */
+
+ff = new File("/tmp", "soapui_GC_lock");
+assert ff.createNewFile()
+
+def tmpf = File.createTempFile("desCovR", ".xml")
+tmpf.deleteOnExit()
+tmpf.write( context.expand( '${DescribeCoverage#Response#//wcs:CoverageDescriptions}') )
+def fn = tmpf.getPath()
+def cmdln = ["bash", "-c", "xmllint -noout --schema http://schemas.opengis.net/wcs/2.0/wcsAll.xsd $fn"]
+def result = cmdln.execute().getErrorStream()
+def resStr = result.text
+ff.delete()
+println resStr
+assert resStr.indexOf('validates') > 1</scriptText></con:configuration></con:assertion><con:assertion type="Simple Contains" name="Contains CoverageDescription"><con:configuration><token>CoverageDescription</token><ignoreCase>false</ignoreCase><useRegEx>false</useRegEx></con:configuration></con:assertion><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:wsaConfig action="ooosRP#DescribeCoverage" mustUnderstand="NONE" version="200508"/>
+<con:wsrmConfig version="1.2"/></con:request></con:config></con:testStep><con:properties/></con:testCase><con:testCase failOnError="true" failTestCaseOnErrors="true" keepSession="false" maxResults="0" name="GetCoverage TestCase" searchProperties="true"><con:settings/><con:testStep type="request" name="GetCoverage"><con:settings/><con:config xsi:type="con:RequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:interface>rpSoapBinding</con:interface><con:operation>GetCoverage</con:operation><con:request name="GetCoverage"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding><con:endpoint>http://127.0.0.1/o3s_wcs</con:endpoint><con:request><![CDATA[<soapenv:Envelope 
+xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" 
+xmlns:ns="http://www.opengis.net/wcs/2.0">
+   <soapenv:Header/>
+   <soapenv:Body>
+      <ns:GetCoverage service="WCS" version="2.0.0">
+         <!--ns:requestParameters -->
+           <ns:mediatype>multipart/mixed</ns:mediatype>
+           <ns:format>image/tiff</ns:format>
+         <!--/ns:RequestParameters -->
+         <ns:CoverageId>a</ns:CoverageId>
+         <ns:DimensionTrim>
+            <ns:Dimension>lat</ns:Dimension>
+            <ns:TrimLow>0</ns:TrimLow>
+            <ns:TrimHigh>24</ns:TrimHigh>
+         </ns:DimensionTrim>
+         <ns:DimensionTrim>
+            <ns:Dimension>long</ns:Dimension>
+            <ns:TrimLow>0</ns:TrimLow>
+            <ns:TrimHigh>48</ns:TrimHigh>
+         </ns:DimensionTrim>
+      </ns:GetCoverage>
+   </soapenv:Body>
+</soapenv:Envelope>]]></con:request>
+<con:assertion type="GroovyScriptAssertion" name="Validate Request"><con:configuration><scriptText>// Run xmllint using local schemas, set up via the XML_CATALOG_FILES env variable.
+//  IThis varaible must be availabe in bash upon startup (i.e. set in .bashrc)
+
+ff = new File("/tmp", "soapui_GC2_lock");
+assert ff.createNewFile()
+
+def tmpf = File.createTempFile("getCovRq", ".xml")
+tmpf.deleteOnExit()
+tmpf.write( context.expand( '${GetCoverage#Request#//ns:GetCoverage}') )
+def fn = tmpf.getPath()
+def cmdln = ["bash", "-c", "xmllint -noout --schema http://schemas.opengis.net/wcs/2.0/wcsAll.xsd $fn"]
+def result = cmdln.execute().getErrorStream()
+def resStr = result.text
+ff.delete()
+println resStr
+assert resStr.indexOf('validates') > 1</scriptText></con:configuration></con:assertion><con:assertion type="SOAP Fault Assertion" name="Not SOAP Fault"/><con:assertion type="XQuery Match" name="Contains Coverage and Include elements"><con:configuration><path>declare namespace xop="http://www.w3.org/2004/08/xop/include";
+declare namespace wcs="http://www.opengis.net/wcs/2.0";
+//wcs:Coverage</path><content>&lt;wcs:Coverage xmlns:wcs="http://www.opengis.net/wcs/2.0">
+  &lt;xop:Include href="*" xmlns:xop="http://www.w3.org/2004/08/xop/include"/>
+&lt;/wcs:Coverage></content><allowWildcards>true</allowWildcards></con:configuration></con:assertion><con:assertion type="GroovyScriptAssertion" name="Verify attachment contents"><con:configuration><scriptText>/*
+ *  SOAPUI script to check GetCoverage response for the presence of one attachement
+ *  where the attchment contains the rfollowing egexps:
+ *     "&lt;(*):RectifiedGridCoverage"  and 
+ *     "&lt;/\1:RectifiedGridCoverage" .
+ *   Further, the attachment must contain a regexp "Content-Type: .* image/tiff".
+ *
+ *  Copyright (C) 2011 ANF DATA spol. s r.o. 
+ */
+
+assert messageExchange.responseAttachments.length == 1
+
+def istr =  messageExchange.responseAttachments[0].getInputStream()
+def attBytes = new byte[ messageExchange.responseAttachments[0].getSize()]
+def nr = istr.read(attBytes)
+def attachmentString  = new String(attBytes)
+
+def xmlStartStr = "&lt;?xml"
+def xmlSection = attachmentString.substring(
+	attachmentString.indexOf(xmlStartStr))
+
+// A very simple check for a "RectifiedGridCoverage" element,
+// by means of simple string manipulations
+def check1="RectifiedGridCoverage"
+def firstRGC = xmlSection.indexOf(check1)
+def lastRGC = xmlSection.lastIndexOf(check1)
+assert firstRGC  > 0
+assert lastRGC>firstRGC
+def endofXml =  xmlSection.indexOf(">", lastRGC)
+xmlSection = xmlSection.substring(0,endofXml)
+assert  xmlSection.matches("(?s).+?&lt;\\s*([\\w]+):"+check1+".*&lt;/\\s*\\1:"+check1+".*")
+	
+// see if there is a Content-Type: image/tiff at the end
+def imgTIffType = "image/tiff"
+def lastType = attachmentString.lastIndexOf("Content-Type:")
+assert attachmentString.indexOf(imgTIffType, lastType) > 0
+log.info "Attachment contains "+check1+" and "+imgTIffType
+
+
+
+
+</scriptText></con:configuration></con:assertion><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:wsaConfig action="ooosRP#GetCoverage" mustUnderstand="NONE" version="200508"/>
+<con:wsrmConfig version="1.2"/></con:request>
+</con:config>
+</con:testStep><con:properties/></con:testCase><con:properties/></con:testSuite>
