@@ -3,22 +3,35 @@
     <parameter name="enableMTOM" locked="xsd:false">true</parameter>
     <parameter name="ServiceClass" locked="xsd:false">soapProxy</parameter>
     
+    <!-- 
+         The parameters BackendURL, MapFile, and MapServ are used to
+         configure soap_proxy.  They may be defined globally in
+         ../../axis2.xml instead of here.
+    -->
+
+    <!-- URL of backend to communicate with.                         -->
+    <!-- If it is defined, then MapFile and MapServ are ignored.     -->
+    <parameter name="BackendURL">/path/to/mapfile.map</parameter>
+    
     <!-- Absolute path to the mapfile used for configuring mapserver -->
-    <!-- May be defined globally in ../../axis2.xml instead.         -->
+    <!-- Used only if BackendURL is not defined.                     -->
     <parameter name="MapFile">/path/to/mapfile.map</parameter>
     
     <!-- Absolute path to the mapservser executable                  -->
-    <!-- May be defined globally in ../../axis2.xml instead.         -->
+    <!-- Used only if BackendURL is not defined.                     -->
     <parameter name="MapServ">/path/to/mapserv</parameter>
     
     <description>
-       This proxy service accepts O3S WCS 2.0 SOAP requests, and invokes a corresponding
+       This proxy service accepts O3S WCS 2.0 SOAP requests, optionally with
+       the Earth Observation Application Profile, and invokes a corresponding
        POST operation on a connected mapserver.
-       The operation GetMsVersion is a debugging information operation for this service,
-       and is not a O3S WCS operation.  It reports the version of the mapserver connected 
-       to this service. 
+       The operation GetMsVersion is a debugging information operation for
+       this service, and is not a O3S WCS operation.  It reports the version
+       of the mapserver connected this service. It may not be available in all
+       configurations.
     </description>
     <operation name="DescribeCoverage"/>
+    <!-- operation name="DescribeEOCoverageSet"/ -->
     <operation name="GetCapabilities"/>
     <operation name="GetCoverage"/>
     <operation name="GetMsVersion"/>

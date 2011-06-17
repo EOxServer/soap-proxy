@@ -37,8 +37,12 @@ Right click the just-created project to get a context menu, choose
 
 Navigate to locate and load 's2p_TestSuite001.xml'.
 
-Once the test suite is loaded, right-click the test suite for a 
-context menu -> Launch TestRunner --> [ Launch ]
+Open each test step (one for each of the three test cases) and set the
+endpoint URL at the top of its editor window to the URL of your service. Be
+sure to close the editor windows and save the project.
+
+Once the test suite is loaded,  configured and saved, right-click the test
+suite for a context menu -> Launch TestRunner --> [ Launch ]
 
 A successful run ends with a dialog 'Execution finished successfully'.
 

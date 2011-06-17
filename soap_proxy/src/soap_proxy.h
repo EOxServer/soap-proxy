@@ -76,10 +76,14 @@
 #define SP_RESP_APP_SEXML_TYPE 4
 #define SP_RESP_UNKNOWN_TYPE  -1
 
-/*
+/**
  * WCS Version identifiers (int)
  */
-#define SP_WCS_V200           200
+enum sp_wcs_version_ids
+{
+	SP_WCS_V200 = 200,
+	SP_EOWCS_V100 = 1100
+};
 
 /* ------------------------------- http header related ---------------*/
 
@@ -88,7 +92,9 @@
 */
 #define SP_HTTP_BOUNDLEN  70
 
-// Indices into httpHeaderVal_struct.values and rp_httpHeaderKeys
+/**
+* Indices into httpHeaderVal_struct.values and rp_httpHeaderKeys
+*/
 #define SP_HH_CONTENTTYPE  0
 #define SP_HH_DESCRIPTION  1
 #define SP_HH_ID           2
