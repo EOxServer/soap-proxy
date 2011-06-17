@@ -2,7 +2,7 @@
 #  Soap Proxy.
 #  Copyright (c) 2011, ANF DATA Spol. s r.o.
 #  See the file soap_proxy/LICENSE for terms of use.
-#  See README and INSTALL in the same directory for usage.
+#  See README and INSTALL in the soap_proxy directory for usage.
 #  The file sp_svc.c contains the main entry point of execution.
 #
 #  There is absolutely no warranty of any kind for this sofware.

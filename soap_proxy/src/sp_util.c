@@ -769,4 +769,16 @@ void rp_print_coverage_hash_entries(
     }
 }
 
-
+//-----------------------------------------------------------------------------
+/** Determine the WCS protocol/version and/or profile used.
+ * @param env
+ * @param node
+ * @return one of the sp_wcs_version_ids
+ */
+int sp_glean_protocol(
+  const axutil_env_t *env,
+  axiom_node_t       *node)
+{
+	// TODO: sp_glean_protocol() is not implemented.
+	return SP_WCS_V200;
+}

@@ -74,6 +74,12 @@ int  rp_load_props(
 		const axutil_env_t    *env,
 	    const axis2_msg_ctx_t *msg_ctx);
 
+axiom_node_t *rp_dispatch_op(
+    const axutil_env_t *env,
+    axis2_char_t       *op_name,
+    axiom_node_t       *node,
+    const int           protocol);
+
 
 //-----------------------------------------------------------------------------
 static const axis2_svc_skeleton_ops_t rpSvc_svc_skeleton_ops_var = {
@@ -137,12 +143,23 @@ rpSvc_invoke(
 
 		if (axiom_node_get_node_type(node, env) == AXIOM_ELEMENT)
 		{
+	    	const int  protocol = sp_glean_protocol(env, node);
+	    	SP_WCS_V200;
+	    	/* WCS-EO:
+	    	 * Requirement 30 /req/eowcs/getCapabilities-response-conformance-class-in-profile:
+	           A WCS service implementing this extension shall include the following URI in a Profile
+	element in the ServiceIdentification in a GetCapabilities response:
+	http://www.opengis.net/spec/WCS_profile_earth-
+	observation/1.0/conf/eowcs
+	    	 *
+	    	 */
+
 			axiom_element_t *el =
 					(axiom_element_t *) axiom_node_get_data_element(node, env);
 			if (el)
 			{
 				axis2_char_t *op_name = axiom_element_get_localname(el, env);
-				rt_node = rp_dispatch_op(env, op_name, node);
+				rt_node = rp_dispatch_op(env, op_name, node, protocol);
 				if (NULL == rt_node) fflush(stderr);
 				return rt_node;
 			}

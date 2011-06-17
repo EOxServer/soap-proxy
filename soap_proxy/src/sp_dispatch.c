@@ -47,18 +47,19 @@ axiom_node_t *rp_getMsVers(
     const axis2_char_t * msexec);
 
 axiom_node_t *rp_invokeMapserv(
-    const axutil_env_t * env,
-    axiom_node_t * node,
-    const axis2_char_t * mapfile,
-    const axis2_char_t * msexe,
-    const int wcs_version);
+    const axutil_env_t *env,
+    axiom_node_t       *node,
+    const axis2_char_t *mapfile,
+    const axis2_char_t *msexe,
+    const int          wcs_version);
 
 //-----------------------------------------------------------------------------
 axiom_node_t *
 rp_dispatch_op(
-    const axutil_env_t * env,
-    axis2_char_t *op_name,
-    axiom_node_t * node
+    const axutil_env_t *env,
+    axis2_char_t       *op_name,
+    axiom_node_t       *node,
+    const int          protocol
     )
 {
     axiom_node_t *return_node = NULL;
@@ -69,14 +70,21 @@ rp_dispatch_op(
             axutil_strcmp(op_name, "GetCoverage"     ) == 0 )
         {
         	return_node = rp_invokeMapserv
-        			(env, node, rp_getMapfile(), rp_getMapserverExec(), SP_WCS_V200);
+        			(env, node, rp_getMapfile(), rp_getMapserverExec(), protocol);
         }
         else if ( axutil_strcmp(op_name, "GetCapabilities" ) == 0 )
         {
             return_node = rp_invokeMapserv
-            		(env, node, rp_getMapfile(), rp_getMapserverExec(), SP_WCS_V200);
+            		(env, node, rp_getMapfile(), rp_getMapserverExec(), protocol);
             rp_inject_soap_cap20(env, return_node);
         }
+        /*
+        else if ( axutil_strcmp(op_name, "DescribeEOCoverageSet" ) == 0 )
+        {
+            return_node = rp_invokeMapserv
+            		(env, node, rp_getMapfile(), rp_getMapserverExec(), protocol);
+        }
+        */
         else if ( axutil_strcmp(op_name, "GetMsVersion" ) == 0 )
         {
         	return_node = rp_getMsVers(env,rp_getMapserverExec());
@@ -99,11 +107,11 @@ rp_dispatch_op(
 //-----------------------------------------------------------------------------
 axiom_node_t *
 rp_invokeMapserv(
-    const axutil_env_t * env,
-    axiom_node_t * node,
-    const axis2_char_t * mapfile,
-    const axis2_char_t * msexec,
-    const int wcs_version)
+    const axutil_env_t *env,
+    axiom_node_t       *node,
+    const axis2_char_t *mapfile,
+    const axis2_char_t *msexec,
+    const int           wcs_version)
 {
     axiom_node_t *return_node = NULL;
     axis2_char_t *req_string  = NULL;
