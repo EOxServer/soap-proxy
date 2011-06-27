@@ -66,6 +66,7 @@
 #include <axiom_text.h>
 #include <axiom_node.h>
 #include <axiom_element.h>
+#include <axutil_url.h>
 
 /* ------------------------------------ forward declarations -----------*/
 int AXIS2_CALL rpSvc_free(

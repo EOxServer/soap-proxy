@@ -36,21 +36,19 @@
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
-#include <axutil_linked_list.h>
+// XXX #include <axutil_linked_list.h>
+#include <axutil_url.h>
 
 #include "soap_proxy.h"
 #include "sp_svc.h"
 
 //  ==================== Forward declarations ================================
 axiom_node_t *rp_getMsVers(
-    const axutil_env_t * env,
-    const axis2_char_t * msexec);
+    const axutil_env_t * env);
 
-axiom_node_t *rp_invokeMapserv(
+axiom_node_t *rp_invokeBackend(
     const axutil_env_t *env,
     axiom_node_t       *node,
-    const axis2_char_t *mapfile,
-    const axis2_char_t *msexe,
     const int          wcs_version);
 
 //-----------------------------------------------------------------------------
@@ -69,25 +67,22 @@ rp_dispatch_op(
         if (axutil_strcmp(op_name, "DescribeCoverage") == 0 ||
             axutil_strcmp(op_name, "GetCoverage"     ) == 0 )
         {
-        	return_node = rp_invokeMapserv
-        			(env, node, rp_getMapfile(), rp_getMapserverExec(), protocol);
+        	return_node = rp_invokeBackend(env, node, protocol);
         }
         else if ( axutil_strcmp(op_name, "GetCapabilities" ) == 0 )
         {
-            return_node = rp_invokeMapserv
-            		(env, node, rp_getMapfile(), rp_getMapserverExec(), protocol);
+            return_node = rp_invokeBackend(env, node, protocol);
             rp_inject_soap_cap20(env, return_node);
         }
-        /*
+        /* TODO
         else if ( axutil_strcmp(op_name, "DescribeEOCoverageSet" ) == 0 )
         {
-            return_node = rp_invokeMapserv
-            		(env, node, rp_getMapfile(), rp_getMapserverExec(), protocol);
+            return_node = rp_invokeBackend(env, node, protocol);
         }
         */
         else if ( axutil_strcmp(op_name, "GetMsVersion" ) == 0 )
         {
-        	return_node = rp_getMsVers(env,rp_getMapserverExec());
+        	return_node = rp_getMsVers(env);
         }
         else
         {
@@ -106,44 +101,72 @@ rp_dispatch_op(
 
 //-----------------------------------------------------------------------------
 axiom_node_t *
-rp_invokeMapserv(
+rp_invokeBackend(
     const axutil_env_t *env,
     axiom_node_t       *node,
-    const axis2_char_t *mapfile,
-    const axis2_char_t *msexec,
     const int           wcs_version)
 {
-    axiom_node_t *return_node = NULL;
-    axis2_char_t *req_string  = NULL;
-
-    unsigned long resp_len = 0;
-    axis2_char_t *response_buf = NULL;
-
     AXIS2_ENV_CHECK(env, NULL);
 
-    req_string = axiom_node_to_string(node, env);
+    axiom_node_t *return_node  = NULL;
+    axis2_char_t *req_string   = axiom_node_to_string(node, env);
+    unsigned long resp_len     = 0;
+    axis2_char_t *response_buf = NULL;
+    int           resp_fd      = -1;
 
-    int resp_fd = -1;
-    if (NULL == msexec)
+	const axis2_char_t *mapfile     = NULL;
+	const axis2_char_t *msexec      = NULL;
+	const axutil_url_t *backend_url = NULL;
+
+    if (rp_getUrlMode())
     {
-    	SP_ERROR(env, SP_SYS_ERR_MS_EXEC);
-    	fprintf(stderr,
-    			"*** S2P(%s:%d): rp_invokeMapserv-0, msexec=NULL\n",
-    			__FILE__, __LINE__);
-    	fflush(stderr);
+    	backend_url = rp_getBackendURL();
+    	if (NULL == backend_url)
+    	{
+    		SP_ERROR(env, SP_SYS_ERR_MS_EXEC);
+    		rp_log_error(env, "(%s:%d)rp_invokeBackend-0, backendUrl=NULL\n",
+    				__FILE__, __LINE__);
+    	}
+    	else
+    	{
+    		resp_fd = rp_backend_socket(env, req_string, backend_url);
+    	}
     }
     else
     {
-    	resp_fd = rp_execMapserv(env, req_string, mapfile, msexec);
+    	mapfile = rp_getMapfile();
+    	msexec  = rp_getMapserverExec();
+
+    	if (NULL == msexec || '\0' == msexec[0])
+    	{
+    		SP_ERROR(env, SP_SYS_ERR_MS_EXEC);
+    		rp_log_error(env,
+    				"(%s:%d)rp_invokeBackend-1, msexec=NULL or empty\n",
+    				__FILE__, __LINE__);
+    	}
+    	else
+    	{
+    		resp_fd = rp_execMapserv(env, req_string, mapfile, msexec);
+    	}
     }
 
     if (resp_fd < 0)
     {
     	SP_ERROR(env, SP_SYS_ERR_MS_EXEC);
-    	fprintf(stderr,
-    			"*** S2P(%s:%d): rp_invokeMapserv-1, msexec='%s'\n"
-    			"                mapfile='%s'\n",
-    			__FILE__, __LINE__, msexec, mapfile);
+    	if (rp_getUrlMode())
+    	{
+    		rp_log_error(env, " (%s:%d) rp_invokeBackend-2u, url='%s'\n",
+    				__FILE__, __LINE__, rp_get_prop_s(SP_BACKENDURL_ID));
+    	}
+    	else
+    	{
+    		rp_log_error(env,
+    				"(%s:%d)rp_invokeBackend-2e, msexec ='%s'\n"
+    				"                            mapfile='%s'\n",
+    				__FILE__, __LINE__, msexec, mapfile);
+
+
+    	}
     }
     else
     {
@@ -152,8 +175,8 @@ rp_invokeMapserv(
         {
         	int e = errno;
         	SP_ERROR(env, SP_SYS_ERR_MS_OUT_PROCESSING);
-            fprintf(stderr,"*** S2P(%s:%d): "
-            		"Unexpected error processing Mapserver output,"
+        	rp_log_error(env,
+        			"(%s:%d)Unexpected error processing Mapserver output,"
             		" fdopen() error %d\n",
             		__FILE__, __LINE__, e);
         }
@@ -167,13 +190,14 @@ rp_invokeMapserv(
         	default:
         		return_node = NULL;
             	SP_ERROR(env, SP_SYS_ERR_INTERNAL);
-                fprintf(stderr,"*** S2P(%s:%d): "
-                		"Unexpected wcs_version (%d) in switch.\n"
+            	rp_log_error(env,
+                		"(%s:%d)Unexpected wcs_version (%d) in switch.\n"
                 		__FILE__, __LINE__, wcs_version);
         	}
 
         }
         fclose(fp);
+        if (rp_getUrlMode()) rp_close_sock(resp_fd);
     }
 
     AXIS2_FREE(env->allocator, req_string);

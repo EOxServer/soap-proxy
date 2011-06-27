@@ -36,8 +36,11 @@
  * 
  */
 
+#include <stdarg.h>
 #include <axutil_error.h>
 #include "soap_proxy.h"
+
+#define SP_SELF_ID_STRING "soap_proxy"
 
 static int rp_errors_initialized = 0;
 
@@ -78,6 +81,8 @@ void rp_init_errors()
 			"Unexpected error processing Mapserver output";
 	axutil_error_messages[SP_SYS_ERR_PROPSLOAD] =
 			"Failed to load required properties.";
+	axutil_error_messages[SP_SYS_ERR_NOT_IMPLEMENTED] =
+			"Not Implemented.";
 
 	rp_errors_initialized = 1;
 }
@@ -85,8 +90,8 @@ void rp_init_errors()
 //-----------------------------------------------------------------------------
 axiom_node_t *
 rp_error_elem(
-    const axutil_env_t * env,
-    axis2_char_t * errorText)
+    const axutil_env_t *env,
+    axis2_char_t       *errorText)
 {
     axiom_node_t    *resp_om_node  = NULL;
     axiom_element_t *resp_om_ele   = NULL;
@@ -101,21 +106,37 @@ rp_error_elem(
 
 //-----------------------------------------------------------------------------
 axiom_node_t *rp_fault_elem(
-    const axutil_env_t * env)
+    const axutil_env_t *env)
 {
     axiom_node_t    *resp_om_node  = NULL;
     axiom_element_t *resp_om_ele   = NULL;
-    /*
-    <soapenv:Fault>
-    <faultcode>soapenv:Sender</faultcode>
-    <faultstring>NULL parameter was passed when a non NULL parameter was expected</faultstring>
-    <detail><EchoServiceError></EchoServiceError></detail>
-    </soapenv:Fault>
-    */
 
     resp_om_ele = axiom_element_create(
         env, NULL, "errorResponse", NULL, &resp_om_node);
 
     return resp_om_node;
+}
+
+//-----------------------------------------------------------------------------
+int rp_log_error(
+    const axutil_env_t *env,
+    const axis2_char_t *format,
+    ...)
+{
+	va_list args;
+	int ret = 0;
+	axis2_char_t *buf = NULL;
+
+	int buf_len = strlen(format) + strlen(SP_SELF_ID_STRING) + 9;
+	buf = (axis2_char_t *) AXIS2_MALLOC(env->allocator, buf_len);
+	sprintf(buf," *** %s: %s", SP_SELF_ID_STRING, format);
+
+	va_start (args, format);
+	ret = vfprintf(stderr, (char *)buf, args);
+	va_end (args);
+	fflush(stderr);
+
+	AXIS2_FREE(env->allocator, buf);
+	return ret;
 }
 
