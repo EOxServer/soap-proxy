@@ -201,6 +201,10 @@ rpSvc_free(
     axis2_svc_skeleton_t * svc_skeleton,
     const axutil_env_t * env)
 {
+	// XXX
+	fprintf(stderr, "called rpSvc_free");
+	fflush(stderr);
+
     if (svc_skeleton->func_array)
     {
         axutil_array_list_free(svc_skeleton->func_array, env);

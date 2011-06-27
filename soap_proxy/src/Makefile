@@ -29,7 +29,8 @@ L_FLAGS = -L${AXIS2C_HOME}/lib -laxutil -laxis2_axiom -laxis2_parser \
 SP_INCLUDES = soap_proxy.h sp_svc.h
 SP_SOURCES  = sp_ctype.c sp_svc.c sp_dispatch.c sp_exec_ms.c \
               sp_props.c sp_util.c sp_image.c sp_fault.c \
-              sp_wcs20.c sp_wcs11.c sp_ms_version.c sp_process_mime.c
+              sp_wcs20.c sp_wcs11.c sp_ms_version.c sp_process_mime.c \
+              sp_backend_sock.c
              
 .PHONY: 	all configs inst install
 

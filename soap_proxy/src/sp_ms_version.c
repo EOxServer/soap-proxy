@@ -48,17 +48,24 @@
 //-----------------------------------------------------------------------------
 axiom_node_t *
 rp_getMsVers(
-    const axutil_env_t * env,
-    const axis2_char_t * msexec)
+    const axutil_env_t * env)
 {
     axiom_node_t *return_node = NULL;
+
+    if (rp_getUrlMode())
+    {
+    	SP_ERROR(env, SP_SYS_ERR_NOT_IMPLEMENTED);
+    	rp_log_error(env, "getMsVersion not implemented with backend_url.\n");
+    	return NULL;
+    }
+
+    const axis2_char_t *msexec = rp_getMapserverExec();
 
     int resp_fd = rp_execMs_dashV(env, msexec);
     if (resp_fd < 0)
     {
     	SP_ERROR(env, SP_SYS_ERR_MS_EXEC);
-    	fprintf(stderr,
-    			"*** S2P(%s:%d): Mapserver -v exec fail - msexec='%s'\n",
+    	rp_log_error(env, "%s:%d: Mapserver -v exec fail - msexec='%s'\n",
     			__FILE__, __LINE__, msexec);
     }
     else

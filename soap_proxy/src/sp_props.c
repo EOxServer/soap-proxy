@@ -52,15 +52,22 @@
 /**
  * Names of the parameters in in the config file
  */
-#define SP_MAPFILE   "MapFile"
-#define SP_MAPSERVER "MapServ"
+#define SP_MAPFILE_STR    "MapFile"
+#define SP_MAPSERVER_STR  "MapServ"
+#define SP_BACKENDURL_STR "BackendURL"
+
+// TODO: Should lock the access functions for concurrent thread safety.
 
 //-----------------------------------------------------------------------------
 static int rp_props_loaded = 0;
-static axis2_char_t rp_mapfile[SP_MAX_MPATHS_LEN];
-static axis2_char_t rp_mapserv[SP_MAX_MPATHS_LEN];
+static int rp_url_mode     = 0;
+static axis2_char_t rp_mapfile         [SP_MAX_MPATHS_LEN] = "";
+static axis2_char_t rp_mapserv         [SP_MAX_MPATHS_LEN] = "";
+static axis2_char_t rp_backend_url_str [SP_MAX_MPATHS_LEN] = "";
+static axutil_url_t *rp_backend_url  = NULL;
 
 // =========================  local functions = ===============================
+
 //-----------------------------------------------------------------------------
 static int rp_load_prop(
 	    const axutil_env_t    *env,
@@ -91,12 +98,22 @@ static int rp_set_props_loaded()
 
 // =========================  public functions = ===============================
 //-----------------------------------------------------------------------------
+/** Get url mode.
+ * @return false (0): not URL-mode, use exec of mapserver binary,
+ *         true  (1): communicate with URL via a socket connection.
+ */
+const int rp_getUrlMode()
+{
+    return rp_url_mode;
+}
+
+//-----------------------------------------------------------------------------
 /** Get mapfile path.
  * @return pointer to the mapfile path as a static string, not a copy.
  */
 const axis2_char_t *rp_getMapfile()
 {
-    return rp_get_prop_s(SP_MAPFILE_I);
+    return rp_get_prop_s(SP_MAPFILE_ID);
 }
 
 //-----------------------------------------------------------------------------
@@ -106,20 +123,43 @@ const axis2_char_t *rp_getMapfile()
  */
 const axis2_char_t *rp_getMapserverExec()
 {
-	return rp_get_prop_s(SP_MAPSERVER_I);
+	return rp_get_prop_s(SP_MAPSERVER_ID);
 }
 
 //-----------------------------------------------------------------------------
-/** Get property by index.
- * @param i
- *   0: mapfile path,
- *   1: mapserver executable path
+/** Get backend URL.
+ * @return pointer to the backend url struct.
+ * The returned struct should not be freed.
+ */
+const axutil_url_t *rp_getBackendURL()
+{
+	return rp_backend_url;
+}
+
+//-----------------------------------------------------------------------------
+/** Get property string by index.
+ * Note some properties are also available as a derived value; this function
+ * only delivers raw string values.
+ *
+ * @param i index, one of sp_property_ids.
  * @return pointer to a static string, not a copy.
  */
 const axis2_char_t *rp_get_prop_s(
-    int i)
+    const int i)
 {
-	return (0==i) ? rp_mapfile : rp_mapserv ;
+	switch (i)
+	{
+	case SP_MAPSERVER_ID:  return rp_mapserv;
+	case SP_MAPFILE_ID:    return rp_mapfile;
+	case SP_BACKENDURL_ID: return rp_backend_url_str;
+
+	default:
+		fprintf(stderr,
+				"%s: %d: **error: unknown property ID",
+				__FILE__, __LINE__);
+		fflush(stderr);
+		return "(**error: unknown property ID)";
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -136,10 +176,26 @@ int rp_load_props(
 {
     if (rp_props_loaded) return 0;
 
-    return
-    		rp_load_prop(env, msg_ctx, rp_mapfile, SP_MAPFILE)   ||
-    		rp_load_prop(env, msg_ctx, rp_mapserv, SP_MAPSERVER) ||
-    		rp_set_props_loaded();
+    // must load MAPFILE and one of BACKENDURL or MAPSERVER
+    if (rp_load_prop(env, msg_ctx, rp_mapfile, SP_MAPFILE_STR)) return -1;
+
+    if ( ! rp_load_prop(env, msg_ctx, rp_backend_url_str, SP_BACKENDURL_STR))
+    {
+    	rp_url_mode = 0;
+    	if (rp_backend_url) axutil_url_free(rp_backend_url, env);
+    	rp_backend_url = axutil_url_parse_string(env, rp_backend_url_str);
+    	if (!rp_backend_url) return -1;
+    	rp_url_mode = 1;
+    	rp_set_props_loaded();
+    	return 0;
+    }
+    else
+    {
+    	rp_url_mode = 0;
+    	return
+    			rp_load_prop(env, msg_ctx, rp_mapserv, SP_MAPSERVER_STR) ||
+    			rp_set_props_loaded();
+    }
 }
 
 

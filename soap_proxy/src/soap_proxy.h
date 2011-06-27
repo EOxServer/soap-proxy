@@ -38,6 +38,7 @@
 #define SOAPPROXY_H_INCLUDED
 
 #include "sp_svc.h"
+#include <stdarg.h>
 
 /**
  * limit the operation name len to prevent buffer overrrun-type attacks
@@ -54,12 +55,6 @@
  */
 #define SP_MAX_MPATHS_LEN 4096
 
-/**
- * ID constants for retrieving the property strings.
- */
-#define SP_MAPFILE_I   0
-#define SP_MAPSERVER_I 1
-
 #define SP_IMG_BUF_SIZE 4096
 
 #define MAPSERV_ID_STR "mapserv"
@@ -75,6 +70,16 @@
 #define SP_RESP_TIFF_TYPE      3
 #define SP_RESP_APP_SEXML_TYPE 4
 #define SP_RESP_UNKNOWN_TYPE  -1
+
+/**
+ * ID constants for retrieving the property strings.
+ */
+enum sp_property_ids
+{
+	SP_MAPFILE_ID =  0,
+	SP_MAPSERVER_ID,
+	SP_BACKENDURL_ID
+};
 
 /**
  * WCS Version identifiers (int)
@@ -169,7 +174,8 @@ enum sp_error_codes
 	 SP_SYS_ERR_INTERNAL,
 	 SP_SYS_ERR_MS_EXEC,
 	 SP_SYS_ERR_MS_OUT_PROCESSING,
-	 SP_SYS_ERR_PROPSLOAD
+	 SP_SYS_ERR_PROPSLOAD,
+	 SP_SYS_ERR_NOT_IMPLEMENTED
 };
 
 /* ---------------------- forward / external declarations ----------*/
@@ -177,9 +183,15 @@ axiom_node_t *rp_error_elem(
     const axutil_env_t * env,
     axis2_char_t * errorText);
 
+int rp_log_error(
+    const axutil_env_t *env,
+    const char         *format,
+    ...);
+
+const int           rp_getUrlMode();
 const axis2_char_t *rp_getMapfile();
 const axis2_char_t *rp_getMapserverExec();
-
+const axutil_url_t *rp_getBackendURL();
 const axis2_char_t *rp_get_prop_s(
 		int i);
 
