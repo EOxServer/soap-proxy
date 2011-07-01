@@ -121,8 +121,13 @@ typedef struct httpHeaderVal_struct hh_values;
 /* -----------  support for axiom_xml_reader_create_for_io() ----------*/
 struct rp_cb_ctx_struct {
 
-  // file to read from
+  const axutil_env_t *env;
+
+  // file to read from - only one of fp or st is used.
   FILE *fp;
+
+  // stream to read from, if file is not used.
+  axutil_stream_t *st;
 
   // boundary string
   const char *bound;
@@ -191,7 +196,7 @@ int rp_log_error(
 const int           rp_getUrlMode();
 const axis2_char_t *rp_getMapfile();
 const axis2_char_t *rp_getMapserverExec();
-const axutil_url_t *rp_getBackendURL();
+axutil_url_t       *rp_getBackendURL();
 const axis2_char_t *rp_get_prop_s(
 		int i);
 
@@ -199,16 +204,34 @@ int rp_get_contentType(
     char *str);
 
 axiom_node_t *
+sp_process_xml_st(
+    const axutil_env_t *env,
+    axutil_stream_t    *st,
+    const char         *boundId);
+
+axiom_node_t *
 rp_process_xml(
     const axutil_env_t * env,
     FILE *fp,
     const char *boundId);
 
-int rp_execMapserv(
+int sp_execMs_dashV(
+    const axutil_env_t *env,
+    const axis2_char_t *msexec);
+
+axutil_stream_t *sp_execMapserv(
     const axutil_env_t * env,
     const axis2_char_t *req,
-    const axis2_char_t *mapfile,
-    const axis2_char_t *mx);
+    const axis2_char_t *mapfile);
+
+axutil_stream_t *sp_backend_socket(
+    const axutil_env_t *env,
+    const axis2_char_t *req,
+    const axis2_char_t *mapfile);
+
+void sp_stream_cleanup(
+    const axutil_env_t *env,
+    axutil_stream_t    *sstream);
 
 char *skipChars(
      char * str,
@@ -226,16 +249,26 @@ void rp_initHttpHeaderStruct(
     hh_values *hh);
 
 void rp_freeHttpHeaders(
-    const axutil_env_t * env,
+    const axutil_env_t *env,
     hh_values *hh);
 
 void rp_parseHttpHeaders(
-    const axutil_env_t * env,
-    hh_values *hh,
-    FILE *fp);
+    const axutil_env_t *env,
+    hh_values          *hh,
+    FILE               *fp);
+
+void sp_parseHttpHeaders_buf(
+    const axutil_env_t *env,
+    hh_values          *hh,
+    char               *buf);
+
+void sp_parseHttpHeaders(
+    const axutil_env_t *env,
+    hh_values          *hh,
+    axutil_stream_t    *sstream);
 
 void rp_printHttpHeaders(
-    FILE *fp,
+    FILE      *fp,
     hh_values *hh);
 
 int seek_to_boundary(
@@ -247,9 +280,15 @@ int check_end_bound(
 
 char * rp_read_bin_mime_image(
     const axutil_env_t * env,
-    FILE *fp,
+    FILE       *fp,
     const char *boundId,
-    int *len);
+    int        *len);
+
+char *sp_load_binary_file(
+    const axutil_env_t *env,
+    char               *header_blob,
+    axutil_stream_t    *st,
+    int                *len);
 
 char * rp_load_binary_file(
     const axutil_env_t * env,
@@ -294,14 +333,10 @@ axis2_char_t *rp_get_ref_href(
     const axutil_env_t   *env,
     axiom_node_t         *node);
 
-int rp_execMs_dashV(
-    const axutil_env_t *env,
-    const axis2_char_t *msexec);
-
 axiom_node_t *
-rp_build_response20(
+sp_build_response20(
     const axutil_env_t * env,
-    FILE *fp);
+    axutil_stream_t    *st);
 
 void rp_inject_soap_cap20(
     const axutil_env_t * env,
@@ -311,4 +346,12 @@ void rp_print_coverage_hash_entries(
     const axutil_env_t *env,
     FILE               *fp,
     axutil_hash_t      *ch);
+
+char* sp_stream_getline(
+	axutil_stream_t    *st,
+	const axutil_env_t *env,
+	char               *buf,
+	unsigned int       size,
+	const int          delete_cr);
+
 #endif

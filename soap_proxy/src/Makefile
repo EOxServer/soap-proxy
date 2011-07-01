@@ -47,7 +47,9 @@ ${SERVICE_PATH}:
 	if [ ! -d $@ ] ; then mkdir $@ ; fi
 	
 configs:	${AXIS2C_HOME} ${SERVICE_PATH}
+ifndef SOAP_PROXY_NOCONFIG
 	@ $(MAKE) -C ${CONFIG_SRC_DIR}
+endif
 
 ${SERVICE_LIB}:	${AXIS2C_HOME} ${SP_INCLUDES} ${SP_SOURCES} 
 	gcc ${C_FLAGS} -o $@ ${I_FLAGS} ${L_FLAGS}  ${SP_SOURCES}

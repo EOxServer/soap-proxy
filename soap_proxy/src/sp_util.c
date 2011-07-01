@@ -209,7 +209,88 @@ int check_end_bound(FILE *fp)
         return -1;  // error
     }
 }
+//-----------------------------------------------------------------------------
+//====================== Stream related  ================================
 
+//-----------------------------------------------------------------------------
+/** Emulates fgets() for a axutil_stream_t.
+ * @param st
+ * @param env
+ * @param buf
+ * @param size
+ * @param delete_cr
+ * @return  buf on success, and NULL when end of file occurs while no characters
+ *  have been read.
+ */
+char* sp_stream_getline(
+	axutil_stream_t    *st,
+	const axutil_env_t *env,
+	char               *buf,
+	unsigned int       size,
+	const int          delete_cr)
+{
+	if (NULL == st || NULL == buf) return;
+
+    char c;
+    int n_read = 1;
+
+    while (size > n_read)
+    {
+    	if ( 0 == axutil_stream_read( st, env, &c, 1))
+    	{
+    		if (1 == n_read) return NULL;
+    		else             break;
+    	}
+    	if (delete_cr)
+    	{
+    		if ('\r' == c) continue;
+    	}
+    	*buf++ = c;
+    	n_read++;
+    	if ('\n' == c || '\0' == c) break;
+    }
+
+    *buf = '\0';
+    return buf;
+}
+
+//-----------------------------------------------------------------------------
+// Reads headers into a buffer from the stream st.
+// Deletes carriage returns ('\r');
+//  @return the number of chars actually read.
+//
+int sp_load_header_blob(
+    const axutil_env_t *env,
+    axutil_stream_t    *st,
+    char               *buf,
+    const int           len)
+{
+    int total_size = 0;
+    int n_read     = 0;
+    int buf_space  = len;
+
+    if (len < 1) return 0;
+    *buf = '\0';
+
+    while( sp_stream_getline(st, env, buf, buf_space, 1) )
+    {
+    	n_read = strlen(buf);
+    	buf_space  -= n_read;
+        total_size += n_read;
+
+        if (buf_space <= 0)
+        {
+        	return -1;
+        }
+
+    	if ('\n' == *buf || '\0' ==  *buf)
+    	{
+            break;
+    	}
+    	buf += n_read;
+    }
+    return total_size;
+}
 
 //-----------------------------------------------------------------------------
 //====================== HTTP Headers related  ================================
@@ -280,7 +361,6 @@ void rp_printHttpHeaders(
 }
 
 //-----------------------------------------------------------------------------
-
 /**
  * On entry, assume hh is initialised to all NULL pointers.
  * @param env
@@ -288,9 +368,9 @@ void rp_printHttpHeaders(
  * @param fp
  */
 void rp_parseHttpHeaders(
-    const axutil_env_t * env,
-    hh_values *hh,
-    FILE *fp) 
+    const axutil_env_t *env,
+    hh_values          *hh,
+    FILE               *fp)
 {
     if (NULL == hh || NULL == fp) return;
 
@@ -298,6 +378,105 @@ void rp_parseHttpHeaders(
     int i;
 
     while (fgets(tmpBuf, 512, fp))
+    {
+        if ('\n' == *tmpBuf || '\0' == *tmpBuf) break;
+
+        for ( i=0; i<SP_HH_NKEYS; i++)
+        {
+            const char *key = rp_httpHeaderKeys[i];
+            if ( 0 == strncasecmp (key, tmpBuf, strlen(key)) )
+            {
+                char *val     = tmpBuf+strlen(key);
+                hh->values[i] = axutil_strtrim(env, val, " \t\r\n");
+                break;
+            }
+        }
+    }
+}
+
+//-----------------------------------------------------------------------------
+/**
+ * @param env
+ * @param dst_buf
+ * @param src_buf
+ * @param max_size
+ * @return number of chars copied into dst_buf, including a trailing '\0'.
+ */
+int sp_copyline(
+    const axutil_env_t *env,
+    char               *dst_buf,
+    char               *src_buf,
+    const int           max_size)
+{
+	char *c = src_buf;
+	int   n = 1;
+
+	if (max_size < 1) return 0;
+
+    while (n<max_size)
+    {
+    	*dst_buf = *src_buf++;
+    	n++;
+    	if ('\n' == *dst_buf || '\0' == *dst_buf) break;
+    	dst_buf++;
+    }
+    *dst_buf = '\0';
+    return n;
+}
+
+//-----------------------------------------------------------------------------
+/**
+ * On entry, assume hh is initialised to all NULL pointers.
+ * @param env
+ * @param hh
+ * @param src_buf
+ */
+void sp_parseHttpHeaders_buf(
+    const axutil_env_t *env,
+    hh_values          *hh,
+    char               *src_buf)
+{
+    if (NULL == hh || NULL == src_buf) return;
+
+    char tmpBuf[512];
+    int n;
+    while ( n = sp_copyline(env, tmpBuf, src_buf, 512 )-1 )
+    {
+        if ('\n' == *tmpBuf || '\0' == *tmpBuf) break;
+
+        int i;
+        for ( i=0; i<SP_HH_NKEYS; i++)
+        {
+            const char *key = rp_httpHeaderKeys[i];
+            if ( 0 == strncasecmp (key, tmpBuf, strlen(key)) )
+            {
+                char *val     = tmpBuf+strlen(key);
+                hh->values[i] = axutil_strtrim(env, val, " \t\r\n");
+                break;
+            }
+        }
+        src_buf += n;
+    }
+}
+
+//-----------------------------------------------------------------------------
+/**
+ * On entry, assume hh is initialised to all NULL pointers.
+ * @param env
+ * @param hh
+ * @param st
+ */
+void sp_parseHttpHeaders_st(
+    const axutil_env_t *env,
+    hh_values          *hh,
+    axutil_stream_t    *st)
+{
+    if (NULL == hh || NULL == st) return;
+
+    char tmpBuf[512];
+    int i;
+
+    while ( sp_stream_getline(st, env, tmpBuf, 512, 1 ) )
     {
         if ('\n' == *tmpBuf || '\0' == *tmpBuf) break;
 
@@ -782,3 +961,18 @@ int sp_glean_protocol(
 	// TODO: sp_glean_protocol() is not implemented.
 	return SP_WCS_V200;
 }
+
+//-----------------------------------------------------------------------------
+/** Close down a stream and perform any cleanup.
+ * @param env
+ * @param sstream
+ */
+void
+sp_stream_cleanup(
+    const axutil_env_t *env,
+    axutil_stream_t    *sstream)
+{
+	axutil_stream_close (sstream, env);
+	axutil_stream_free  (sstream, env);
+}
+

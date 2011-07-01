@@ -108,99 +108,53 @@ rp_invokeBackend(
 {
     AXIS2_ENV_CHECK(env, NULL);
 
-    axiom_node_t *return_node  = NULL;
-    axis2_char_t *req_string   = axiom_node_to_string(node, env);
-    unsigned long resp_len     = 0;
-    axis2_char_t *response_buf = NULL;
-    int           resp_fd      = -1;
+    axiom_node_t   *return_node  = NULL;
+    axis2_char_t   *req_string   = axiom_node_to_string(node, env);
+    axutil_stream_t *r_stream    = NULL;
+	const axis2_char_t *mapfile  = rp_getMapfile();
 
-	const axis2_char_t *mapfile     = NULL;
-	const axis2_char_t *msexec      = NULL;
-	const axutil_url_t *backend_url = NULL;
+	if (rp_getUrlMode())
+	{
+		r_stream = sp_backend_socket(env, req_string, mapfile);
+	}
+	else
+	{
+		r_stream = sp_execMapserv(env, req_string, mapfile);
+	}
 
-    if (rp_getUrlMode())
-    {
-    	backend_url = rp_getBackendURL();
-    	if (NULL == backend_url)
-    	{
-    		SP_ERROR(env, SP_SYS_ERR_MS_EXEC);
-    		rp_log_error(env, "(%s:%d)rp_invokeBackend-0, backendUrl=NULL\n",
-    				__FILE__, __LINE__);
-    	}
-    	else
-    	{
-    		resp_fd = rp_backend_socket(env, req_string, backend_url);
-    	}
-    }
-    else
-    {
-    	mapfile = rp_getMapfile();
-    	msexec  = rp_getMapserverExec();
+	if (NULL == r_stream)
+	{
+		SP_ERROR(env, SP_SYS_ERR_MS_EXEC);
+		rp_log_error(env,
+				" (%s:%d) rp_invokeBackend / mode:%s, "
+				"mapfile='%s', exec/addr=%s\n",
+				__FILE__, __LINE__,
+				(rp_getUrlMode() ? "URL" : "Exec"),
+				mapfile,
+				(rp_getUrlMode() ?
+						rp_get_prop_s(SP_BACKENDURL_ID) :
+						rp_getMapserverExec())
+		);
 
-    	if (NULL == msexec || '\0' == msexec[0])
-    	{
-    		SP_ERROR(env, SP_SYS_ERR_MS_EXEC);
-    		rp_log_error(env,
-    				"(%s:%d)rp_invokeBackend-1, msexec=NULL or empty\n",
-    				__FILE__, __LINE__);
-    	}
-    	else
-    	{
-    		resp_fd = rp_execMapserv(env, req_string, mapfile, msexec);
-    	}
-    }
+	}
+	else
+	{
+		switch(wcs_version)
+		{
+		case SP_WCS_V200:
+			return_node = sp_build_response20(env, r_stream);
+			break;
+		default:
+			return_node = NULL;
+			SP_ERROR(env, SP_SYS_ERR_INTERNAL);
+			rp_log_error(env,
+					"(%s:%d)Unexpected wcs_version (%d) in switch.\n"
+					__FILE__, __LINE__, wcs_version);
+		}
 
-    if (resp_fd < 0)
-    {
-    	SP_ERROR(env, SP_SYS_ERR_MS_EXEC);
-    	if (rp_getUrlMode())
-    	{
-    		rp_log_error(env, " (%s:%d) rp_invokeBackend-2u, url='%s'\n",
-    				__FILE__, __LINE__, rp_get_prop_s(SP_BACKENDURL_ID));
-    	}
-    	else
-    	{
-    		rp_log_error(env,
-    				"(%s:%d)rp_invokeBackend-2e, msexec ='%s'\n"
-    				"                            mapfile='%s'\n",
-    				__FILE__, __LINE__, msexec, mapfile);
+		sp_stream_cleanup(env, r_stream);
+	}
 
-
-    	}
-    }
-    else
-    {
-        FILE *fp = fdopen(resp_fd, "r");
-        if (NULL == fp)
-        {
-        	int e = errno;
-        	SP_ERROR(env, SP_SYS_ERR_MS_OUT_PROCESSING);
-        	rp_log_error(env,
-        			"(%s:%d)Unexpected error processing Mapserver output,"
-            		" fdopen() error %d\n",
-            		__FILE__, __LINE__, e);
-        }
-        else
-        {
-        	switch(wcs_version)
-        	{
-        	case SP_WCS_V200:
-        		return_node = rp_build_response20(env, fp);
-        		break;
-        	default:
-        		return_node = NULL;
-            	SP_ERROR(env, SP_SYS_ERR_INTERNAL);
-            	rp_log_error(env,
-                		"(%s:%d)Unexpected wcs_version (%d) in switch.\n"
-                		__FILE__, __LINE__, wcs_version);
-        	}
-
-        }
-        fclose(fp);
-        if (rp_getUrlMode()) rp_close_sock(resp_fd);
-    }
-
-    AXIS2_FREE(env->allocator, req_string);
-
-    return return_node;
+	AXIS2_FREE(env->allocator, req_string);
+	return return_node;
 }

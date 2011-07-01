@@ -37,7 +37,7 @@
 
 //--------------------------- forward declarations ----------------------------
 axutil_stream_t *
-rp_sock_connect(
+sp_sock_connect(
     const axutil_env_t *env,
     const axis2_char_t *host,
     int                 port);
@@ -46,68 +46,110 @@ rp_sock_connect(
 /** Send the request to the url.
  * @param env
  * @param req
+ * @param mapfile
  * @param backend_url
- * @return filedescriptor of the socket where the response should be read. On
- * error return -1.
+ * @return stream corresponding to the socket where the response should be read.
+ * On error return NULL.
  */
-int
-rp_backend_socket(
+axutil_stream_t *
+sp_backend_socket(
     const axutil_env_t *env,
     const axis2_char_t *req,
-    axutil_url_t       *backend_url)
+    const axis2_char_t *mapfile)
 {
-	return -1;
     axutil_stream_t     *sock_stream;
     int                  n_writ = -1;
     int                  n_read = -1;
 
-    axis2_char_t buff[1];
+	axutil_url_t *backend_url = rp_getBackendURL();
+	if (NULL == backend_url)
+	{
+		SP_ERROR(env, SP_SYS_ERR_MS_EXEC);
+		rp_log_error(env, "(%s:%d)backendUrl=NULL\n", __FILE__, __LINE__);
+		return NULL;
+	}
 
-    int reqLen = strlen(req);
+    int req_len = strlen(req);
 
-    if (reqLen > SP_MAX_REQ_LEN || 0 == reqLen)
+    if (req_len > SP_MAX_REQ_LEN || 0 == req_len)
     {
-        rp_log_error(env, "Request too long or short (%d)\n", reqLen);
-        return -1;
+        rp_log_error(env, "Request too long or short (%d)\n", req_len);
+        return NULL;
     }
 
-    sock_stream = rp_sock_connect(
+    sock_stream = sp_sock_connect(
     		env,
     		axutil_url_get_host(backend_url, env),
     		axutil_url_get_port(backend_url, env));
 
-
     if (!sock_stream)
     {
-        rp_log_error(env, "error creating stream.");
-        return -1;
+        rp_log_error(env, "error creating stream.\n");
+        return NULL;
     }
 
-    // XXX not implemented
-    return -1;
-}
+    const axis2_char_t *path = axutil_url_get_path(backend_url, env);
 
-//-----------------------------------------------------------------------------
-/** Close down the socket and perform any cleanup.
- * @param sstream socket stream
- */
-void
-rp_sock_close(
-    const axutil_env_t *env,
-    axutil_stream_t    *sstream)
-{
-	// XXX not implemented
+    // est. max len of fixed header strings ('POST ' ', 'Content-type:' etc.)
+    const int max_fixed_len = 160;
+    int max_headers_len = max_fixed_len + strlen(path) + strlen(mapfile);
 
+    char *headers = (char*) AXIS2_MALLOC(env->allocator, max_headers_len);
+    snprintf(headers, max_headers_len,
+    		"POST %s HTTP/1.0\n"
+    		"Content-Length: %d\n"
+    		"Content-Type:   %s\n"
+    		"MS_MAPFILE:     %s\n"
+    		"\n"
+    		,
+    		path,
+    		req_len,
+    		"text/xml",
+    		mapfile);
+
+    n_writ = axutil_stream_write(sock_stream, env, headers, strlen(headers));
+    if (n_writ < strlen(headers))
+    {
+    	rp_log_error(env, "stream write error");
+    	sp_stream_cleanup(env, sock_stream);
+    	return NULL;
+    }
+
+    n_writ = axutil_stream_write(sock_stream, env, req, req_len);
+    if (n_writ < req_len)
+    {
+    	rp_log_error(env, "stream write error");
+    	sp_stream_cleanup(env, sock_stream);
+    	return NULL;
+    }
+
+    /*
+    // eat up the HTTP headers
+    char header_buf[1024];
+    if (sp_load_header_blob(env, sock_stream, header_buf, 1024) < 0)
+    {
+    	// TODO:  Could allocate a bigger buffer, copy chars, etc.
+    	// In practice we never expect the headers to be that big, or if
+    	//  it does come up then something is wrong.
+    	rp_log_error(env, "HTTP headers unexpectedly large,\n"
+    			"start with:\n%s\n", header_buf);
+        SP_ERROR(env, SP_USER_ERR_CONTENTHEADERS);
+        return NULL;
+    }
+*/
+
+    return sock_stream;
 }
 
 //-----------------------------------------------------------------------------
 /** Open up a socket stream to host:port.
+ * @param env
  * @param host
  * @param port
- * @return filedescriptor of the socket, -1 on error.
+ * @return stream for the socket, NULL on error.
  */
 axutil_stream_t *
-rp_sock_connect(
+sp_sock_connect(
     const axutil_env_t *env,
     const axis2_char_t *host,
     int                 port)
@@ -118,14 +160,14 @@ rp_sock_connect(
 
     if (!host || port <= 0)
     {
-        rp_log_error(env, "cannot get host/port.");
+        rp_log_error(env, "cannot get host/port.\n");
         return NULL;
     }
 
     sockfd = (int)axutil_network_handler_open_socket(env, (char *) host, port);
     if (sockfd <= 0)
     {
-        rp_log_error(env, "error creating socket.");
+        rp_log_error(env, "error creating socket.\n");
         return NULL;
     }
 

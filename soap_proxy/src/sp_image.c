@@ -53,9 +53,9 @@ struct tmp_store
 typedef struct tmp_store TmpStore;
 
 //-----------------------------------------------------------------------------
-// Builds the complete image from pieces stored in the linked list ll.
+// Compose a single buffer from pieces stored in the linked list ll.
 //
-static char * compose_image(
+char * compose_buffer(
     const axutil_env_t * env,
     int image_size,
     axutil_linked_list_t *ll)
@@ -90,26 +90,43 @@ static char * compose_image(
 }
 
 //-----------------------------------------------------------------------------
-// Reads a binary image from the file fp.
-//  fp is positioned at the start of the image.
+// Reads arbitrary binary data from the file fp.
+//  fp is positioned at the start of the file.
 //
-char * rp_load_binary_file(
-    const axutil_env_t * env,
-    FILE *fp,
-    int *len)
+char *sp_load_binary_file(
+    const axutil_env_t *env,
+    char               *header_blob,
+    axutil_stream_t    *st,
+    int                *len)
 {
-    char     *image_binary   = NULL;
-    char     *ip             = NULL;
+    *len                            = 0;
+    char                 *bin_data  = NULL;
+    TmpStore             *ts        = NULL;
+    axutil_linked_list_t *ll        = axutil_linked_list_create(env);
 
-    TmpStore             *ts = NULL;
-    axutil_linked_list_t *ll = axutil_linked_list_create(env);
+    // pre-pend header-blob (if any) in front of the remaining data
+    if (header_blob)
+    {
+    	int hdr_size = strlen(header_blob);
+    	if ( (hdr_size) > SP_IMG_BUF_SIZE)
+    	{
+    		// failsafe - should never happen.
+    	    axutil_linked_list_free(ll, env);
+    		return NULL;
+    	}
+
+    	ts = (TmpStore *)AXIS2_MALLOC(env->allocator, sizeof(TmpStore));
+    	memcpy(ts->buf, header_blob, hdr_size);
+    	ts->size = hdr_size;
+    	*len    += hdr_size;
+    	axutil_linked_list_add (ll, env, (void *)ts);
+    }
 
     int n_read  = 0;
-    *len = 0;
-    while ( ! ( feof(fp) || ferror(fp) ) )
+    while ( 1 )
     {
         ts = (TmpStore *)AXIS2_MALLOC(env->allocator, sizeof(TmpStore));
-        n_read = fread(ts->buf, 1, SP_IMG_BUF_SIZE, fp);
+        n_read = axutil_stream_read(st, env, ts->buf, SP_IMG_BUF_SIZE);
         if (0 == n_read) 
         {
             AXIS2_FREE(env->allocator, ts);
@@ -121,9 +138,9 @@ char * rp_load_binary_file(
         axutil_linked_list_add (ll, env, (void *)ts);
     }
 
-    image_binary = compose_image(env, *len, ll);
+    bin_data = compose_buffer(env, *len, ll);
     axutil_linked_list_free(ll, env);
-    return image_binary;
+    return bin_data;
 }
 
 //-----------------------------------------------------------------------------
@@ -148,7 +165,7 @@ char * rp_read_bin_mime_image(
     *len = 0;
 
     Rp_cb_ctx fill_ctx;
-    init_rp_cb_ctx(&fill_ctx);
+    init_rp_cb_ctx(env, &fill_ctx);
     fill_ctx.fp    = fp;
     fill_ctx.bound = boundId;
 
@@ -166,7 +183,7 @@ char * rp_read_bin_mime_image(
         axutil_linked_list_add (ll, env, (void *)ts);
     }
 
-    image_binary = compose_image(env, *len, ll);
+    image_binary = compose_buffer(env, *len, ll);
     axutil_linked_list_free(ll, env);
     return image_binary;
 }

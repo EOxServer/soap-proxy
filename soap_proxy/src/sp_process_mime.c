@@ -52,10 +52,44 @@
 
 //  ===== call-backs and support for axiom_xml_reader_create_for_io() ========
 //-----------------------------------------------------------------------------
-void init_rp_cb_ctx(
-  Rp_cb_ctx *ctx)
+static void sp_cb_ctx_getchar(
+	char      *c,
+	Rp_cb_ctx *ctx)
 {
+	if (ctx->fp)
+	{
+		*c = fgetc(ctx->fp);
+	}
+	else
+	{
+		int n = axutil_stream_read (ctx->st, ctx->env, c, 1);
+		if (0 == n) *c = EOF;
+	}
+}
+
+//-----------------------------------------------------------------------------
+static char *sp_cb_ctx_getline(
+	Rp_cb_ctx *ctx,
+	const int size)
+{
+	if (ctx->fp)
+	{
+		return fgets(&(ctx->buf[1]), size, ctx->fp);
+	}
+	else
+	{
+		return sp_stream_getline(ctx->st, ctx->env, &(ctx->buf[1]), size, 0);
+	}
+}
+
+//-----------------------------------------------------------------------------
+void init_rp_cb_ctx(
+	const axutil_env_t *env,
+	Rp_cb_ctx *ctx)
+{
+    ctx->env      = env;
     ctx->fp       = NULL;
+    ctx->st       = NULL;
     ctx->bound    = NULL;
     ctx->done     = 0;
     ctx->buf[0]   = '\0';
@@ -76,7 +110,7 @@ void init_rp_cb_ctx(
 //-----------------------------------------------------------------------------
 int rp_fill_buff_CB(
     char *buffer,
-    int size,
+    int   size,
     void *ctx)
 {
     Rp_cb_ctx *rpctx = (Rp_cb_ctx *) ctx;
@@ -85,7 +119,14 @@ int rp_fill_buff_CB(
 
     if ( NULL == rpctx->bound || '\0' == *(rpctx->bound) )
     {
-        return fread(buffer, 1, size, rpctx->fp);
+    	if (rpctx->fp)
+    	{
+    		return fread(buffer, 1, size, rpctx->fp);
+    	}
+    	else
+    	{
+    		return axutil_stream_read (rpctx->st, rpctx->env, buffer, size);
+    	}
     }
 
 
@@ -139,6 +180,173 @@ int rp_fill_buff_CB(
         }
     }
 
+
+    while (n_to_read > 0)
+    {
+        // keep reading chars (or lines if possible) until we reach 'size',
+        // checking for the boundary as we go.
+        char *ret_val = NULL;
+        char next_c   = '\0';
+        sp_cb_ctx_getchar(&next_c, rpctx);
+
+        if (EOF == next_c ||
+        		(rpctx->fp && (feof(rpctx->fp) || ferror(rpctx->fp))))
+        {
+            rpctx->done    = 1;
+            *rpctx->buf = '\0';
+            return size - n_to_read;
+        }
+
+        if (next_c == first_bc)
+        {
+            // candidate for a boundary
+
+            rpctx->buf[0] = next_c;
+
+            ret_val = sp_cb_ctx_getline(rpctx, bound_len);
+
+            if ( NULL == ret_val )
+            {
+                // We hit EOF  - done.
+                rpctx->done    = 1;
+                *rpctx->buf = '\0';
+                return size - n_to_read;
+            }
+
+            if ( 0 == strncmp(rpctx->buf, rpctx->bound, bound_len) )
+            {
+                // We matched the bound string - done with this section
+                // of input, but must take care of a possible \n in the
+                // busp_process_mime.cer that should have been part of the boundary.
+#ifndef SP_MS_BOUNDARIES_BUG
+                n_to_read++;
+#endif
+                rpctx->done    = 1;
+                *rpctx->buf = '\0';
+                return size - n_to_read;
+            }
+            else
+            {
+                // It was not a boundary after all
+
+                if ( n_to_read <= bound_len )
+                {
+                    memcpy(b, rpctx->buf, n_to_read);
+                    b += n_to_read;
+                    n_to_read = 0;
+
+                    // move the remaining data up to the start
+                    // of rpctx-> to be ready for the next call
+                    memmove(rpctx->buf,
+                            rpctx->buf+n_to_read,
+                            strlen(rpctx->buf+n_to_read) + 1);
+                }
+                else
+                {
+                    memcpy(b, rpctx->buf, bound_len);
+                    *rpctx->buf = '\0';
+                    b += bound_len;
+                    n_to_read -= bound_len;
+                }
+            }
+        }
+        else
+        {
+            *b++ = next_c;
+            n_to_read--;
+
+#ifndef SP_MS_BOUNDARIES_BUG
+
+            if (n_to_read <= 1) continue;
+
+            if (NULL == fgets(b, n_to_read, rpctx->fp))
+            {
+                rpctx->done    = 1;
+                *rpctx->buf = '\0';
+                return 0;
+            }
+
+            n_read_line = strlen(b);
+            n_to_read   -= n_read_line;
+            b           += n_read_line;
+
+#endif
+
+        }
+
+    } // while
+
+    return size - n_to_read;
+}
+
+/*
+//-----------------------------------------------------------------------------
+// Same as rp_fill_buff_CB(), but uses an axutil_stream_t*
+// instead of a FILE *.
+int sp_fill_buff_st_CB(
+    char *buffer,
+    int size,
+    void *ctx)
+{
+    Rp_cb_ctx *rpctx = (Rp_cb_ctx *) ctx;
+
+    if (size <= 0)  return 0;
+
+    if ( NULL == rpctx->bound || '\0' == *(rpctx->bound) )
+    {
+        return axutil_stream_read (rpctx->st, env, buffer, size);
+    }
+
+
+    // Implementation notes:
+    //
+    // The basic principle is that reading from the file generally starts
+    // after a new line, with some exceptions:
+    //   -- one exception is if the input lines in the file are longer
+    //   than the requested 'size' input parameter,
+    //   -- another case is that after a boundary, fp is left pointing
+    //   at the char immediately following the boundary.  This is
+    //   done so as to enable the caller to recognize the end-boundary which
+    //   is a bound with a trailing '--'.
+
+    if ( 1 == rpctx->done)
+    {
+        return 0;
+    }
+
+    int         n_to_read   = size;
+    int         n_read_line = 0;
+    int         bound_len   = strlen(rpctx->bound);
+    const char  first_bc    = *(rpctx->bound);
+    char       *b           = buffer;
+
+    if (n_to_read > 0 && *rpctx->buf != '\0')
+    {
+        // there is something left over in the read-ahead buffer.
+
+        int left_over_len = strlen(rpctx->buf);
+
+        if (left_over_len > SP_HTTP_BOUNDLEN+3)
+        {
+            // error - something is not initialised; the buf_len
+            // should never be more than this
+            return 0;
+        }
+
+        if (n_to_read <= left_over_len)
+        {
+            memcpy(b, rpctx->buf, n_to_read);
+            *rpctx->buf = '\0';
+            return n_to_read;
+        }
+        else
+        {
+            memcpy(b, rpctx->buf, left_over_len);
+            *rpctx->buf = '\0';
+            b         += left_over_len;
+            n_to_read =- left_over_len;
+        }
+    }
 
     while (n_to_read > 0)
     {
@@ -235,7 +443,7 @@ int rp_fill_buff_CB(
 
     return size - n_to_read;
 }
-
+*/
 //-----------------------------------------------------------------------------
 int rp_close_CB(
     void *ctx)
@@ -247,29 +455,22 @@ int rp_close_CB(
 
 
 //-----------------------------------------------------------------------------
-axiom_node_t *
-rp_process_xml(
-    const axutil_env_t * env,
-    FILE *fp,
-    const char *boundId)
+static axiom_node_t *
+rp_process_xml_with_cbctx(
+    const axutil_env_t *env,
+    Rp_cb_ctx          *cbctx )
 {
-    axiom_xml_reader_t        *xml_reader    = NULL;
-    axiom_stax_builder_t      *om_builder    = NULL;
     axiom_document_t          *document      = NULL;
     axiom_node_t              *resp_om_node  = NULL;
+    axiom_xml_reader_t        *xml_reader    = NULL;
+    axiom_stax_builder_t      *om_builder    = NULL;
 
-    // parse the response, creating an om_element.
-
-    Rp_cb_ctx cbctx;
-    init_rp_cb_ctx(&cbctx);
-    cbctx.fp    = fp;
-    cbctx.bound = boundId;
+    int                       success        = 1;
 
     xml_reader = axiom_xml_reader_create_for_io(
-        env, rp_fill_buff_CB, rp_close_CB, &cbctx, NULL);
-    om_builder = axiom_stax_builder_create(env, xml_reader);
+        env, rp_fill_buff_CB, rp_close_CB, cbctx, NULL);
 
-    int success = 1;
+    om_builder = axiom_stax_builder_create(env, xml_reader);
 
     if (!om_builder)
     {
@@ -317,3 +518,36 @@ rp_process_xml(
     return resp_om_node;
 }
 
+//-----------------------------------------------------------------------------
+// Parse the response, creating an om_element.
+// Input via a FILE pointer.
+axiom_node_t *
+rp_process_xml(
+    const axutil_env_t *env,
+    FILE *fp,
+    const char *boundId)
+{
+    Rp_cb_ctx cbctx;
+    init_rp_cb_ctx(env, &cbctx);
+    cbctx.fp    = fp;
+    cbctx.bound = boundId;
+
+    return rp_process_xml_with_cbctx(env, &cbctx);
+}
+
+//-----------------------------------------------------------------------------
+// Parse the response, creating an om_element.
+// Input using an axutil_stream_t *.
+axiom_node_t *
+sp_process_xml_st(
+    const axutil_env_t *env,
+    axutil_stream_t    *st,
+    const char         *boundId)
+{
+    Rp_cb_ctx cbctx;
+    init_rp_cb_ctx(env, &cbctx);
+    cbctx.st    = st;
+    cbctx.bound = boundId;
+
+    return rp_process_xml_with_cbctx(env, &cbctx);
+}
