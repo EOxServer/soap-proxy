@@ -75,7 +75,7 @@ void do_child(
  * @return filedescriptor of response file, or -1 on error.
  */
 int
-rp_execMs_dashV(
+sp_execMs_dashV(
     const axutil_env_t *env,
     const axis2_char_t *msexec)
 {
@@ -115,49 +115,50 @@ rp_execMs_dashV(
  * The response from mapserv is stored in a temp file.
  * The file is already unlinked on return - it can be used until
  * closed,  It is the responsibility of the caller to close the file.
- * In case of error the method returns -1.
+ * In case of error the method returns NULL.
  *
- * @return filedescriptor of response file, or -1 on error.
+ * @return stream corresponding to response file, or NULL on error.
  */
-int
-rp_execMapserv(
+axutil_stream_t *
+sp_execMapserv(
     const axutil_env_t *env,
     const axis2_char_t *req,
-    const axis2_char_t *mapfile,
-    const axis2_char_t *msexec)
+    const axis2_char_t *mapfile)
 {
     int rrpipe[2];
     int wwpipe[2];
     pid_t cpid;
-    int reqLen = strlen(req);
 
-    if (reqLen > SP_MAX_REQ_LEN)
-    {
-        fprintf(stderr, "Request too long (%d)\n", reqLen);
-        return -1;
-    }
-
-    if (0 == reqLen)
-    {
-        fprintf(stderr, "Zero length request\n");
-        return -1;
-    }
+    const char *msexec  = (char *)rp_getMapserverExec();
+	if (NULL == msexec || '\0' == msexec[0])
+	{
+		SP_ERROR(env, SP_SYS_ERR_MS_EXEC);
+		rp_log_error(env, "(%s:%d) msexec=NULL/empty\n", __FILE__, __LINE__);
+	}
 
     if (strlen(msexec) > SP_MAX_MPATHS_LEN)
     {
-        fprintf(stderr, "Msexec string too long (%d)\n", strlen(msexec));
-        return -1;
+        rp_log_error(env, "Msexec string too long (%d)\n", strlen(msexec));
+        return NULL;
     }
 
     if (strlen(msexec) < 3)
     {
-        fprintf(stderr, "Msexec string('%s') too short (%d)\n", msexec, strlen(msexec));
-        return -1;
+    	rp_log_error(env, "Msexec string('%s') too short (%d)\n",
+    			msexec, strlen(msexec));
+        return NULL;
     }
     if (strlen(mapfile) > SP_MAX_MPATHS_LEN)
     {
-        fprintf(stderr, "Mapfile string too long (%d)\n", strlen(mapfile));
-        return -1;
+    	rp_log_error(env, "Mapfile string too long (%d)\n", strlen(mapfile));
+        return NULL;
+    }
+
+	int reqLen = strlen(req);
+    if (reqLen > SP_MAX_REQ_LEN || (0 == reqLen) )
+    {
+    	rp_log_error(env, "Request too long (%d)\n", reqLen);
+        return NULL;
     }
 
 
@@ -165,7 +166,7 @@ rp_execMapserv(
         pipe(wwpipe)== -1 )
     {
         perror("pipe");
-        return -1;
+        return NULL;
     }
 
     if (rrpipe[0] < 3 ||
@@ -174,7 +175,7 @@ rp_execMapserv(
         wwpipe[1] < 3)
     {
         perror("pipe is < 3");
-        return -1;
+        return NULL;
     }
 
     cpid = fork();
@@ -212,7 +213,7 @@ rp_execMapserv(
           perror("mkstemp in rp_execMapserv--parent");
           close(wwpipe[0]);
           wait(NULL);
-          return -1;
+          return NULL;
       }
 
       ssize_t nRead  = read(wwpipe[0], tempBuf, SP_BUF_READSIZE);
@@ -248,8 +249,20 @@ rp_execMapserv(
       unlink(tmpFname);
 
       wait(NULL);                // Wait for child
-      return tmp_fd;
       
+      FILE *fp = fdopen(tmp_fd, "r");
+      if (NULL == fp)
+      {
+          rp_log_error(env," %s Cannot create fp from fd (fd=%d)\n",
+        		  __FILE__, tmp_fd);
+          close(tmp_fd);
+          return NULL;
+      }
+      else
+      {
+    	  return axutil_stream_create_file (env, fp);
+      }
+
     }  // else --- end parent ---
 }
 

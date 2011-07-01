@@ -199,18 +199,19 @@ void rp_inject_soap_cap20(
 
 //-----------------------------------------------------------------------------
 axiom_node_t *
-rp_make_MTOM_node20(
-    const axutil_env_t * env,
-    FILE         *fp,
-    axis2_char_t *el_name,
-    axis2_char_t *content_type,
-    axis2_char_t *ns_prefix,
-    axis2_char_t *ns_uri)
+sp_make_MTOM_node20(
+    const axutil_env_t *env,
+    axutil_stream_t    *st,
+    char               *header_blob,
+    axis2_char_t       *el_name,
+    axis2_char_t       *content_type,
+    axis2_char_t       *ns_prefix,
+    axis2_char_t       *ns_uri)
 {
 	axiom_node_t         *resp_om_node = NULL;
 
     int data_len = 0;
-    char *bin_data = rp_load_binary_file(env, fp,  &data_len);
+    char *bin_data = sp_load_binary_file(env, header_blob, st,  &data_len);
 
     if (NULL == bin_data)
     {
@@ -227,9 +228,9 @@ rp_make_MTOM_node20(
     	resp_om_ele =
     			axiom_element_create (env, NULL, el_name, ns, &resp_om_node);
         data_handler =
-          axiom_data_handler_create(env, NULL, content_type);
+        		axiom_data_handler_create(env, NULL, content_type);
         axiom_data_handler_set_binary_data
-          (data_handler, env, bin_data, data_len);
+            (data_handler, env, bin_data, data_len);
         data_text =
           axiom_text_create_with_data_handler
           (env, resp_om_node, data_handler, &data_om_node);
@@ -275,6 +276,24 @@ rp_make_MTOM_node20(
  */
 //-----------------------------------------------------------------------------
 axiom_node_t *
+sp_process_coverage20(
+    const axutil_env_t *env,
+    char               *header_blob,
+    axutil_stream_t    *st)
+{
+    return sp_make_MTOM_node20(
+    		env,
+    		st,
+    		header_blob,
+    		"Coverage",
+    		"application/coverage",
+    		"wcs",
+    		"http://www.opengis.net/wcs/2.0");
+
+}
+/*
+//-----------------------------------------------------------------------------
+axiom_node_t *
 rp_process_coverage20(
     const axutil_env_t * env,
     char *contentLine,
@@ -290,17 +309,18 @@ rp_process_coverage20(
     		"http://www.opengis.net/wcs/2.0");
 
 }
-
+*/
 //-----------------------------------------------------------------------------
 axiom_node_t *
-rp_process_tiff20(
-    const axutil_env_t * env,
-    FILE *fp,
+sp_process_tiff20(
+    const axutil_env_t *env,
+    axutil_stream_t    *st,
     hh_values *hh)
 {
-    return rp_make_MTOM_node20(
+    return sp_make_MTOM_node20(
     		env,
-    		fp,
+    		st,
+    		NULL,
     		"Coverage",
     		hh->values[SP_HH_CONTENTTYPE],
     		"wcs",
@@ -309,41 +329,49 @@ rp_process_tiff20(
 
 //-----------------------------------------------------------------------------
 axiom_node_t *
-rp_build_response20(
-    const axutil_env_t * env,
-    FILE *fp)
+sp_build_response20(
+    const axutil_env_t *env,
+    axutil_stream_t    *st)
 {
     char tmpBuf[255];
     axiom_node_t *return_node = NULL;
 
     hh_values hh;
     rp_initHttpHeaderStruct(&hh);
-    rp_parseHttpHeaders(env, &hh, fp);
+
+    char header_buf[2560];
+    if (sp_load_header_blob(env, st, header_buf, 2560) < 0)
+    {
+    	// TODO:  Could allocate a bigger buffer, copy chars, etc.
+    	// In practice we never expect the headers to be that big, or if
+    	//  it does come up then something is wrong.
+        SP_ERROR(env, SP_USER_ERR_CONTENTHEADERS);
+        return NULL;
+    }
+    sp_parseHttpHeaders_buf(env, &hh, header_buf);
 
     char *contentTypeStr = hh.values[SP_HH_CONTENTTYPE];
-
     if ( NULL == contentTypeStr)
     {
         rp_freeHttpHeaders(env, &hh);
         SP_ERROR(env, SP_USER_ERR_CONTENTHEADERS);
         return NULL;
     }
-
     switch(rp_get_contentType(contentTypeStr))
     {
     case SP_RESP_XML_TYPE:
     case SP_RESP_APP_SEXML_TYPE:
-        return_node =  rp_process_xml(env, fp, NULL);
+        return_node =  sp_process_xml_st(env, st, NULL);
         break;
 
     case SP_RESP_MIXED_TYPE:
     	// A mixed type response generally signifies a coverage response.
     	// TODO:  check that we really do have a coverage!
-        return_node =  rp_process_coverage20(env, contentTypeStr, fp);
+        return_node =  sp_process_coverage20(env, contentTypeStr, st);
         break;
 
     case SP_RESP_TIFF_TYPE:
-        return_node =  rp_process_tiff20(env, fp, &hh);
+        return_node =  sp_process_tiff20(env, st, &hh);
         break;
 
     default:

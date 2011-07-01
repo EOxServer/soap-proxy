@@ -131,7 +131,7 @@ const axis2_char_t *rp_getMapserverExec()
  * @return pointer to the backend url struct.
  * The returned struct should not be freed.
  */
-const axutil_url_t *rp_getBackendURL()
+axutil_url_t *rp_getBackendURL()
 {
 	return rp_backend_url;
 }
