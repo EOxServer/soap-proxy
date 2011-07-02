@@ -86,7 +86,7 @@ sp_execMs_dashV(
 
     if (strlen(msexec) > SP_MAX_MPATHS_LEN)
     {
-        fprintf(stderr, "Msexec string too long (%d)\n", strlen(msexec));
+    	rp_log_error(env, "Msexec string too long (%d)\n", strlen(msexec));
         return -1;
     }
 
@@ -102,7 +102,7 @@ sp_execMs_dashV(
     int retval=system(exec_str);
     if (retval < 0)
     {
-        fprintf(stderr, "system call failed.\n");
+    	rp_log_error(env, "system call failed.\n");
         unlink(tmpFname);
         return -1;
     }

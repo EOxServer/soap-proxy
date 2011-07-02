@@ -765,9 +765,8 @@ static axiom_element_t *rp_add_node(
 
     if (AXIS2_SUCCESS != success)
     {
-    	fprintf(stderr, "*** S2P(%s:%d): Failed to add node name='%s'\n",
+    	p_log_error(env, "*** S2P(%s:%d): Failed to add node name='%s'\n",
     			__FILE__, __LINE__, node_id->name);
-    	fflush(stderr);
     }
 
     return new_ele;
@@ -972,7 +971,10 @@ sp_stream_cleanup(
     const axutil_env_t *env,
     axutil_stream_t    *sstream)
 {
-	axutil_stream_close (sstream, env);
+	if (AXIS2_SUCCESS != axutil_stream_close (sstream, env) )
+	{
+		p_log_error(env, "Error closing socket stream");
+	}
 	axutil_stream_free  (sstream, env);
 }
 

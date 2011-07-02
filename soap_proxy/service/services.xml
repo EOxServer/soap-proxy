@@ -7,6 +7,10 @@
          The parameters BackendURL, MapFile, and MapServ are used to
          configure soap_proxy.  They may be defined globally in
          ../../axis2.xml instead of here.
+         MapFile and one of BackendURL or MapServ are required to be
+         correctly configured.  If BackendURL is defined, then MapServ is
+         ignored.  This means if you wish to use MapServ you must delete or
+         comment out the BackendURL parameter.
     -->
 
     <!-- URL of backend to communicate with.                         -->

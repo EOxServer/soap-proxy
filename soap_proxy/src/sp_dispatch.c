@@ -36,7 +36,6 @@
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
-// XXX #include <axutil_linked_list.h>
 #include <axutil_url.h>
 
 #include "soap_proxy.h"
@@ -132,8 +131,8 @@ rp_invokeBackend(
 				(rp_getUrlMode() ? "URL" : "Exec"),
 				mapfile,
 				(rp_getUrlMode() ?
-						rp_get_prop_s(SP_BACKENDURL_ID) :
-						rp_getMapserverExec())
+						rp_getBackendURL() :
+						rp_getMapserverExec() )
 		);
 
 	}
@@ -156,5 +155,6 @@ rp_invokeBackend(
 	}
 
 	AXIS2_FREE(env->allocator, req_string);
+
 	return return_node;
 }
