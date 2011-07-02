@@ -28,8 +28,6 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 # Quick installation guide for the impatient: #
 ###############################################
 
-For now, see the full installation instructions below.
-
 0. Prerequisite: mapserver installed & configured.
 
 1. Install and configure axis2/c.
@@ -67,7 +65,8 @@ For now, see the full installation instructions below.
 
 2. Configure and Compile Soap Proxy:
     In services/soapProxy.wsdl set '<soap:address location=.../>'.
-    In services.xml set the paths for 'MapFile' and 'MapServ'.
+    In services.xml set the paths for 'MapFile' and one of
+       'MapServ' or 'BackendURL'.
 
    cd src
     -->  in Makefile set AXIS2C_HOME appropriately
@@ -150,8 +149,7 @@ NOTE:  set paths below as appropriate for your system.
        In particular, Axis2RepoPath is AXIS2C_HOME from above.
 Edit
  /etc/apache2/default-server.conf
-   to add:
-
+    1. add:
         LoadModule axis2_module  /lib64/apache2/mod_axis2.so
         Axis2RepoPath /home/xxx/yyy/axis2c
         Axis2LogFile /zzz/yyy/ax2logs
@@ -160,6 +158,11 @@ Edit
         <Location /sp_axis>
             SetHandler axis2_module
         </Location>
+
+    2. If you are using BackendURL (see 'Configure the soapProxy service'
+       below), add the following SetEnvIf directive to the block for
+       <Directory "/srv/www/cgi-bin">:
+        SetEnvIf MS_MAPFILE ^([/\w+-=~#\.]*) MS_MAPFILE=$1
 
 NOTE 2: In theory one should use <IfModule mod_axis2> .. </IfModule>
 
@@ -196,7 +199,7 @@ not be any further details listed.
 2. Configure and Compile Soap Proxy
 ====================================
 
- a. configure the soapProxy service
+ a. Configure the soapProxy service
  ----------------------------------
 
  cd service
@@ -204,10 +207,18 @@ not be any further details listed.
      At the bottom of the file, set '<soap:address location=.../>' 
 
   <edit> services.xml:
-     Set correct paths for the parameters 'MapFile' and 'MapServ'.
+     Set correct paths for the parameters 'MapFile' and one of
+       'MapServ' or 'BackendURL'.
      
+     The parameters BackendURL, MapFile, and MapServ are used to configure
+     soap_proxy.  They may be defined globally in ../../axis2.xml instead of
+     here. MapFile and one of BackendURL or MapServ are required to be
+     correctly configured.  If BackendURL is defined, then MapServ is ignored.
+     This means if you wish to use MapServ you must delete or comment out the
+     BackendURL parameter.
+ 
 
- b. configure the development environment, compile and install
+ b. Configure the development environment, compile and install
  -------------------------------------------------------------
 
  cd src

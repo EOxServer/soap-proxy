@@ -133,8 +133,7 @@ rpSvc_invoke(
     if (rp_load_props(env, msg_ctx))
     {
     	SP_ERROR(env, SP_SYS_ERR_PROPSLOAD);
-    	fprintf(stderr, "*** S2P: Failed to load properties.\n");
-    	fflush(stderr);
+    	rp_log_error(env, "*** S2P: Failed to load properties.\n");
     	return NULL;
     }
 
@@ -160,14 +159,12 @@ rpSvc_invoke(
 			{
 				axis2_char_t *op_name = axiom_element_get_localname(el, env);
 				rt_node = rp_dispatch_op(env, op_name, node, protocol);
-				if (NULL == rt_node) fflush(stderr);
 				return rt_node;
 			}
 		}
 		else
 		{
-			fprintf(stderr, "*** S2P: invalid XML in request\n");
-			fflush(stderr);
+			rp_log_error(env, "*** S2P: invalid XML in request\n");
 			SP_ERROR(env, AXIS2_ERROR_SVC_SKEL_INVALID_XML_FORMAT_IN_REQUEST);
 			return NULL;
 		}
@@ -201,10 +198,6 @@ rpSvc_free(
     axis2_svc_skeleton_t * svc_skeleton,
     const axutil_env_t * env)
 {
-	// XXX
-	fprintf(stderr, "called rpSvc_free");
-	fflush(stderr);
-
     if (svc_skeleton->func_array)
     {
         axutil_array_list_free(svc_skeleton->func_array, env);

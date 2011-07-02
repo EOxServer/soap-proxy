@@ -64,7 +64,10 @@ static int rp_url_mode     = 0;
 static axis2_char_t rp_mapfile         [SP_MAX_MPATHS_LEN] = "";
 static axis2_char_t rp_mapserv         [SP_MAX_MPATHS_LEN] = "";
 static axis2_char_t rp_backend_url_str [SP_MAX_MPATHS_LEN] = "";
-static axutil_url_t *rp_backend_url  = NULL;
+
+static int          rp_backend_port                    = -1;
+static axis2_char_t rp_backend_host[SP_MAX_MPATHS_LEN] = "";
+static axis2_char_t rp_backend_path[SP_MAX_MPATHS_LEN] = "";
 
 // =========================  local functions = ===============================
 
@@ -93,6 +96,19 @@ static int rp_load_prop(
 static int rp_set_props_loaded()
 {
     rp_props_loaded = 1;
+    return 0;
+}
+
+//-----------------------------------------------------------------------------
+// copy src to dst, and free src.
+static int rp_load_axis_str(
+	axis2_char_t        *dst,
+	axis2_char_t        *src,
+	const int           max_chars,
+	const axutil_env_t  *env)
+{
+	strncpy(dst, src, max_chars);
+	AXIS2_FREE(env->allocator, src);
     return 0;
 }
 
@@ -127,13 +143,39 @@ const axis2_char_t *rp_getMapserverExec()
 }
 
 //-----------------------------------------------------------------------------
-/** Get backend URL.
- * @return pointer to the backend url struct.
- * The returned struct should not be freed.
+/** Get backend URL string.
+ * @return pointer to a static string, not a copy.
  */
-axutil_url_t *rp_getBackendURL()
+const axis2_char_t *rp_getBackendURL()
 {
-	return rp_backend_url;
+	return rp_get_prop_s(SP_BACKENDURL_ID);
+}
+
+//-----------------------------------------------------------------------------
+/** Get backend path.
+ * @return pointer to a static string, not a copy.
+ */
+const axis2_char_t *rp_getBackendPath()
+{
+	return rp_backend_path;
+}
+
+//-----------------------------------------------------------------------------
+/** Get backend port.
+ * @return pointer to a static string, not a copy.
+ */
+const int rp_getBackendPort()
+{
+	return rp_backend_port;
+}
+
+//-----------------------------------------------------------------------------
+/** Get backend host.
+ * @return pointer to a static string, not a copy.
+ */
+const axis2_char_t *rp_getBackendHost()
+{
+	return rp_backend_host;
 }
 
 //-----------------------------------------------------------------------------
@@ -157,7 +199,6 @@ const axis2_char_t *rp_get_prop_s(
 		fprintf(stderr,
 				"%s: %d: **error: unknown property ID",
 				__FILE__, __LINE__);
-		fflush(stderr);
 		return "(**error: unknown property ID)";
 	}
 }
@@ -182,9 +223,24 @@ int rp_load_props(
     if ( ! rp_load_prop(env, msg_ctx, rp_backend_url_str, SP_BACKENDURL_STR))
     {
     	rp_url_mode = 0;
-    	if (rp_backend_url) axutil_url_free(rp_backend_url, env);
-    	rp_backend_url = axutil_url_parse_string(env, rp_backend_url_str);
-    	if (!rp_backend_url) return -1;
+
+    	axutil_url_t *backend_url = axutil_url_parse_string(env, rp_backend_url_str);
+    	if (!backend_url) return -1;
+
+    	rp_backend_port = axutil_url_get_port(backend_url, env);
+    	rp_load_axis_str(
+    			rp_backend_host,
+    			axutil_url_get_host(backend_url, env),
+    			SP_MAX_MPATHS_LEN,
+    			env);
+    	rp_load_axis_str(
+    			rp_backend_path,
+    			axutil_url_get_path(backend_url, env),
+    			SP_MAX_MPATHS_LEN,
+    			env);
+
+    	axutil_url_free(backend_url, env);
+
     	rp_url_mode = 1;
     	rp_set_props_loaded();
     	return 0;

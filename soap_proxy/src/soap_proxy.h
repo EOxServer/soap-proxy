@@ -196,7 +196,11 @@ int rp_log_error(
 const int           rp_getUrlMode();
 const axis2_char_t *rp_getMapfile();
 const axis2_char_t *rp_getMapserverExec();
-axutil_url_t       *rp_getBackendURL();
+const axis2_char_t *rp_getBackendURL();
+const axis2_char_t *rp_getBackendPath();
+const int           rp_getBackendPort();
+const axis2_char_t *rp_getBackendHost();
+
 const axis2_char_t *rp_get_prop_s(
 		int i);
 

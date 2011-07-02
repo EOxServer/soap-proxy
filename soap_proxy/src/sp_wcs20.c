@@ -64,9 +64,8 @@ static int f_add_PostEncodingSOAP(
                          1);
     if (NULL == constraint_node)
     {
-    	fprintf(stderr, "*** S2P(%s:%d): %s node not found.\n",
+    	rp_log_error(env, "*** S2P(%s:%d): %s node not found.\n",
     			__FILE__, __LINE__,  constrIdStr);
-    	fflush(stderr);
     	return 1;
     }
 
@@ -93,10 +92,9 @@ static int f_add_PostEncodingSOAP(
     	// TODO: Future enhancement: could add a "PostEncoding" constraint
     	//   element.
 
-    	fprintf(stderr,
+    	rp_log_error(env,
     			"*** S2P(%s:%d): 'PostEncoding' constraint not found.\n",
     			__FILE__, __LINE__,  constrIdStr);
-    	fflush(stderr);
     	return 1;
     }
 
@@ -108,10 +106,9 @@ static int f_add_PostEncodingSOAP(
     if (NULL == allowedValues_node)
     {
     	// TODO: Future enhancement: insert an "AllowedValues" node.
-    	fprintf(stderr,
+    	rp_log_error(env,
     			"*** S2P(%s:%d): 'AllowedValues' node not found.\n",
     			__FILE__, __LINE__,  constrIdStr);
-    	fflush(stderr);
     	return 1;
     }
 
@@ -148,9 +145,8 @@ void rp_inject_soap_cap20(
     		  0);
     if (NULL == svc_node)
     {
-    	fprintf(stderr, "*** S2P(%s:%d): %s node not found.\n",
+    	rp_log_error(env, "*** S2P(%s:%d): %s node not found.\n",
     			__FILE__, __LINE__,  svcIdStr);
-    	fflush(stderr);
     	return;
     }
 
@@ -183,9 +179,8 @@ void rp_inject_soap_cap20(
     		  1);
     if (NULL == ops_node)
     {
-    	fprintf(stderr, "*** S2P(%s:%d): %s node not found.\n",
+    	rp_log_error(env, "*** S2P(%s:%d): %s node not found.\n",
     			__FILE__, __LINE__,  "OperationsMetadata");
-    	fflush(stderr);
     	return;
     }
 
@@ -376,7 +371,7 @@ sp_build_response20(
 
     default:
     	SP_ERROR(env, SP_USER_ERR_CONTENTTYPE);
-    	fprintf(stderr,
+    	rp_log_error(env,
     			"*** S2P(%s:%d): Unrecognised Content-type: %s\n",
     			__FILE__, __LINE__,
     			contentTypeStr);

@@ -57,15 +57,18 @@ sp_backend_socket(
     const axis2_char_t *req,
     const axis2_char_t *mapfile)
 {
-    axutil_stream_t     *sock_stream;
-    int                  n_writ = -1;
-    int                  n_read = -1;
+    axutil_stream_t     *sock_stream  = NULL;
+    int                  n_writ       = -1;
+    int                  n_read       = -1;
+    const int            backend_port = rp_getBackendPort();
+    const axis2_char_t  *backend_host = rp_getBackendHost();
+    const axis2_char_t  *backend_path = rp_getBackendPath();
 
-	axutil_url_t *backend_url = rp_getBackendURL();
-	if (NULL == backend_url)
+	if (axutil_strlen(backend_host) < 3 || axutil_strlen(backend_path) < 1 )
 	{
 		SP_ERROR(env, SP_SYS_ERR_MS_EXEC);
-		rp_log_error(env, "(%s:%d)backendUrl=NULL\n", __FILE__, __LINE__);
+		rp_log_error(env, "(%s:%d)backend_host='%s', backend_path='%s'\n",
+				__FILE__, __LINE__, backend_host, backend_path);
 		return NULL;
 	}
 
@@ -77,22 +80,18 @@ sp_backend_socket(
         return NULL;
     }
 
-    sock_stream = sp_sock_connect(
-    		env,
-    		axutil_url_get_host(backend_url, env),
-    		axutil_url_get_port(backend_url, env));
+    sock_stream = sp_sock_connect(env, backend_host, backend_port);
 
     if (!sock_stream)
     {
-        rp_log_error(env, "error creating stream.\n");
+        rp_log_error(env, "error creating stream for '%s'\n",
+        		rp_getBackendURL());
         return NULL;
     }
 
-    const axis2_char_t *path = axutil_url_get_path(backend_url, env);
-
     // est. max len of fixed header strings ('POST ' ', 'Content-type:' etc.)
     const int max_fixed_len = 160;
-    int max_headers_len = max_fixed_len + strlen(path) + strlen(mapfile);
+    int max_headers_len = max_fixed_len + strlen(backend_path) + strlen(mapfile);
 
     char *headers = (char*) AXIS2_MALLOC(env->allocator, max_headers_len);
     snprintf(headers, max_headers_len,
@@ -102,7 +101,7 @@ sp_backend_socket(
     		"MS_MAPFILE:     %s\n"
     		"\n"
     		,
-    		path,
+    		backend_path,
     		req_len,
     		"text/xml",
     		mapfile);
@@ -122,21 +121,6 @@ sp_backend_socket(
     	sp_stream_cleanup(env, sock_stream);
     	return NULL;
     }
-
-    /*
-    // eat up the HTTP headers
-    char header_buf[1024];
-    if (sp_load_header_blob(env, sock_stream, header_buf, 1024) < 0)
-    {
-    	// TODO:  Could allocate a bigger buffer, copy chars, etc.
-    	// In practice we never expect the headers to be that big, or if
-    	//  it does come up then something is wrong.
-    	rp_log_error(env, "HTTP headers unexpectedly large,\n"
-    			"start with:\n%s\n", header_buf);
-        SP_ERROR(env, SP_USER_ERR_CONTENTHEADERS);
-        return NULL;
-    }
-*/
 
     return sock_stream;
 }
@@ -167,7 +151,7 @@ sp_sock_connect(
     sockfd = (int)axutil_network_handler_open_socket(env, (char *) host, port);
     if (sockfd <= 0)
     {
-        rp_log_error(env, "error creating socket.\n");
+        rp_log_error(env, "error creating socket: %s:%d\n", host, port);
         return NULL;
     }
 
