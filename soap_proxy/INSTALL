@@ -114,9 +114,9 @@ Download the source dist.
 It is recommended to create the required directories (below) as a regular
 user (i.e. not root).
 Make a directory to install to:
-cd someplace
-mkdir axis2c
-setenv AXIS2C_HOME <...>/someplace/axis2c
+  cd someplace
+  mkdir axis2c
+  setenv AXIS2C_HOME <...>/someplace/axis2c
 
 Follow the instructions in 'doc' to compile- but
 use something like the following configure line to get the mod_axis2
@@ -160,9 +160,18 @@ Edit
         </Location>
 
     2. If you are using BackendURL (see 'Configure the soapProxy service'
-       below), add the following SetEnvIf directive to the block for
+       below) to invoke mapserver: In the configuration file for apache httpd
+       on the target system (this it the machine/address where the URL points
+       to), add the following SetEnvIf directive to the block for
        <Directory "/srv/www/cgi-bin">:
-        SetEnvIf MS_MAPFILE ^([/\w+-=~#\.]*) MS_MAPFILE=$1
+         SetEnvIf MS_MAPFILE ^([/\w+-=~#\.]*) MS_MAPFILE=$1
+
+       This only applies for executing mapserver. When the target system
+       executues mapserver via its cgi interface, this directive is required to
+       set the MS_MAPFILE environment variable to the mapfile location as
+       configured by the 'MapFile' parameter in 'services.xml' on the source
+       machine.
+.
 
 NOTE 2: In theory one should use <IfModule mod_axis2> .. </IfModule>
 
