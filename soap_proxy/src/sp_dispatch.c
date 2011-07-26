@@ -63,8 +63,11 @@ rp_dispatch_op(
 
     if (op_name && axutil_strlen(op_name) < SP_MAX_OP_LEN)
     {
-        if (axutil_strcmp(op_name, "DescribeCoverage") == 0 ||
-            axutil_strcmp(op_name, "GetCoverage"     ) == 0 )
+        if (
+        		axutil_strcmp(op_name, "DescribeCoverage"      ) == 0 ||
+        		axutil_strcmp(op_name, "DescribeEOCoverageSet" ) == 0 ||
+        		axutil_strcmp(op_name, "GetCoverage"           ) == 0
+        )
         {
         	return_node = rp_invokeBackend(env, node, protocol);
         }
@@ -73,12 +76,6 @@ rp_dispatch_op(
             return_node = rp_invokeBackend(env, node, protocol);
             rp_inject_soap_cap20(env, return_node);
         }
-        /* TODO
-        else if ( axutil_strcmp(op_name, "DescribeEOCoverageSet" ) == 0 )
-        {
-            return_node = rp_invokeBackend(env, node, protocol);
-        }
-        */
         else if ( axutil_strcmp(op_name, "GetMsVersion" ) == 0 )
         {
         	return_node = rp_getMsVers(env);

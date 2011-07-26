@@ -88,8 +88,4 @@ axiom_node_t *AXIS2_CALL rpSvc_on_fault(
     const axutil_env_t * env,
     axiom_node_t * node);
 
-axiom_node_t *rp_error_elem(
-    const axutil_env_t * env,
-    axis2_char_t * errorText);
-
 #endif

@@ -732,9 +732,9 @@ axiom_node_t *rp_find_named_node(
  * @param attribute optional Name_value pair for setting an attribute,
  *   may be NULL.
  * @param sibling 1: add as sibling, 0: add as child.
- * @return ptr to the the newly added element.
+ * @return ptr to the the newly added node.
  */
-static axiom_element_t *rp_add_node(
+static axiom_node_t *rp_add_node(
     const axutil_env_t *env,
     axiom_node_t       *root_node,
     Name_value         *node_id,
@@ -769,7 +769,7 @@ static axiom_element_t *rp_add_node(
     			__FILE__, __LINE__, node_id->name);
     }
 
-    return new_ele;
+    return new_node;
 }
 
 //-----------------------------------------------------------------------------
@@ -790,9 +790,9 @@ static axiom_element_t *rp_add_node(
  *   node_id.value: text of element
  * @param attribute optional Name_value pair for setting an attribute,
  *   may be NULL.
- * @return ptr to the the newly added element.
+ * @return ptr to the the newly added node.
  */
-axiom_element_t *rp_add_sibbling(
+axiom_node_t *rp_add_sibbling(
     const axutil_env_t *env,
     axiom_node_t       *root_node,
     Name_value         *node_id,
@@ -820,9 +820,9 @@ axiom_element_t *rp_add_sibbling(
  *   node_id.value: text of element
  * @param attribute optional Name_value pair for setting an attribute,
  *   may be NULL.
- * @return ptr to the the newly added element.
+ * @return ptr to the the newly added node.
  */
-axiom_element_t *rp_add_child(
+axiom_node_t *rp_add_child(
     const axutil_env_t *env,
     axiom_node_t       *root_node,
     Name_value         *node_id,

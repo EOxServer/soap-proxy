@@ -160,9 +160,15 @@ void rp_inject_soap_cap20(
     		axiom_node_get_first_child (svc_node, env),
     		profIdStr,
     		0);
-    (NULL == target_node) ?
+    axiom_node_t *ext_node = (NULL == target_node) ?
     		rp_add_child    (env, svc_node,    &ext_nv, NULL) :
     		rp_add_sibbling (env, target_node, &ext_nv, NULL);
+
+    // Add the EO WCS Application Profile
+    /* Commented out MN 25.7.2011. This should be added by EOxServer.
+    ext_nv.value = SP_EO_WCS_PROFILE;
+    rp_add_sibbling (env, ext_node, &ext_nv, NULL);
+     */
 
     //
     // Next, for all Operation children of OperationsMetadata find the path
