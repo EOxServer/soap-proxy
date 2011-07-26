@@ -146,10 +146,9 @@ rpSvc_invoke(
 	    	SP_WCS_V200;
 	    	/* WCS-EO:
 	    	 * Requirement 30 /req/eowcs/getCapabilities-response-conformance-class-in-profile:
-	           A WCS service implementing this extension shall include the following URI in a Profile
-	element in the ServiceIdentification in a GetCapabilities response:
-	http://www.opengis.net/spec/WCS_profile_earth-
-	observation/1.0/conf/eowcs
+	         * A WCS service implementing this extension shall include the following URI in a Profile
+	         * element in the ServiceIdentification in a GetCapabilities response:
+	         *    http://www.opengis.net/spec/WCS_profile_earth-observation/1.0/conf/eowcs
 	    	 *
 	    	 */
 

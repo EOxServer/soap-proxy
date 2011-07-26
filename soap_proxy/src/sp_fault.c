@@ -91,7 +91,7 @@ void rp_init_errors()
 axiom_node_t *
 rp_error_elem(
     const axutil_env_t *env,
-    axis2_char_t       *errorText)
+    const axis2_char_t       *errorText)
 {
     axiom_node_t    *resp_om_node  = NULL;
     axiom_element_t *resp_om_ele   = NULL;

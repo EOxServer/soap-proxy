@@ -59,8 +59,14 @@
 
 #define MAPSERV_ID_STR "mapserv"
 
-#define SP_WCS_SOAP_EXTENSION "http://www.opengis.net/spec/WCS_protocol-binding_soap/1.0"
-#define SP_WCSPROXY_NAMESPACE_STR "http://www.eoxserver.org/soap_proxy/wcsProxy"
+#define SP_WCS_SOAP_EXTENSION \
+	"http://www.opengis.net/spec/WCS_protocol-binding_soap/1.0"
+
+#define SP_WCSPROXY_NAMESPACE_STR \
+	"http://www.eoxserver.org/soap_proxy/wcsProxy"
+
+#define SP_EO_WCS_PROFILE \
+	"http://www.opengis.net/spec/WCS_application-profile_earth-observation/1.0/conf/eowcs_soap"
 
 #define SP_BUF_READSIZE   4096
 
@@ -186,7 +192,7 @@ enum sp_error_codes
 /* ---------------------- forward / external declarations ----------*/
 axiom_node_t *rp_error_elem(
     const axutil_env_t * env,
-    axis2_char_t * errorText);
+    const axis2_char_t * errorText);
 
 int rp_log_error(
     const axutil_env_t *env,
@@ -313,13 +319,13 @@ axiom_namespace_t * rp_get_namespace(
     const axutil_env_t *env,
     axiom_node_t *node);
 
-axiom_element_t *rp_add_sibbling(
+axiom_node_t *rp_add_sibbling(
     const axutil_env_t *env,
     axiom_node_t       *root_node,
     Name_value         *node_id,
     Name_value         *attribute);
 
-axiom_element_t *rp_add_child(
+axiom_node_t *rp_add_child(
     const axutil_env_t *env,
     axiom_node_t       *root_node,
     Name_value         *node_id,

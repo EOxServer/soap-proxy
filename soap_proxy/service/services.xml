@@ -14,7 +14,7 @@
     -->
 
     <!-- URL of backend to communicate with.                         -->
-    <!-- If it is defined, then MapFile and MapServ are ignored.     -->
+    <!-- If it is defined, then MapServ is ignored             .     -->
     <parameter name="BackendURL">http://127.0.0.1/BACKEND_URL_UNDEFINED</parameter>
     
     <!-- Absolute path to the mapfile used for configuring mapserver -->
