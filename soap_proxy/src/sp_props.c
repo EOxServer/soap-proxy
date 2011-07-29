@@ -135,6 +135,16 @@ const int rp_getUrlMode()
 }
 
 //-----------------------------------------------------------------------------
+/** Get url mode.
+ * @return false (0): not URL-mode, use exec of mapserver binary,
+ *         true  (1): communicate with URL via a socket connection.
+ */
+const int rp_getUrlRewriting()
+{
+    return rp_url_rewriting;
+}
+
+//-----------------------------------------------------------------------------
 /** Get mapfile path.
  * @return pointer to the mapfile path as a static string, not a copy.
  */
@@ -255,7 +265,11 @@ int rp_load_props(
     	rp_url_mode = 0;
 
     	axutil_url_t *backend_url = axutil_url_parse_string(env, rp_backend_url_str);
-    	if (!backend_url) return -1;
+    	if (!backend_url)
+    	{
+    		rp_log_error(env, "Malformed " SP_BACKENDURL_STR ".");
+    		return -1;
+    	}
 
     	rp_backend_port = axutil_url_get_port(backend_url, env);
     	rp_load_axis_str(

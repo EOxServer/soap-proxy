@@ -55,13 +55,18 @@ static int f_add_PostEncodingSOAP(
     void *arg2
  )
 {
+	//
+    // Find the path
+    //   Constraint[@name="PostEncoding"]/AllowedValues
+    //   and add
+    //      <ns:Value>SOAP</ns:Value>
+    //   where ns is the namespace of the enclosing AllowedValues element.
+	//
+
     const axis2_char_t *constrIdStr = "Constraint";
 
     axiom_node_t *constraint_node =
-      rp_find_named_node(env,
-                         axiom_node_get_first_child (target_node, env),
-                         constrIdStr,
-                         1);
+    		rp_find_named_child(env, target_node, constrIdStr, 1);
     if (NULL == constraint_node)
     {
     	rp_log_error(env, "*** S2P(%s:%d): %s node not found.\n",
@@ -99,10 +104,7 @@ static int f_add_PostEncodingSOAP(
     }
 
     axiom_node_t *allowedValues_node =
-      rp_find_named_node(env,
-                         axiom_node_get_first_child (constraint_node, env),
-                         "AllowedValues",
-                         1);
+      rp_find_named_child(env, constraint_node, "AllowedValues", 1);
     if (NULL == allowedValues_node)
     {
     	// TODO: Future enhancement: insert an "AllowedValues" node.
@@ -120,7 +122,61 @@ static int f_add_PostEncodingSOAP(
     rp_add_child (env, allowedValues_node, &value_nv_n, NULL);
 
     return 0;
+}
 
+//-----------------------------------------------------------------------------
+// This function is invoked via rp_func_at_nodes() from rp_delete_gets()
+static int f_delete_get(
+	const axutil_env_t * env,
+	axiom_node_t *target_node,
+	void *arg2)
+{
+    axiom_node_t *top_node = rp_find_named_child(env, target_node, "HTTP", 1);
+    if (NULL == top_node) return 0;
+
+    axiom_node_t *get_node = rp_find_named_child(env, top_node, "Get", 1);
+    if (NULL == get_node) return 0;
+
+    axiom_node_detach    (get_node, env);
+    axiom_node_free_tree (get_node, env);
+
+    return 1;
+}
+
+//-----------------------------------------------------------------------------
+// This function is invoked via rp_func_at_nodes() from rp_rewrite_urls()
+static int f_rewrite_url(
+	const axutil_env_t * env,
+	axiom_node_t *target_node,
+	void *arg2)
+{
+    //
+    // Find the path
+    //   HTTP/Post
+    //   and change the url in the href attribute.
+    // If none found it  is not considered an error.
+	//
+
+    axiom_node_t *top_node =  rp_find_named_child(env, target_node, "HTTP", 1);
+    if (NULL == top_node) return 0;
+
+    axiom_node_t *post_node =  rp_find_named_child(env, top_node, "Post", 1);
+    if (NULL == post_node) return 0;
+
+    axiom_attribute_t *href_attr = NULL;
+    axiom_element_t          *el = NULL;
+    axutil_qname_t           *qn = axutil_qname_create
+    		(env, "href", "http://www.w3.org/1999/xlink", "xlink");
+	if (axiom_node_get_node_type(post_node, env) == AXIOM_ELEMENT)
+	{
+		el        = axiom_node_get_data_element(post_node, env);
+		href_attr = axiom_element_get_attribute (el, env, qn);
+	}
+    if (NULL == href_attr) return 0;
+
+    axiom_attribute_set_value (href_attr, env, rp_getRewriteURL());
+
+    return 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -128,21 +184,15 @@ void rp_inject_soap_cap20(
     const axutil_env_t * env,
     axiom_node_t *r_node)
 {
-
     // First find the node Capabilities/ServiceIdentification
     const axis2_char_t *capIdStr  = "Capabilities";
     const axis2_char_t *svcIdStr  = "ServiceIdentification";
     const axis2_char_t *profIdStr = "Profile";
 
-    axiom_node_t *cap_node = rp_find_named_node(
-    		env, r_node, capIdStr, 0);
+    axiom_node_t *cap_node = rp_find_named_node (env, r_node, capIdStr, 0);
     if (NULL == cap_node) return;
 
-    axiom_node_t *svc_node =
-      rp_find_named_node(env,
-    		  axiom_node_get_first_child (cap_node, env),
-    		  svcIdStr,
-    		  0);
+    axiom_node_t *svc_node = rp_find_named_child(env, cap_node, svcIdStr, 0);
     if (NULL == svc_node)
     {
     	rp_log_error(env, "*** S2P(%s:%d): %s node not found.\n",
@@ -174,18 +224,12 @@ void rp_inject_soap_cap20(
     }
 
     //
-    // Next, for all Operation children of OperationsMetadata find the path
-    //   Constraint[@name="PostEncoding"]/AllowedValues
-    //   and add
-    //      <ns:Value>SOAP</ns:Value>
-    //   where ns is the namespace of the enclosing AllowedValues element.
+    // Next, add the SOAP constraint to Constraint/AllowedValues
+    // to all Operation children of OperationsMetadata
     //
 
     axiom_node_t *ops_node =
-      rp_find_named_node(env,
-    		  axiom_node_get_first_child (r_node, env),
-    		  "OperationsMetadata",
-    		  1);
+    		rp_find_named_child(env, r_node, "OperationsMetadata", 1);
     if (NULL == ops_node)
     {
     	rp_log_error(env, "*** S2P(%s:%d): %s node not found.\n",
@@ -295,25 +339,7 @@ sp_process_coverage20(
     		"http://www.opengis.net/wcs/2.0");
 
 }
-/*
-//-----------------------------------------------------------------------------
-axiom_node_t *
-rp_process_coverage20(
-    const axutil_env_t * env,
-    char *contentLine,
-    FILE *fp)
-{
-	rewind(fp);
-    return rp_make_MTOM_node20(
-    		env,
-    		fp,
-    		"Coverage",
-    		"application/coverage",
-    		"wcs",
-    		"http://www.opengis.net/wcs/2.0");
 
-}
-*/
 //-----------------------------------------------------------------------------
 axiom_node_t *
 sp_process_tiff20(
@@ -391,3 +417,62 @@ sp_build_response20(
 
 }
 
+
+//-----------------------------------------------------------------------------
+void rp_delete_gets(
+    const axutil_env_t * env,
+    axiom_node_t *r_node)
+{
+    //
+    // For all Operation children of OperationsMetadata find the path
+    //   HTTP/Get
+    //   and delete the node.
+    //
+
+    axiom_node_t *ops_node =
+    		rp_find_named_child(env, r_node, "OperationsMetadata", 1);
+    if (NULL == ops_node)
+    {
+    	rp_log_error(env, "*** S2P(%s:%d): %s node not found.\n",
+    			__FILE__, __LINE__,  "OperationsMetadata");
+    	return;
+    }
+
+    rp_func_at_nodes(env,
+                     axiom_node_get_first_child(ops_node, env),
+                     "Operation",
+                     &f_delete_get,
+                     NULL);
+}
+
+
+//-----------------------------------------------------------------------------
+void rp_rewrite_urls(
+    const axutil_env_t * env,
+    axiom_node_t *r_node)
+{
+	if ( ! rp_getUrlRewriting ) return;
+
+    //
+    // For all Operation children of OperationsMetadata find the path
+    //   HTTP/Post
+    //   and change the url there.
+    //
+
+    axiom_node_t *ops_node =
+    		rp_find_named_child(env, r_node, "OperationsMetadata", 1);
+    if (NULL == ops_node)
+    {
+    	rp_log_error(env, "*** S2P(%s:%d): %s node not found.\n",
+    			__FILE__, __LINE__,  "OperationsMetadata");
+    	return;
+    }
+
+    rp_func_at_nodes(env,
+                     axiom_node_get_first_child(ops_node, env),
+                     "Operation",
+                     &f_rewrite_url,
+                     NULL);
+
+
+}

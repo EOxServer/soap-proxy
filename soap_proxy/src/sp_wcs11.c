@@ -79,11 +79,7 @@ void rp_populate_coverage_hash(
                 if ( 0 == strncasecmp(covStr, el_name, strlen(covStr)) )
                 {
                     axiom_node_t *ref_node =
-                      rp_find_named_node
-                      (env,
-                       axiom_node_get_first_child(curr_node,env),
-                       referenceStr,
-                       0);
+                      rp_find_named_child (env, curr_node, referenceStr, 0);
                     axis2_char_t *a_val = rp_get_ref_href (env, ref_node);
                     if (a_val != NULL && 0 == strncmp(a_val, "cid:", 4))
                     {
