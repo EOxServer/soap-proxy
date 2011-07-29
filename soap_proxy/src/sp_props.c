@@ -55,16 +55,20 @@
 #define SP_MAPFILE_STR    "MapFile"
 #define SP_MAPSERVER_STR  "MapServ"
 #define SP_BACKENDURL_STR "BackendURL"
+#define SP_REWRITEURL_STR "RewriteURL"
 
 // TODO: Should lock the access functions for concurrent thread safety.
 
 //-----------------------------------------------------------------------------
-static int rp_props_loaded = 0;
-static int rp_url_mode     = 0;
+static int rp_props_loaded  = 0;
+static int rp_url_mode      = 0;
+static int rp_url_rewriting = 0;
 static axis2_char_t rp_mapfile         [SP_MAX_MPATHS_LEN] = "";
 static axis2_char_t rp_mapserv         [SP_MAX_MPATHS_LEN] = "";
 static axis2_char_t rp_backend_url_str [SP_MAX_MPATHS_LEN] = "";
+static axis2_char_t rp_rewrite_url_str [SP_MAX_MPATHS_LEN] = "";
 
+// Derived values.
 static int          rp_backend_port                    = -1;
 static axis2_char_t rp_backend_host[SP_MAX_MPATHS_LEN] = "";
 static axis2_char_t rp_backend_path[SP_MAX_MPATHS_LEN] = "";
@@ -72,6 +76,13 @@ static axis2_char_t rp_backend_path[SP_MAX_MPATHS_LEN] = "";
 // =========================  local functions = ===============================
 
 //-----------------------------------------------------------------------------
+/** Load a property.
+ * @param env
+ * @param msg_ctx
+ * @param dest
+ * @param name
+ * @return 0 on success, 1 on failure.
+ */
 static int rp_load_prop(
 	    const axutil_env_t    *env,
 	    const axis2_msg_ctx_t *msg_ctx,
@@ -143,6 +154,15 @@ const axis2_char_t *rp_getMapserverExec()
 }
 
 //-----------------------------------------------------------------------------
+/** Get rewrite URL string.
+ * @return pointer to a static string, not a copy.
+ */
+const axis2_char_t *rp_getRewriteURL()
+{
+	return rp_get_prop_s(SP_REWRITEURL_ID);
+}
+
+//-----------------------------------------------------------------------------
 /** Get backend URL string.
  * @return pointer to a static string, not a copy.
  */
@@ -194,6 +214,7 @@ const axis2_char_t *rp_get_prop_s(
 	case SP_MAPSERVER_ID:  return rp_mapserv;
 	case SP_MAPFILE_ID:    return rp_mapfile;
 	case SP_BACKENDURL_ID: return rp_backend_url_str;
+	case SP_REWRITEURL_ID: return rp_rewrite_url_str;
 
 	default:
 		fprintf(stderr,
@@ -217,8 +238,17 @@ int rp_load_props(
 {
     if (rp_props_loaded) return 0;
 
-    // must load MAPFILE and one of BACKENDURL or MAPSERVER
-    if (rp_load_prop(env, msg_ctx, rp_mapfile, SP_MAPFILE_STR)) return -1;
+    rp_url_rewriting =
+    		! rp_load_prop(env, msg_ctx, rp_rewrite_url_str, SP_REWRITEURL_STR);
+
+    // Must load at least one of BACKENDURL or MAPSERVER.
+    // If loading MAPSERVER then must also load MAPFILE.
+    // In case of BACKENDURL we don't know if we're running mapserver
+    // or eoxserver, so the MAPFILE is not mandatory - but things will
+    // fail downstream if the user attempts to send requests to mapserver
+    // without a mapfile.
+
+    int mapfile_loaded = ! rp_load_prop(env, msg_ctx, rp_mapfile, SP_MAPFILE_STR);
 
     if ( ! rp_load_prop(env, msg_ctx, rp_backend_url_str, SP_BACKENDURL_STR))
     {
@@ -248,6 +278,7 @@ int rp_load_props(
     else
     {
     	rp_url_mode = 0;
+    	if ( ! mapfile_loaded ) return -1;
     	return
     			rp_load_prop(env, msg_ctx, rp_mapserv, SP_MAPSERVER_STR) ||
     			rp_set_props_loaded();

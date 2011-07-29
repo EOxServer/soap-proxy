@@ -152,23 +152,26 @@ void rp_inject_soap_cap20(
 
     // see if there is a 'profile' node:
     //  if yes, insert the soap extension URI there.
+    axiom_node_t *svc_child_node = axiom_node_get_first_child (svc_node, env);
+    axiom_node_t *profile_node =
+    		rp_find_named_node(env, svc_child_node, profIdStr, 0);
+
     Name_value ext_nv;
     ext_nv.name  = "Profile";
     ext_nv.value = SP_WCS_SOAP_EXTENSION;
-    axiom_node_t *target_node = rp_find_named_node(
-    		env,
-    		axiom_node_get_first_child (svc_node, env),
-    		profIdStr,
-    		0);
-    axiom_node_t *ext_node = (NULL == target_node) ?
+    axiom_node_t *ext_node = (NULL == profile_node) ?
     		rp_add_child    (env, svc_node,    &ext_nv, NULL) :
-    		rp_add_sibbling (env, target_node, &ext_nv, NULL);
+    		rp_add_sibbling (env, profile_node, &ext_nv, NULL);
 
-    // Add the EO WCS Application Profile
-    /* Commented out MN 25.7.2011. This should be added by EOxServer.
-    ext_nv.value = SP_EO_WCS_PROFILE;
-    rp_add_sibbling (env, ext_node, &ext_nv, NULL);
-     */
+    // Add the EO WCS Application Profile for SOAP, but only
+    // if another EO WCS profile is already present
+    if ( rp_find_node_with_text
+    		(env, svc_child_node, profIdStr, 0, SP_EO_WCS_PROFILE_ROOT)
+    )
+    {
+    	ext_nv.value = SP_EO_WCS_SOAP_PROFILE;
+    	rp_add_sibbling (env, ext_node, &ext_nv, NULL);
+    }
 
     //
     // Next, for all Operation children of OperationsMetadata find the path
