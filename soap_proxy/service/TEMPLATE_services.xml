@@ -7,10 +7,15 @@
          The parameters BackendURL, MapFile, and MapServ are used to
          configure soap_proxy.  They may be defined globally in
          ../../axis2.xml instead of here.
-         MapFile and one of BackendURL or MapServ are required to be
+         At least one of BackendURL or MapServ is required to be
          correctly configured.  If BackendURL is defined, then MapServ is
          ignored.  This means if you wish to use MapServ you must delete or
          comment out the BackendURL parameter.
+         If MapServ is used, then MapFile must also be defined.
+         In case of BackendURL we don't know if the backend is a mapserver
+         or an eoxserver instance, so MapFile is not mandatory - but beware
+         that things will fail downstream if the user attempts to send
+         requests to mapserver without a mapfile.
     -->
 
     <!-- URL of backend to communicate with.                         -->
@@ -18,13 +23,19 @@
     <parameter name="BackendURL">http://127.0.0.1/BACKEND_URL_UNDEFINED</parameter>
     
     <!-- Absolute path to the mapfile used for configuring mapserver -->
+    <!-- Not required for eoxserver                                  -->
     <parameter name="MapFile">/path/to/mapfile.map</parameter>
     
     <!-- Absolute path to the mapservser executable                  -->
     <!-- Used only if BackendURL is not defined.                     -->
     <parameter name="MapServ">/path/to/mapserv</parameter>
     
-    <description>
+    <!--  Optional ULR to replace server/service URLs
+         in e.g. GetCapabilites responses
+         If undefined then no rewriting is performed                 -->
+   <parameter name="RewriteURL">http://SERVER_UNDEFINED/service</parameter>
+
+   <description>
        This proxy service accepts O3S WCS 2.0 SOAP requests, optionally with
        the Earth Observation Application Profile, and invokes a corresponding
        POST operation on a connected mapserver.

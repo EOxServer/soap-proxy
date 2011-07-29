@@ -65,8 +65,11 @@
 #define SP_WCSPROXY_NAMESPACE_STR \
 	"http://www.eoxserver.org/soap_proxy/wcsProxy"
 
-#define SP_EO_WCS_PROFILE \
+#define SP_EO_WCS_SOAP_PROFILE \
 	"http://www.opengis.net/spec/WCS_application-profile_earth-observation/1.0/conf/eowcs_soap"
+
+#define SP_EO_WCS_PROFILE_ROOT \
+	"http://www.opengis.net/spec/WCS_application-profile_earth-observation"
 
 #define SP_BUF_READSIZE   4096
 
@@ -84,7 +87,8 @@ enum sp_property_ids
 {
 	SP_MAPFILE_ID =  0,
 	SP_MAPSERVER_ID,
-	SP_BACKENDURL_ID
+	SP_BACKENDURL_ID,
+	SP_REWRITEURL_ID
 };
 
 /**

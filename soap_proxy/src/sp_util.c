@@ -593,13 +593,14 @@ const axis2_char_t *rp_getText(
  * @param env
  * @param root_node
  * @param local_name
- * @return  the first child of 'root_node' with a matching local_name, or
- *  NULL if none found.
+ * @param search_str
+ * @return  the first matching child of 'root_node', or NULL if none found.
  */
-axiom_node_t *rp_find_named_node_recurse(
+axiom_node_t *rp_find_named_node_re(
     const axutil_env_t * env,
     axiom_node_t       *root_node,
-    const axis2_char_t *local_name)
+    const axis2_char_t *local_name,
+    const axis2_char_t *search_str)
 {
    axiom_node_t *found_node = NULL;
 
@@ -617,10 +618,23 @@ axiom_node_t *rp_find_named_node_recurse(
                 axiom_element_t * el = (axiom_element_t *)
                   axiom_node_get_data_element (curr_node, env);
                 axis2_char_t *el_name = axiom_element_get_localname( el, env);
-                if ( 0 == strncasecmp( local_name, el_name, strlen(local_name) ) )
+                if ( 0 == strncasecmp(local_name, el_name, strlen(local_name)))
                 {
-                    found_node = curr_node;
-                    break;
+                	if ( search_str )
+                	{
+                		axis2_char_t *txt =
+                				axiom_element_get_text (el, env, curr_node);
+                		if ( 0 == strncmp(search_str, txt, strlen(search_str)))
+                		{
+                			found_node = curr_node;
+                			break;
+                		}
+               	}
+                	else
+                	{
+                		found_node = curr_node;
+                		break;
+                	}
                 }
                 else
                 {
@@ -628,8 +642,8 @@ axiom_node_t *rp_find_named_node_recurse(
                 			axiom_node_get_first_element(curr_node, env);
                 	if (NULL != child_node)
                 	{
-                		found_node = rp_find_named_node_recurse(
-                				env, child_node, local_name);
+                		found_node = rp_find_named_node_re(
+                				env, child_node, local_name, search_str);
                 		if (NULL != found_node)
                 		{
                 			break;
@@ -653,13 +667,14 @@ axiom_node_t *rp_find_named_node_recurse(
  * @param env
  * @param root_node
  * @param local_name
- * @return  the first child of 'root_node' with a matching local_name, or
- *  NULL if none found.
+ * @param search_str
+ * @return  the first matching child of 'root_node', or NULL if none found.
  */
 axiom_node_t *rp_find_named_node_nr(
     const axutil_env_t * env,
     axiom_node_t       *root_node,
-    const axis2_char_t *local_name)
+    const axis2_char_t *local_name,
+    const axis2_char_t *search_str)
 {
    axiom_node_t *found_node = NULL;
 
@@ -679,8 +694,21 @@ axiom_node_t *rp_find_named_node_nr(
                 axis2_char_t *el_name = axiom_element_get_localname( el, env);
                 if ( 0 == strncasecmp( local_name, el_name, strlen(local_name) ) )
                 {
-                    found_node = curr_node;
-                    break;
+                	if ( search_str )
+                	{
+                		axis2_char_t *txt =
+                				axiom_element_get_text (el, env, curr_node);
+                		if ( 0 == strncmp(search_str, txt, strlen(search_str)))
+                		{
+                			found_node = curr_node;
+                			break;
+                		}
+                	}
+                	else
+                	{
+                		found_node = curr_node;
+                		break;
+                	}
                 }
             }  // if
         } // while
@@ -708,8 +736,31 @@ axiom_node_t *rp_find_named_node(
     int                recurse)
 {
 	return (recurse) ?
-		rp_find_named_node_recurse(env, root_node, local_name) :
-		rp_find_named_node_nr     (env, root_node, local_name);
+			rp_find_named_node_re (env, root_node, local_name, NULL) :
+			rp_find_named_node_nr (env, root_node, local_name, NULL);
+}
+
+//-----------------------------------------------------------------------------
+/**
+ * Find the first child of 'root_node' with a matching 'local_name' who's text
+ *  contains 'search_str'.
+ * @param env
+ * @param root_node
+ * @param local_name
+ * @param recurse
+ * @param search_str
+ * @return the first matching child of 'root_node', or NULL if none found.
+ */
+axiom_node_t *rp_find_node_with_text(
+    const axutil_env_t * env,
+    axiom_node_t       *root_node,
+    const axis2_char_t *local_name,
+    int                recurse,
+    const axis2_char_t *search_str)
+{
+	return (recurse) ?
+			rp_find_named_node_re (env, root_node, local_name, search_str) :
+			rp_find_named_node_nr (env, root_node, local_name, search_str);
 }
 
 
