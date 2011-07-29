@@ -721,7 +721,7 @@ axiom_node_t *rp_find_named_node_nr(
 
 //-----------------------------------------------------------------------------
 /**
- * Find the first child of 'root_node' with a matching 'local_name'.
+ * Find the first node at 'root_node' with a matching 'local_name'.
  * @param env
  * @param root_node
  * @param local_name
@@ -738,6 +738,28 @@ axiom_node_t *rp_find_named_node(
 	return (recurse) ?
 			rp_find_named_node_re (env, root_node, local_name, NULL) :
 			rp_find_named_node_nr (env, root_node, local_name, NULL);
+}
+
+//-----------------------------------------------------------------------------
+/**
+ * Find the first child of 'root_node' with a matching 'local_name'.
+ * @param env
+ * @param root_node
+ * @param local_name
+ * @param recurse
+ * @return the first child of 'root_node' with a matching local_name, or
+ *  NULL if none found.
+ */
+axiom_node_t *rp_find_named_child(
+    const axutil_env_t * env,
+    axiom_node_t       *root_node,
+    const axis2_char_t *local_name,
+    int                recurse)
+{
+	axiom_node_t * child_node = axiom_node_get_first_child (root_node, env);
+	return (recurse) ?
+			rp_find_named_node_re (env, child_node, local_name, NULL) :
+			rp_find_named_node_nr (env, child_node, local_name, NULL);
 }
 
 //-----------------------------------------------------------------------------

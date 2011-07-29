@@ -204,8 +204,10 @@ int rp_log_error(
     ...);
 
 const int           rp_getUrlMode();
+const int           rp_getUrlRewriting();
 const axis2_char_t *rp_getMapfile();
 const axis2_char_t *rp_getMapserverExec();
+const axis2_char_t *rp_getRewriteURL();
 const axis2_char_t *rp_getBackendURL();
 const axis2_char_t *rp_getBackendPath();
 const int           rp_getBackendPort();
@@ -319,6 +321,12 @@ axiom_node_t *rp_find_named_node(
     const axis2_char_t *local_name,
     int recurse);
 
+axiom_node_t *rp_find_named_child(
+    const axutil_env_t * env,
+    axiom_node_t       *root_node,
+    const axis2_char_t *local_name,
+    int recurse);
+
 axiom_namespace_t * rp_get_namespace(
     const axutil_env_t *env,
     axiom_node_t *node);
@@ -353,6 +361,14 @@ sp_build_response20(
     axutil_stream_t    *st);
 
 void rp_inject_soap_cap20(
+    const axutil_env_t * env,
+    axiom_node_t *r_node);
+
+void rp_rewrite_urls(
+    const axutil_env_t * env,
+    axiom_node_t *r_node);
+
+void rp_delete_gets(
     const axutil_env_t * env,
     axiom_node_t *r_node);
 
