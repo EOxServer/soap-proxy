@@ -251,6 +251,31 @@ int rp_load_props(
     rp_url_rewriting =
     		! rp_load_prop(env, msg_ctx, rp_rewrite_url_str, SP_REWRITEURL_STR);
 
+    // Try get the endpoint URL.
+    // Not sure why this in the 'from' rather than the 'to'. (TODO)
+    if ( ! rp_url_rewriting)
+    {
+    	axis2_endpoint_ref_t *xaddr = axis2_msg_ctx_get_from (msg_ctx, env);
+    	if (NULL==xaddr)
+    	{
+    		rp_log_error(env, " SP: **WARNING: NULL==xaddr\n");
+    	}
+    	else
+    	{
+    		if (strlen(axis2_endpoint_ref_get_address(xaddr, env))
+    				> SP_MAX_MPATHS_LEN)
+    		{
+    			rp_log_error(env,
+    					" SP: **WARNING: xaddr exceeds %d \n",
+    					SP_MAX_MPATHS_LEN);
+    		}
+    		strncpy(rp_rewrite_url_str,
+    				axis2_endpoint_ref_get_address(xaddr, env),
+    				SP_MAX_MPATHS_LEN);
+    		rp_url_rewriting = 1;
+    	}
+    }
+
     // Must load at least one of BACKENDURL or MAPSERVER.
     // If loading MAPSERVER then must also load MAPFILE.
     // In case of BACKENDURL we don't know if we're running mapserver

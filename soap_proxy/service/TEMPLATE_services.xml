@@ -32,7 +32,9 @@
     
     <!--  Optional ULR to replace server/service URLs
          in e.g. GetCapabilites responses
-         If undefined then no rewriting is performed                 -->
+         If undefined then soap_proxy uses the ULR where it is invoked.
+         Note that this often may not be the correct ULR for accessing
+          the service due to server proxy redirecion.                -->
    <parameter name="RewriteURL">http://SERVER_UNDEFINED/service</parameter>
 
    <description>

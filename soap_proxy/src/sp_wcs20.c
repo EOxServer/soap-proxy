@@ -69,8 +69,25 @@ static int f_add_PostEncodingSOAP(
     		rp_find_named_child(env, target_node, constrIdStr, 1);
     if (NULL == constraint_node)
     {
-    	rp_log_error(env, "*** S2P(%s:%d): %s node not found.\n",
-    			__FILE__, __LINE__,  constrIdStr);
+    	axiom_element_t *el      = NULL;
+    	axis2_char_t    *el_name = NULL;
+    	axis2_char_t    *op_name = NULL;
+        if (axiom_node_get_node_type(target_node, env) == AXIOM_ELEMENT)
+        {
+            el = (axiom_element_t *)
+              axiom_node_get_data_element (target_node, env);
+            el_name = el ?
+            		axiom_element_get_localname( el, env) :
+            		NULL;
+    		op_name = el ?
+    				axiom_element_get_attribute_value_by_name(el, env, "name"):
+            		NULL;
+        }
+    	rp_log_error(env,
+    			"*** S2P(%s:%d): %s node not found under %s/name='%s'.\n",
+    			__FILE__, __LINE__,  constrIdStr,
+    			el_name ? el_name : "<UNKNOWN>",
+    			op_name ? op_name : "<UNKNOWN>");
     	return 1;
     }
 
