@@ -18,6 +18,10 @@
          requests to mapserver without a mapfile.
     -->
 
+   <!-- Set to true to delete GET capabilites in Operation elements 
+        advertised by the backend.                                   -->
+    <parameter name="DeleteGets">false</parameter>
+
     <!-- URL of backend to communicate with.                         -->
     <!-- If it is defined, then MapServ is ignored             .     -->
     <parameter name="BackendURL">http://127.0.0.1/BACKEND_URL_UNDEFINED</parameter>

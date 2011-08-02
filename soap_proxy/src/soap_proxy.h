@@ -205,6 +205,7 @@ int rp_log_error(
 
 const int           rp_getUrlMode();
 const int           rp_getUrlRewriting();
+const int           rp_getDeletingGets();
 const axis2_char_t *rp_getMapfile();
 const axis2_char_t *rp_getMapserverExec();
 const axis2_char_t *rp_getRewriteURL();
