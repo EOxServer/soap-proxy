@@ -56,6 +56,7 @@
 #define SP_MAPSERVER_STR  "MapServ"
 #define SP_BACKENDURL_STR "BackendURL"
 #define SP_REWRITEURL_STR "RewriteURL"
+#define SP_DELETEGETS_STR "DeleteGets"
 
 // TODO: Should lock the access functions for concurrent thread safety.
 
@@ -63,6 +64,7 @@
 static int rp_props_loaded  = 0;
 static int rp_url_mode      = 0;
 static int rp_url_rewriting = 0;
+static int rp_deleting_gets = 0;
 static axis2_char_t rp_mapfile         [SP_MAX_MPATHS_LEN] = "";
 static axis2_char_t rp_mapserv         [SP_MAX_MPATHS_LEN] = "";
 static axis2_char_t rp_backend_url_str [SP_MAX_MPATHS_LEN] = "";
@@ -104,6 +106,31 @@ static int rp_load_prop(
 }
 
 //-----------------------------------------------------------------------------
+/** Load a property with a boolean value.
+ * @param env
+ * @param msg_ctx
+ * @param name
+ * @return 1 on success and if property==true,
+ *         0 on failure, non-existent property, or anything other than 'true'.
+ */
+static int rp_load_boolean(
+	    const axutil_env_t    *env,
+	    const axis2_msg_ctx_t *msg_ctx,
+	    const axis2_char_t    *name
+)
+{
+    axutil_param_t *param = NULL;
+
+    param = axis2_msg_ctx_get_parameter(msg_ctx, env, name);
+    if (NULL == param)
+    {
+    	return 0;
+    }
+    const axis2_char_t *val = axutil_param_get_value(param, env);
+    return  ! axutil_strcasecmp(val, "true");
+
+}
+//-----------------------------------------------------------------------------
 static int rp_set_props_loaded()
 {
     rp_props_loaded = 1;
@@ -135,9 +162,19 @@ const int rp_getUrlMode()
 }
 
 //-----------------------------------------------------------------------------
-/** Get url mode.
- * @return false (0): not URL-mode, use exec of mapserver binary,
- *         true  (1): communicate with URL via a socket connection.
+/** Get delete_gets mode.
+ * @return false (0): to keep all GET capabilites as advertised by the backend,
+ *         true  (1): delete GET capabilites coming from the backend.
+ */
+const int rp_getDeletingGets()
+{
+    return rp_deleting_gets;
+}
+
+//-----------------------------------------------------------------------------
+/** Get urlRewriting mode.
+ * @return false (0): keep URLs as-is.
+ *         true  (1): change URLs to that given by rp_getRewriteURL().
  */
 const int rp_getUrlRewriting()
 {
@@ -247,6 +284,8 @@ int rp_load_props(
     const axis2_msg_ctx_t *msg_ctx)
 {
     if (rp_props_loaded) return 0;
+
+    rp_deleting_gets   = rp_load_boolean(env, msg_ctx, SP_DELETEGETS_STR);
 
     rp_url_rewriting =
     		! rp_load_prop(env, msg_ctx, rp_rewrite_url_str, SP_REWRITEURL_STR);
