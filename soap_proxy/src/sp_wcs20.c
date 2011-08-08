@@ -162,13 +162,43 @@ static int f_delete_get(
 
 //-----------------------------------------------------------------------------
 // This function is invoked via rp_func_at_nodes() from rp_rewrite_urls()
+static int rewrite_url_attr(
+	const axutil_env_t *env,
+	axiom_node_t       *top_node,
+	axis2_char_t       *node_name
+	)
+{
+	axiom_node_t *node =  rp_find_named_child(env, top_node,  node_name, 1);
+	if (NULL == node) return 0;
+
+    axiom_attribute_t *href_attr = NULL;
+    axiom_element_t          *el = NULL;
+    axutil_qname_t           *qn = axutil_qname_create
+    		(env, "href", "http://www.w3.org/1999/xlink", "xlink");
+	if (axiom_node_get_node_type(node, env) == AXIOM_ELEMENT)
+	{
+		el        = axiom_node_get_data_element(node, env);
+		href_attr = axiom_element_get_attribute (el, env, qn);
+	}
+
+    if (NULL != href_attr)
+    {
+    	axiom_attribute_set_value (href_attr, env, rp_getRewriteURL());
+    }
+
+    return 0;
+}
+
+//-----------------------------------------------------------------------------
+// This function is invoked via rp_func_at_nodes() from rp_rewrite_urls()
 static int f_rewrite_url(
 	const axutil_env_t * env,
 	axiom_node_t *target_node,
 	void *arg2)
 {
     //
-    // Find the path
+    // Find the paths
+    //   HTTP/Get
     //   HTTP/Post
     //   and change the url in the href attribute.
     // If none found it  is not considered an error.
@@ -177,21 +207,8 @@ static int f_rewrite_url(
     axiom_node_t *top_node =  rp_find_named_child(env, target_node, "HTTP", 1);
     if (NULL == top_node) return 0;
 
-    axiom_node_t *post_node =  rp_find_named_child(env, top_node, "Post", 1);
-    if (NULL == post_node) return 0;
-
-    axiom_attribute_t *href_attr = NULL;
-    axiom_element_t          *el = NULL;
-    axutil_qname_t           *qn = axutil_qname_create
-    		(env, "href", "http://www.w3.org/1999/xlink", "xlink");
-	if (axiom_node_get_node_type(post_node, env) == AXIOM_ELEMENT)
-	{
-		el        = axiom_node_get_data_element(post_node, env);
-		href_attr = axiom_element_get_attribute (el, env, qn);
-	}
-    if (NULL == href_attr) return 0;
-
-    axiom_attribute_set_value (href_attr, env, rp_getRewriteURL());
+    rewrite_url_attr(env, top_node, "Get");
+    rewrite_url_attr(env, top_node, "Post");
 
     return 0;
 }

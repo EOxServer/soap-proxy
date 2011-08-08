@@ -4,9 +4,9 @@
     <parameter name="ServiceClass" locked="xsd:false">soapProxy</parameter>
     
     <!-- 
-         The parameters BackendURL, MapFile, and MapServ are used to
-         configure soap_proxy.  They may be defined globally in
-         ../../axis2.xml instead of here.
+         The following parameters are used to configure soap_proxy:
+            BackendURL, MapFile, MapServ, DeleteGets, RewriteURL
+         They may be defined globally in ../../axis2.xml instead of here.
          At least one of BackendURL or MapServ is required to be
          correctly configured.  If BackendURL is defined, then MapServ is
          ignored.  This means if you wish to use MapServ you must delete or
