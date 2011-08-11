@@ -2,7 +2,7 @@
     <!-- enableMTOM must be enabled globally in ../../axis2.xml -->
     <parameter name="enableMTOM" locked="xsd:false">true</parameter>
     <parameter name="ServiceClass" locked="xsd:false">soapProxy</parameter>
-    
+
     <!-- 
          The following parameters are used to configure soap_proxy:
             BackendURL, MapFile, MapServ, DeleteGets, RewriteURL
@@ -15,25 +15,25 @@
          In case of BackendURL we don't know if the backend is a mapserver
          or an eoxserver instance, so MapFile is not mandatory - but beware
          that things will fail downstream if the user attempts to send
-         requests to mapserver without a mapfile.
+         requests to mapserver without a mapfile, even via a BackendURL.
     -->
 
-   <!-- Set to true to delete GET capabilites in Operation elements 
-        advertised by the backend.                                   -->
-    <parameter name="DeleteGets">false</parameter>
-
     <!-- URL of backend to communicate with.                         -->
-    <!-- If it is defined, then MapServ is ignored             .     -->
+    <!-- If it is defined, then MapServ is ignored.                  -->
     <parameter name="BackendURL">http://127.0.0.1/BACKEND_URL_UNDEFINED</parameter>
-    
-    <!-- Absolute path to the mapfile used for configuring mapserver -->
-    <!-- Not required for eoxserver                                  -->
-    <parameter name="MapFile">/path/to/mapfile.map</parameter>
-    
+
     <!-- Absolute path to the mapservser executable                  -->
     <!-- Used only if BackendURL is not defined.                     -->
     <parameter name="MapServ">/path/to/mapserv</parameter>
-    
+
+    <!-- Absolute path to the mapfile used for configuring mapserver -->
+    <!-- Not required for eoxserver                                  -->
+    <parameter name="MapFile">/path/to/mapfile.map</parameter>
+
+    <!-- Set to true to delete GET capabilites in Operation elements 
+        advertised by the backend.                                   -->
+    <parameter name="DeleteGets">false</parameter>
+
     <!--  Optional ULR to replace server/service URLs
          in e.g. GetCapabilites responses
          If undefined then soap_proxy uses the ULR where it is invoked.
@@ -51,7 +51,7 @@
        configurations.
     </description>
     <operation name="DescribeCoverage"/>
-    <!-- operation name="DescribeEOCoverageSet"/ -->
+    <operation name="DescribeEOCoverageSet"/>
     <operation name="GetCapabilities"/>
     <operation name="GetCoverage"/>
     <operation name="GetMsVersion"/>

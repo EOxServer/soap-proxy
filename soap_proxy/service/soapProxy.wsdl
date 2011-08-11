@@ -5,8 +5,8 @@
 <!-- Copyright (c) 2011, ANF DATA Spol. s r.o.                    -->
 <!--                                                              -->
 <!-- File:    soapProxy.wsdl                                      -->
-<!-- Version: 2.0                                                 -->
-<!-- Date:    June 08, 2011                                       -->
+<!-- Version: 2.1                                                 -->
+<!-- Date:    Aug 09, 2011                                        -->
 <!--                                                              -->
 <!-- This functionality is meant to be used as part of eoxserver. -->
 <!-- See the file soap_proxy/LICENSE for terms of use.            -->
@@ -16,13 +16,21 @@
 <wsdl:definitions
     targetNamespace="http://www.eoxserver.org/soap_proxy/wcsProxy" 
     xmlns:impl="http://www.eoxserver.org/soap_proxy/wcsProxy"
-    xmlns:wcs="http://www.opengis.net/wcs/2.0" 
     xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" 
     xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" 
     xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:wcs   ="http://www.opengis.net/wcs/2.0" 
     xmlns:gmlcov="http://www.opengis.net/gmlcov/1.0" 
-    xsi:schemaLocation="http://www.opengis.net/gmlcov/1.0 http://schemas.opengis.net/gmlcov/1.0/gmlcovAll.xsd">
+    xmlns:gml   ="http://www.opengis.net/gml/3.2" 
+    xmlns:wcseo ="http://www.opengis.net/wcseo/1.0"
+    xmlns:ogc   ="http://www.opengis.net/ogc"
+    xmlns:ows   ="http://www.opengis.net/ows/2.0"
+    xmlns:swe   ="http://www.opengis.net/swe/2.0"
+    xmlns:xlink ="http://www.w3.org/1999/xlink"
+    xsi:schemaLocation="http://www.opengis.net/gmlcov/1.0  http://schemas.opengis.net/gmlcov/1.0/gmlcovAll.xsd
+                        http://www.opengis.net/wcseo/1.0   http://schemas.opengis.net/wcseo/1.0/wcsEOAll.xsd"
+>
 
   <wsdl:types>
     <schema targetNamespace="http://www.eoxserver.org/soap_proxy/wcsProxy"
@@ -30,9 +38,9 @@
             xmlns:impl="http://www.eoxserver.org/soap_proxy/wcsProxy"
             xmlns:xsd="http://www.w3.org/2001/XMLSchema">
       
-      <import namespace="http://www.opengis.net/wcs/2.0" 
-              schemaLocation="http://schemas.opengis.net/wcs/2.0/wcsAll.xsd"/>
-      
+      <import namespace="http://www.opengis.net/wcseo/1.0" 
+              schemaLocation="http://schemas.opengis.net/wcseo/1.0/wcsEOAll.xsd"/>
+
       <!-- Used for debugging: allows to query the version of Mapserver -->
       <element name="GetMsVersion">
         <complexType/>
@@ -58,6 +66,13 @@
       <wsdl:part name="Body" element="wcs:CoverageDescriptions"/>
   </wsdl:message>
 
+  <wsdl:message name="descrEOCovSetRequest">
+      <wsdl:part name="Body" element="wcseo:DescribeEOCoverageSet"/>
+  </wsdl:message>
+  <wsdl:message name="descrEOCovSetResponse">
+      <wsdl:part name="Body" element="wcseo:EOCoverageSetDescription"/>
+  </wsdl:message>
+
   <wsdl:message name="getCovRequest">
       <wsdl:part name="Body" element="wcs:GetCoverage"/>
   </wsdl:message>
@@ -80,6 +95,10 @@
       <wsdl:operation name="DescribeCoverage">
           <wsdl:input  message="impl:descrCovRequest"  name="DescribeCoverage"/>
           <wsdl:output message="impl:descrCovResponse" name="CoverageDescriptions"/>
+      </wsdl:operation>
+      <wsdl:operation name="DescribeEOCoverageSet">
+          <wsdl:input  message="impl:descrEOCovSetRequest"  name="DescribeEOCoverageSet"/>
+          <wsdl:output message="impl:descrEOCovSetResponse" name="EOCoverageSetDescription"/>
       </wsdl:operation>
       <wsdl:operation name="GetCoverage">
           <wsdl:input  message="impl:getCovRequest"  name="GetCoverage"/>
@@ -114,6 +133,16 @@
           </wsdl:output>
       </wsdl:operation>
 
+      <wsdl:operation name="DescribeEOCoverageSet">
+          <soap:operation soapAction="soapProxy#DescribeEOCoverageSet"/>
+          <wsdl:input name="DescribeEOCoverageSet">
+              <soap:body use="literal"/>
+          </wsdl:input>
+          <wsdl:output name="EOCoverageSetDescription">
+              <soap:body use="literal"/>
+          </wsdl:output>
+      </wsdl:operation>
+
       <wsdl:operation name="GetCoverage">
           <soap:operation soapAction="soapProxy#GetCoverage"/>
           <wsdl:input name="GetCoverage">
@@ -138,7 +167,7 @@
 
   <wsdl:service name="soapProxy">
       <wsdl:port binding="impl:spSoapBinding" name="spSOAPport_http">
-          <soap:address location="http://www.your.server/o3s_wcs"/>
+          <soap:address location="http://www.your.server/sp_wcs"/>
       </wsdl:port>
   </wsdl:service>
 
