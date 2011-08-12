@@ -75,8 +75,8 @@ rp_dispatch_op(
         {
             return_node = rp_invokeBackend(env, node, protocol);
             rp_inject_soap_cap20(env, return_node);
-            if (rp_getDeletingGets()) rp_delete_gets (env, return_node);
-            rp_rewrite_urls(env, return_node);
+            if (rp_getDeletingNonSoap()) rp_delete_nonsoap (env, return_node);
+            sp_add_soapurl(env, return_node);
         }
         else if ( axutil_strcmp(op_name, "GetMsVersion" ) == 0 )
         {
