@@ -238,9 +238,6 @@ static int f_add_soapurl(
     axiom_node_t *a_node = rp_add_child(env, c_node, &c_nv, NULL);
 
     c_nv.name  = "Value";
-    c_nv.value = "XML";
-    rp_add_child(env, a_node, &c_nv, NULL);
-
     c_nv.value = "SOAP";
     rp_add_child(env, a_node, &c_nv, NULL);
 
