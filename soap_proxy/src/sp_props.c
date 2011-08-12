@@ -57,6 +57,7 @@
 #define SP_BACKENDURL_STR "BackendURL"
 #define SP_SOAPOPSURL_STR "SOAPOperationsURL"
 #define SP_DELNONSOAP_STR "DeleteNonSoapURLs"
+#define SP_DEBUG_STR      "DebugSoapProxy"
 
 // TODO: Should lock the access functions for concurrent thread safety.
 
@@ -64,6 +65,7 @@
 static int rp_props_loaded     = 0;
 static int rp_url_mode         = 0;
 static int rp_deleting_nonsoap = 0;
+static int rp_debug_mode       = 0;
 static axis2_char_t rp_mapfile         [SP_MAX_MPATHS_LEN] = "";
 static axis2_char_t rp_mapserv         [SP_MAX_MPATHS_LEN] = "";
 static axis2_char_t rp_backend_url_str [SP_MAX_MPATHS_LEN] = "";
@@ -73,6 +75,8 @@ static axis2_char_t rp_soapops_url_str [SP_MAX_MPATHS_LEN] = "";
 static int          rp_backend_port                    = -1;
 static axis2_char_t rp_backend_host[SP_MAX_MPATHS_LEN] = "";
 static axis2_char_t rp_backend_path[SP_MAX_MPATHS_LEN] = "";
+
+const axis2_char_t *rp_get_prop_s(int i);
 
 // =========================  local functions = ===============================
 
@@ -161,9 +165,20 @@ const int rp_getUrlMode()
 }
 
 //-----------------------------------------------------------------------------
-/** Get delete_gets mode.
- * @return false (0): to keep all GET capabilites as advertised by the backend,
- *         true  (1): delete GET capabilites coming from the backend.
+/** Get Debug mode.
+ * @return false (0): debug off.
+ *         true  (1): debug on.
+ */
+const int rp_getDebugMode()
+{
+    return rp_debug_mode;
+}
+
+//-----------------------------------------------------------------------------
+/** Get DeleteNonSoapURLs mode.
+ * @return false (0): to keep all GET & POST capabilities as advertised by the
+ *  backend,
+ *         true  (1): delete GET & POST capabilities coming from the backend.
  */
 const int rp_getDeletingNonSoap()
 {
@@ -274,7 +289,8 @@ int rp_load_props(
 {
     if (rp_props_loaded) return 0;
 
-    rp_deleting_nonsoap   = rp_load_boolean(env, msg_ctx, SP_DELNONSOAP_STR);
+    rp_debug_mode       = rp_load_boolean(env, msg_ctx, SP_DEBUG_STR);
+    rp_deleting_nonsoap = rp_load_boolean(env, msg_ctx, SP_DELNONSOAP_STR);
 
     if ( rp_load_prop(env, msg_ctx, rp_soapops_url_str, SP_SOAPOPSURL_STR) )
     {
