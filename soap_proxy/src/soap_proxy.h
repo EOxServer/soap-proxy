@@ -203,6 +203,7 @@ int rp_log_error(
     const char         *format,
     ...);
 
+const int           rp_getDebugMode();
 const int           rp_getUrlMode();
 const int           rp_getDeletingNonSoap();
 const axis2_char_t *rp_getMapfile();
@@ -213,11 +214,8 @@ const axis2_char_t *rp_getBackendPath();
 const int           rp_getBackendPort();
 const axis2_char_t *rp_getBackendHost();
 
-const axis2_char_t *rp_get_prop_s(
-		int i);
-
-int rp_get_contentType(
-    char *str);
+int rp_get_contentType(char *str);
+int rp_content_is_text_type(char *str);
 
 axiom_node_t *
 sp_process_xml_st(

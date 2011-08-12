@@ -288,27 +288,35 @@ void rp_inject_soap_cap20(
     	rp_add_sibbling (env, ext_node, &ext_nv, NULL);
     }
 
-    //
-    // Next, add the SOAP constraint to Constraint/AllowedValues
-    // to all Operation children of OperationsMetadata
-    //
-    /*  XXX
-     * TODO - remove
-    axiom_node_t *ops_node =
-    		rp_find_named_child(env, r_node, "OperationsMetadata", 1);
-    if (NULL == ops_node)
+}
+
+//-----------------------------------------------------------------------------
+void
+sp_dump_bad_content(
+    const axutil_env_t *env,
+    char               *contentTypeStr,
+    axutil_stream_t    *st,
+    char               *header_blob)
+{
+    int data_len      = 0;
+    char *bad_data    = NULL;
+    const int max_len = 2048;
+
+    if (rp_content_is_text_type(contentTypeStr))
     {
-    	rp_log_error(env, "*** S2P(%s:%d): %s node not found.\n",
-    			__FILE__, __LINE__,  "OperationsMetadata");
-    	return;
+    	bad_data = sp_load_binary_file(env, header_blob, st,  &data_len);
+    	if (data_len > max_len) data_len = max_len;
+    	fprintf(stderr,"Start of bad data: (max %d):\n", max_len);
+    	fwrite(bad_data, 1, data_len, stderr);
+    	fprintf(stderr,"\n");
+    	fflush(stderr);
+    }
+    else
+    {
+    	fprintf(stderr,"Bad data is not text.\n");
+    	fflush(stderr);
     }
 
-    rp_func_at_nodes(env,
-                     axiom_node_get_first_child(ops_node, env),
-                     "Operation",
-                     &f_add_PostEncodingSOAP,
-                     NULL);
-*/
 }
 
 //-----------------------------------------------------------------------------
@@ -476,6 +484,10 @@ sp_build_response20(
     			"*** S2P(%s:%d): Unrecognised Content-type: %s\n",
     			__FILE__, __LINE__,
     			contentTypeStr);
+    	if (rp_getDebugMode())
+    	{
+    		sp_dump_bad_content(env, contentTypeStr, st, header_buf);
+    	}
     }
 
     rp_freeHttpHeaders(env, &hh);

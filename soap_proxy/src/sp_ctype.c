@@ -79,3 +79,13 @@ int rp_get_contentType(
     return SP_RESP_UNKNOWN_TYPE;
 }
 
+//-----------------------------------------------------------------------------
+int rp_content_is_text_type(
+    char *str)
+{
+
+    str = skipBlanks(str);
+    return 0 == strncmp(str, "text/", 5);
+}
+
+
