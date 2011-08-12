@@ -786,6 +786,27 @@ axiom_node_t *rp_find_node_with_text(
 }
 
 
+/**
+ * Delete the first child of 'root_node' with a matching 'local_name'.
+ * @param env
+ * @param root_node
+ * @param local_name
+ */
+void rp_delete_named_child(
+	const axutil_env_t * env,
+	axiom_node_t       *root_node,
+	const axis2_char_t *local_name
+)
+{
+	axiom_node_t *del_node =
+			rp_find_named_child(env, root_node, local_name, 1);
+	if (NULL != del_node)
+	{
+		axiom_node_detach    (del_node, env);
+		axiom_node_free_tree (del_node, env);
+	}
+}
+
 //-----------------------------------------------------------------------------
 /** Add a node with an element to root_node, either as child or as sibling.
  *   The element name is in the same namespace as the root node's name.
@@ -821,7 +842,10 @@ static axiom_node_t *rp_add_node(
     axiom_node_t    *new_node = axiom_node_create(env);
     axiom_element_t *new_ele =
       axiom_element_create(env, NULL, node_id->name, ns, &new_node);
-    axiom_element_set_text(new_ele, env, node_id->value, new_node);
+    if (NULL != node_id->value)
+    {
+    	axiom_element_set_text(new_ele, env, node_id->value, new_node);
+    }
 
     if (NULL != attribute)
     {

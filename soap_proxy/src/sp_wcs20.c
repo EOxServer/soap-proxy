@@ -142,26 +142,24 @@ static int f_add_PostEncodingSOAP(
 }
 
 //-----------------------------------------------------------------------------
-// This function is invoked via rp_func_at_nodes() from rp_delete_gets()
-static int f_delete_get(
+// This function is invoked via rp_func_at_nodes() from rp_delete_nonsoap()
+static int f_delete_nonsoap(
 	const axutil_env_t * env,
 	axiom_node_t *target_node,
 	void *arg2)
 {
+	int n_done = 0;
     axiom_node_t *top_node = rp_find_named_child(env, target_node, "HTTP", 1);
     if (NULL == top_node) return 0;
 
-    axiom_node_t *get_node = rp_find_named_child(env, top_node, "Get", 1);
-    if (NULL == get_node) return 0;
-
-    axiom_node_detach    (get_node, env);
-    axiom_node_free_tree (get_node, env);
+    rp_delete_named_child(env, top_node, "Get");
+    rp_delete_named_child(env, top_node, "Post");
 
     return 1;
 }
 
 //-----------------------------------------------------------------------------
-// This function is invoked via rp_func_at_nodes() from rp_rewrite_urls()
+/*
 static int rewrite_url_attr(
 	const axutil_env_t *env,
 	axiom_node_t       *top_node,
@@ -188,27 +186,63 @@ static int rewrite_url_attr(
 
     return 0;
 }
+*/
 
 //-----------------------------------------------------------------------------
-// This function is invoked via rp_func_at_nodes() from rp_rewrite_urls()
-static int f_rewrite_url(
+// This function is invoked via rp_func_at_nodes() from sp_add_soapurl()
+static int f_add_soapurl(
 	const axutil_env_t * env,
 	axiom_node_t *target_node,
 	void *arg2)
 {
     //
     // Find the paths
-    //   HTTP/Get
-    //   HTTP/Post
-    //   and change the url in the href attribute.
+    //   HTTP
+    //   and add the SOAP capability.
     // If none found it  is not considered an error.
 	//
+/*
+    <ows:Post xlink:type="simple" xlink:href="http://SERVER_UNDEFINED/service">
+      <ows:Constraint name="PostEncoding">
+        <ows:AllowedValues>
+          <ows:Value>XML</ows:Value>
+          <ows:Value>SOAP</ows:Value>
+        </ows:AllowedValues>
+      </ows:Constraint>
+  */
 
-    axiom_node_t *top_node =  rp_find_named_child(env, target_node, "HTTP", 1);
+    axiom_node_t *top_node = rp_find_named_child(env, target_node, "HTTP", 1);
     if (NULL == top_node) return 0;
 
-    rewrite_url_attr(env, top_node, "Get");
-    rewrite_url_attr(env, top_node, "Post");
+    axiom_namespace_t * root_ns = rp_get_namespace (env, top_node);
+
+    axiom_node_t    *post_node = axiom_node_create(env);
+    axiom_element_t *post_ele  =
+      axiom_element_create(env, top_node, "Post", root_ns, &post_node);
+
+	axiom_namespace_t *xlink_ns = axiom_namespace_create(
+			env, "http://www.w3.org/1999/xlink", "xlink");
+
+    axiom_attribute_t *attr =
+      axiom_attribute_create (env, "type", "simple", xlink_ns);
+    axiom_element_add_attribute (post_ele, env, attr, post_node);
+
+    attr = axiom_attribute_create (env, "href", rp_getSoapOpsURL(), xlink_ns);
+    axiom_element_add_attribute (post_ele, env, attr, post_node);
+
+    Name_value c_nv;  c_nv.name = "Constraint";  c_nv.value = NULL;
+    Name_value p_nv;  p_nv.name = "name";        p_nv.value = "PostEncoding";
+    axiom_node_t *c_node = rp_add_child(env, post_node, &c_nv, &p_nv);
+
+    c_nv.name = "AllowedValues";
+    axiom_node_t *a_node = rp_add_child(env, c_node, &c_nv, NULL);
+
+    c_nv.name  = "Value";
+    c_nv.value = "XML";
+    rp_add_child(env, a_node, &c_nv, NULL);
+
+    c_nv.value = "SOAP";
+    rp_add_child(env, a_node, &c_nv, NULL);
 
     return 0;
 }
@@ -261,7 +295,8 @@ void rp_inject_soap_cap20(
     // Next, add the SOAP constraint to Constraint/AllowedValues
     // to all Operation children of OperationsMetadata
     //
-
+    /*  XXX
+     * TODO - remove
     axiom_node_t *ops_node =
     		rp_find_named_child(env, r_node, "OperationsMetadata", 1);
     if (NULL == ops_node)
@@ -276,7 +311,7 @@ void rp_inject_soap_cap20(
                      "Operation",
                      &f_add_PostEncodingSOAP,
                      NULL);
-
+*/
 }
 
 //-----------------------------------------------------------------------------
@@ -453,14 +488,15 @@ sp_build_response20(
 
 
 //-----------------------------------------------------------------------------
-void rp_delete_gets(
+void rp_delete_nonsoap(
     const axutil_env_t * env,
     axiom_node_t *r_node)
 {
     //
-    // For all Operation children of OperationsMetadata find the path
+    // For all Operation children of OperationsMetadata find the paths
     //   HTTP/Get
-    //   and delete the node.
+    //   HTTP/Post
+    //   and for each delete the node.
     //
 
     axiom_node_t *ops_node =
@@ -475,22 +511,20 @@ void rp_delete_gets(
     rp_func_at_nodes(env,
                      axiom_node_get_first_child(ops_node, env),
                      "Operation",
-                     &f_delete_get,
+                     &f_delete_nonsoap,
                      NULL);
 }
 
 
 //-----------------------------------------------------------------------------
-void rp_rewrite_urls(
+void sp_add_soapurl(
     const axutil_env_t * env,
     axiom_node_t *r_node)
 {
-	if ( ! rp_getUrlRewriting ) return;
-
     //
     // For all Operation children of OperationsMetadata find the path
     //   HTTP/Post
-    //   and change the url there.
+    //   and add our soap-url there.
     //
 
     axiom_node_t *ops_node =
@@ -505,7 +539,7 @@ void rp_rewrite_urls(
     rp_func_at_nodes(env,
                      axiom_node_get_first_child(ops_node, env),
                      "Operation",
-                     &f_rewrite_url,
+                     &f_add_soapurl,
                      NULL);
 
 

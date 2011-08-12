@@ -88,7 +88,7 @@ enum sp_property_ids
 	SP_MAPFILE_ID =  0,
 	SP_MAPSERVER_ID,
 	SP_BACKENDURL_ID,
-	SP_REWRITEURL_ID
+	SP_SOAPOPSURL_ID
 };
 
 /**
@@ -204,11 +204,10 @@ int rp_log_error(
     ...);
 
 const int           rp_getUrlMode();
-const int           rp_getUrlRewriting();
-const int           rp_getDeletingGets();
+const int           rp_getDeletingNonSoap();
 const axis2_char_t *rp_getMapfile();
 const axis2_char_t *rp_getMapserverExec();
-const axis2_char_t *rp_getRewriteURL();
+const axis2_char_t *rp_getSoapOpsURL();
 const axis2_char_t *rp_getBackendURL();
 const axis2_char_t *rp_getBackendPath();
 const int           rp_getBackendPort();
@@ -308,7 +307,7 @@ char *sp_load_binary_file(
     int                *len);
 
 char * rp_load_binary_file(
-    const axutil_env_t * env,
+    const axutil_env_t *env,
     FILE *fp,
     int *len);
 
@@ -317,16 +316,21 @@ const axis2_char_t *rp_getText(
 		const axutil_env_t *env);
 
 axiom_node_t *rp_find_named_node(
-    const axutil_env_t * env,
+    const axutil_env_t *env,
     axiom_node_t       *root_node,
     const axis2_char_t *local_name,
-    int recurse);
+    int                 recurse);
 
 axiom_node_t *rp_find_named_child(
-    const axutil_env_t * env,
+    const axutil_env_t *env,
     axiom_node_t       *root_node,
     const axis2_char_t *local_name,
-    int recurse);
+    int                 recurse);
+
+void rp_delete_named_child(
+	const axutil_env_t *env,
+	axiom_node_t       *root_node,
+	const axis2_char_t *local_name);
 
 axiom_namespace_t * rp_get_namespace(
     const axutil_env_t *env,
@@ -365,11 +369,11 @@ void rp_inject_soap_cap20(
     const axutil_env_t * env,
     axiom_node_t *r_node);
 
-void rp_rewrite_urls(
+void sp_add_soapurl(
     const axutil_env_t * env,
     axiom_node_t *r_node);
 
-void rp_delete_gets(
+void rp_delete_nonsoap(
     const axutil_env_t * env,
     axiom_node_t *r_node);
 

@@ -55,20 +55,19 @@
 #define SP_MAPFILE_STR    "MapFile"
 #define SP_MAPSERVER_STR  "MapServ"
 #define SP_BACKENDURL_STR "BackendURL"
-#define SP_REWRITEURL_STR "RewriteURL"
-#define SP_DELETEGETS_STR "DeleteGets"
+#define SP_SOAPOPSURL_STR "SOAPOperationsURL"
+#define SP_DELNONSOAP_STR "DeleteNonSoapURLs"
 
 // TODO: Should lock the access functions for concurrent thread safety.
 
 //-----------------------------------------------------------------------------
-static int rp_props_loaded  = 0;
-static int rp_url_mode      = 0;
-static int rp_url_rewriting = 0;
-static int rp_deleting_gets = 0;
+static int rp_props_loaded     = 0;
+static int rp_url_mode         = 0;
+static int rp_deleting_nonsoap = 0;
 static axis2_char_t rp_mapfile         [SP_MAX_MPATHS_LEN] = "";
 static axis2_char_t rp_mapserv         [SP_MAX_MPATHS_LEN] = "";
 static axis2_char_t rp_backend_url_str [SP_MAX_MPATHS_LEN] = "";
-static axis2_char_t rp_rewrite_url_str [SP_MAX_MPATHS_LEN] = "";
+static axis2_char_t rp_soapops_url_str [SP_MAX_MPATHS_LEN] = "";
 
 // Derived values.
 static int          rp_backend_port                    = -1;
@@ -166,19 +165,9 @@ const int rp_getUrlMode()
  * @return false (0): to keep all GET capabilites as advertised by the backend,
  *         true  (1): delete GET capabilites coming from the backend.
  */
-const int rp_getDeletingGets()
+const int rp_getDeletingNonSoap()
 {
-    return rp_deleting_gets;
-}
-
-//-----------------------------------------------------------------------------
-/** Get urlRewriting mode.
- * @return false (0): keep URLs as-is.
- *         true  (1): change URLs to that given by rp_getRewriteURL().
- */
-const int rp_getUrlRewriting()
-{
-    return rp_url_rewriting;
+    return rp_deleting_nonsoap;
 }
 
 //-----------------------------------------------------------------------------
@@ -201,12 +190,12 @@ const axis2_char_t *rp_getMapserverExec()
 }
 
 //-----------------------------------------------------------------------------
-/** Get rewrite URL string.
+/** Get SOAPOperationsURL string.
  * @return pointer to a static string, not a copy.
  */
-const axis2_char_t *rp_getRewriteURL()
+const axis2_char_t *rp_getSoapOpsURL()
 {
-	return rp_get_prop_s(SP_REWRITEURL_ID);
+	return rp_get_prop_s(SP_SOAPOPSURL_ID);
 }
 
 //-----------------------------------------------------------------------------
@@ -261,7 +250,7 @@ const axis2_char_t *rp_get_prop_s(
 	case SP_MAPSERVER_ID:  return rp_mapserv;
 	case SP_MAPFILE_ID:    return rp_mapfile;
 	case SP_BACKENDURL_ID: return rp_backend_url_str;
-	case SP_REWRITEURL_ID: return rp_rewrite_url_str;
+	case SP_SOAPOPSURL_ID: return rp_soapops_url_str;
 
 	default:
 		fprintf(stderr,
@@ -285,19 +274,20 @@ int rp_load_props(
 {
     if (rp_props_loaded) return 0;
 
-    rp_deleting_gets   = rp_load_boolean(env, msg_ctx, SP_DELETEGETS_STR);
+    rp_deleting_nonsoap   = rp_load_boolean(env, msg_ctx, SP_DELNONSOAP_STR);
 
-    rp_url_rewriting =
-    		! rp_load_prop(env, msg_ctx, rp_rewrite_url_str, SP_REWRITEURL_STR);
-
-    // Try get the endpoint URL.
-    // Not sure why this in the 'from' rather than the 'to'. (TODO)
-    if ( ! rp_url_rewriting)
+    if ( rp_load_prop(env, msg_ctx, rp_soapops_url_str, SP_SOAPOPSURL_STR) )
     {
+    	// Try get the endpoint URL.
+    	// Not sure why this in the 'from' rather than the 'to'. (TODO)
+
     	axis2_endpoint_ref_t *xaddr = axis2_msg_ctx_get_from (msg_ctx, env);
     	if (NULL==xaddr)
     	{
-    		rp_log_error(env, " SP: **WARNING: NULL==xaddr\n");
+    		rp_log_error(env,
+    				" SP: **WARNING: NULL==xaddr."
+    				" Could not determine URL of service.\n");
+    		strcpy(rp_soapops_url_str, "ERROR: URL-UNKNOWN");
     	}
     	else
     	{
@@ -308,10 +298,9 @@ int rp_load_props(
     					" SP: **WARNING: xaddr exceeds %d \n",
     					SP_MAX_MPATHS_LEN);
     		}
-    		strncpy(rp_rewrite_url_str,
+    		strncpy(rp_soapops_url_str,
     				axis2_endpoint_ref_get_address(xaddr, env),
     				SP_MAX_MPATHS_LEN);
-    		rp_url_rewriting = 1;
     	}
     }
 

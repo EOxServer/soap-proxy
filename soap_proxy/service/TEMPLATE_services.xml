@@ -5,7 +5,7 @@
 
     <!-- 
          The following parameters are used to configure soap_proxy:
-            BackendURL, MapFile, MapServ, DeleteGets, RewriteURL
+           BackendURL, MapFile, MapServ, DeleteNonSoapURLs, SOAPOperationsURL
          They may be defined globally in ../../axis2.xml instead of here.
          At least one of BackendURL or MapServ is required to be
          correctly configured.  If BackendURL is defined, then MapServ is
@@ -18,30 +18,40 @@
          requests to mapserver without a mapfile, even via a BackendURL.
     -->
 
-    <!-- URL of backend to communicate with.                         -->
-    <!-- If it is defined, then MapServ is ignored.                  -->
+    <!-- URL of backend to communicate with.                                -->
+    <!-- If it is defined, then MapServ is ignored.                         -->
     <parameter name="BackendURL">http://127.0.0.1/BACKEND_URL_UNDEFINED</parameter>
 
-    <!-- Absolute path to the mapservser executable                  -->
-    <!-- Used only if BackendURL is not defined.                     -->
+    <!-- Absolute path to the mapservser executable                         -->
+    <!-- Used only if BackendURL is not defined.                            -->
     <parameter name="MapServ">/path/to/mapserv</parameter>
 
-    <!-- Absolute path to the mapfile used for configuring mapserver -->
-    <!-- Not required for eoxserver                                  -->
+    <!-- Absolute path to the mapfile used for configuring mapserver        -->
+    <!-- Not required for eoxserver                                         -->
     <parameter name="MapFile">/path/to/mapfile.map</parameter>
 
-    <!-- Set to true to delete GET capabilites in Operation elements 
-        advertised by the backend.                                   -->
-    <parameter name="DeleteGets">false</parameter>
+    <!-- In the GetCapabilites response, each Operation in the 
+         OperationsMetadata section contains a pair of URLs as seen by the back
+         end for accepting GET requests and non-SOAP POST requests. These may
+         be deleted from the response by the soap proxy if you do not wish to
+         advertise the availability of the non-SOAP interface. 
+         Set DeleteNonSoapURLs to true to delete the original GET and POST
+         URLs for non-SOAP access.
+         Default (DeleteNonSoapURLs not present) is false                   -->
+    <parameter name="DeleteNonSoapURLs">false</parameter>
+    
+    <!-- In the GetCapabilites response, the Soap Proxy adds a POST URL to
+         the HTTP section of each Operation to advertise where to access
+         the service via SOAP.
+         The URL as seen by the proxy may not necessarily be the correct URL
+         where the service should be accessed from the outside.
+         Use SOAPOperationsURL to set this URL explicitly.
+         If undefined then soap_proxy uses the URL where it is invoked.
+         Note that this often may not be the correct URL for accessing
+          the service due to server proxy redirecion.                       -->
+    <parameter name="SOAPOperationsURL">http://SERVER_UNDEFINED/service</parameter>
 
-    <!--  Optional ULR to replace server/service URLs
-         in e.g. GetCapabilites responses
-         If undefined then soap_proxy uses the ULR where it is invoked.
-         Note that this often may not be the correct ULR for accessing
-          the service due to server proxy redirecion.                -->
-   <parameter name="RewriteURL">http://SERVER_UNDEFINED/service</parameter>
-
-   <description>
+    <description>
        This proxy service accepts O3S WCS 2.0 SOAP requests, optionally with
        the Earth Observation Application Profile, and invokes a corresponding
        POST operation on a connected mapserver.
