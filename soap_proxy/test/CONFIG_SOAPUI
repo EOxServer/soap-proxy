@@ -1,0 +1,39 @@
+SOAPUI Config guide for eoxserver
+----------------------------------
+
+This guide describes how to set up soapui to work with local schema
+definitions.
+We use apache httpd as a local proxy to access the local xsd files.
+
+CAUTION:
+-------
+Be very careful in setting up apache as a proxy server.  If in doubt about
+deviating from these instructions and in particular about enabling
+ProxyRequests, be sure to study the apache httpd documentaion in detail.
+
+ProxyRequests should be ketp turned Off.
+
+
+1. Setting up Apache httpd.
+----------------------------
+
+1a. configure a local soapuiproxy alias for localhost in /etc/hosts.
+  --> simpoly add soapuiproxy as another alias on the line for 127.0.0.1
+
+1b. set up a virtual server for soapuiproxy for httpd:
+  cd <apache config root>   # on my OpenSuse this is /etc/apache2
+  --> add the folling line in listen.conf:
+     NameVirtualHost 127.0.0.1:8881
+
+  cd vhosts.d
+  copy TEMPLATE_soapuiproxy.conf to this dir, and edit the paths to the local
+  schema directory.  
+  
+
+2. Setting up soapui to use apache httpd.
+-----------------------------------------
+ File->preferences
+   --> ProxySettings
+
+Host: soapuiproxy
+Port: 8881

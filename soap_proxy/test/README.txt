@@ -16,6 +16,8 @@ Install a soap_proxy service as described in INSTALL in the main soap_proxy
 directory.
 
 Use soapui (www.soapui.org) for testing.
+See CONFIG_SOAPUI for instructions on using soapui with local xsd schema
+definitions.
 
 Ensure web access is available. (No matter what sopaui seems to load some
 schemas from the web. There may be a way to avoid this, but to discover
