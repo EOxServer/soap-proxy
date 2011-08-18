@@ -11,14 +11,14 @@ Be very careful in setting up apache as a proxy server.  If in doubt about
 deviating from these instructions and in particular about enabling
 ProxyRequests, be sure to study the apache httpd documentaion in detail.
 
-ProxyRequests should be ketp turned Off.
+ProxyRequests should be kept turned Off.
 
 
 1. Setting up Apache httpd.
 ----------------------------
 
 1a. configure a local soapuiproxy alias for localhost in /etc/hosts.
-  --> simpoly add soapuiproxy as another alias on the line for 127.0.0.1
+  --> simply add soapuiproxy as another alias on the line for 127.0.0.1
 
 1b. set up a virtual server for soapuiproxy for httpd:
   cd <apache config root>   # on my OpenSuse this is /etc/apache2
