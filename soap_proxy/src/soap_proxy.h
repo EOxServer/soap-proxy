@@ -46,6 +46,11 @@
 #define SP_MAX_OP_LEN 300
 
 /**
+ * Whitespace indent for xml formatting
+ */
+#define SP_DEFAULT_WHSPACE 4
+
+/**
  * limit the max length of incoming requests
  */
 #define SP_MAX_REQ_LEN 536870910
@@ -57,10 +62,15 @@
 
 #define SP_IMG_BUF_SIZE 4096
 
+#define SP_MAX_LOCAL_STR_LEN 512
+
 #define MAPSERV_ID_STR "mapserv"
 
 #define SP_WCS_SOAP_EXTENSION \
 	"http://www.opengis.net/spec/WCS_protocol-binding_soap/1.0"
+
+#define SP_OWS_NAMESPACE_STR \
+	"http://www.opengis.net/ows/2.0"
 
 #define SP_WCSPROXY_NAMESPACE_STR \
 	"http://www.eoxserver.org/soap_proxy/wcsProxy"
@@ -72,6 +82,9 @@
 	"http://www.opengis.net/spec/WCS_application-profile_earth-observation"
 
 #define SP_BUF_READSIZE   4096
+
+// Max acceptable time diff in seconds.  If greater, lineage is not changed.
+#define SP_LINEAGE_TIME_DIFF 360
 
 /* -------------------------------misc constants ----------------------*/
 #define SP_RESP_XML_TYPE       0
@@ -203,6 +216,12 @@ int rp_log_error(
     const char         *format,
     ...);
 
+void sp_dump_bad_content(
+    const axutil_env_t *env,
+    char               *contentTypeStr,
+    axutil_stream_t    *st,
+    char               *header_blob);
+
 const int           rp_getDebugMode();
 const int           rp_getUrlMode();
 const int           rp_getDeletingNonSoap();
@@ -259,14 +278,14 @@ char *getNextToken(
     char *dest,
     char *str);
 
-void rp_initHttpHeaderStruct(
+void sp_initHttpHeaderStruct(
     hh_values *hh);
 
-void rp_freeHttpHeaders(
+void sp_freeHttpHeaders(
     const axutil_env_t *env,
     hh_values *hh);
 
-void rp_parseHttpHeaders(
+void sp_parseHttpHeaders_fp(
     const axutil_env_t *env,
     hh_values          *hh,
     FILE               *fp);
@@ -276,12 +295,7 @@ void sp_parseHttpHeaders_buf(
     hh_values          *hh,
     char               *buf);
 
-void sp_parseHttpHeaders(
-    const axutil_env_t *env,
-    hh_values          *hh,
-    axutil_stream_t    *sstream);
-
-void rp_printHttpHeaders(
+void sp_printHttpHeaders(
     FILE      *fp,
     hh_values *hh);
 
@@ -309,9 +323,18 @@ char * rp_load_binary_file(
     FILE *fp,
     int *len);
 
-const axis2_char_t *rp_getText(
+const axis2_char_t *sp_get_text_el(
 		axiom_node_t       *el_node,
 		const axutil_env_t *env);
+
+const axis2_char_t *sp_get_text_text(
+		axiom_node_t       *text_node,
+		const axutil_env_t *env);
+
+axiom_node_t *
+sp_get_last_text_node(
+    axiom_node_t       *node,
+    const axutil_env_t *env);
 
 axiom_node_t *rp_find_named_node(
     const axutil_env_t *env,
@@ -330,6 +353,12 @@ void rp_delete_named_child(
 	axiom_node_t       *root_node,
 	const axis2_char_t *local_name);
 
+axiom_namespace_t *sp_find_or_create_ns(
+    const axutil_env_t *env,
+    axiom_node_t *node,
+    const axis2_char_t *uri,
+    const axis2_char_t *prefix);
+
 axiom_namespace_t * rp_get_namespace(
     const axutil_env_t *env,
     axiom_node_t *node);
@@ -338,21 +367,40 @@ axiom_node_t *rp_add_sibbling(
     const axutil_env_t *env,
     axiom_node_t       *root_node,
     Name_value         *node_id,
-    Name_value         *attribute);
+    Name_value         *attribute,
+    const axis2_char_t *whitespace);
 
 axiom_node_t *rp_add_child(
     const axutil_env_t *env,
     axiom_node_t       *root_node,
     Name_value         *node_id,
-    Name_value         *attribute);
+    Name_value         *attribute,
+    const axis2_char_t *whitespace);
 
-int rp_func_at_nodes(
+axiom_node_t *rp_add_child_el(
+    const axutil_env_t *env,
+    axiom_node_t       *root_node,
+    const axis2_char_t *element_name,
+    const axis2_char_t *whitespace);
+
+int sp_func_at_nodes(
     const axutil_env_t * env,
     axiom_node_t *root_node,
     const axis2_char_t *local_name,
     int (* func)(const axutil_env_t * env, axiom_node_t *node, void *arg3),
     void *func_arg
     );
+
+void sp_add_whspace(
+	const axutil_env_t *env,
+    axiom_node_t       *root_node,
+    const axis2_char_t *whitespace);
+
+axiom_node_t *sp_latest_named(
+    const axutil_env_t *env,
+    axiom_node_t       *root_node,
+    const axis2_char_t *local_name,
+    time_t             *node_time);
 
 axis2_char_t *rp_get_ref_href(
     const axutil_env_t   *env,
@@ -375,6 +423,12 @@ void rp_delete_nonsoap(
     const axutil_env_t * env,
     axiom_node_t *r_node);
 
+void sp_update_lineage(
+    const axutil_env_t * env,
+    axiom_node_t *return_node,
+    axiom_node_t *request_node,
+    time_t request_time);
+
 void rp_print_coverage_hash_entries(
     const axutil_env_t *env,
     FILE               *fp,
@@ -386,5 +440,7 @@ char* sp_stream_getline(
 	char               *buf,
 	unsigned int       size,
 	const int          delete_cr);
+
+time_t sp_parse_time_str(const axis2_char_t *time_str);
 
 #endif

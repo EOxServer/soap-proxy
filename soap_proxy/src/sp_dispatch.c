@@ -36,6 +36,8 @@
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
+
 #include <axutil_url.h>
 
 #include "soap_proxy.h"
@@ -65,11 +67,16 @@ rp_dispatch_op(
     {
         if (
         		axutil_strcmp(op_name, "DescribeCoverage"      ) == 0 ||
-        		axutil_strcmp(op_name, "DescribeEOCoverageSet" ) == 0 ||
-        		axutil_strcmp(op_name, "GetCoverage"           ) == 0
+        		axutil_strcmp(op_name, "DescribeEOCoverageSet" ) == 0
         )
         {
         	return_node = rp_invokeBackend(env, node, protocol);
+        }
+        else if ( axutil_strcmp(op_name, "GetCoverage" ) == 0 )
+        {
+        	time_t request_time = time(NULL);
+        	return_node = rp_invokeBackend(env, node, protocol);
+            sp_update_lineage(env, return_node, node, request_time);
         }
         else if ( axutil_strcmp(op_name, "GetCapabilities" ) == 0 )
         {
