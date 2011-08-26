@@ -41,6 +41,17 @@
 #include <axiom_text.h>
 
 //-----------------------------------------------------------------------------
+// Convert time_t to a date sting ISO 8601 format in UTC, example:
+//   2011-02-04T15:45:52Z
+void
+sp_time_str(char *tmbuf, time_t time)
+{
+	struct tm tm0;
+	gmtime_r(&time, &tm0);
+	strftime(tmbuf, 22, "%FT%TZ", &tm0);
+}
+
+//-----------------------------------------------------------------------------
 // Date stings are expected in ISO 8601 format in UTC, example:
 //   2011-02-04T15:45:52Z
 time_t

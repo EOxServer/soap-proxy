@@ -162,36 +162,6 @@ static int f_delete_nonsoap(
 }
 
 //-----------------------------------------------------------------------------
-/*
-static int rewrite_url_attr(
-	const axutil_env_t *env,
-	axiom_node_t       *top_node,
-	axis2_char_t       *node_name
-	)
-{
-	axiom_node_t *node =  rp_find_named_child(env, top_node,  node_name, 1);
-	if (NULL == node) return 0;
-
-    axiom_attribute_t *href_attr = NULL;
-    axiom_element_t          *el = NULL;
-    axutil_qname_t           *qn = axutil_qname_create
-    		(env, "href", "http://www.w3.org/1999/xlink", "xlink");
-	if (axiom_node_get_node_type(node, env) == AXIOM_ELEMENT)
-	{
-		el        = axiom_node_get_data_element(node, env);
-		href_attr = axiom_element_get_attribute (el, env, qn);
-	}
-
-    if (NULL != href_attr)
-    {
-    	axiom_attribute_set_value (href_attr, env, rp_getRewriteURL());
-    }
-
-    return 0;
-}
-*/
-
-//-----------------------------------------------------------------------------
 // This function is invoked via sp_func_at_nodes() from sp_add_soapurl()
 static int f_add_soapurl(
 	const axutil_env_t * env,
@@ -224,7 +194,7 @@ static int f_add_soapurl(
       axiom_element_create(env, top_node, "Post", root_ns, &post_node);
 
 	axiom_namespace_t *xlink_ns = axiom_namespace_create(
-			env, "http://www.w3.org/1999/xlink", "xlink");
+			env, SP_XLINK_NAMESPACE_STR, "xlink");
 
     axiom_attribute_t *attr =
       axiom_attribute_create (env, "type", "simple", xlink_ns);
@@ -642,7 +612,7 @@ sp_update_lineage(
     		  env, ref_g1_node, "ServiceReference", ows_ns, &service_ref_node);
 
 	axiom_namespace_t *xlink_ns = sp_find_or_create_ns(
-			env, return_node, "http://www.w3.org/1999/xlink", "xlink");
+			env, return_node, SP_XLINK_NAMESPACE_STR, "xlink");
 
     axiom_attribute_t *attr =
       axiom_attribute_create (env, "type", "simple", xlink_ns);
@@ -670,15 +640,29 @@ sp_update_lineage(
     	axiom_node_add_child (req_msg_node, env, gc_node);
     }
 
-    // TODO: add timestamp!
-
-    // Now adjust the indentation of all the closing tags
+    // Adjust the indentation of closing tags
     sp_inc_whspace(curr_whspace, -whspace_indent);
     sp_add_whspace(env, req_msg_node, curr_whspace);
     sp_inc_whspace(curr_whspace, -whspace_indent);
     sp_add_whspace(env, service_ref_node, curr_whspace);
     sp_inc_whspace(curr_whspace, -whspace_indent);
     sp_add_whspace(env, ref_g1_node, curr_whspace);
+    sp_inc_whspace(curr_whspace, -whspace_indent);
+
+    //<gml:timePosition>2011-08-24T14:18:52Z</gml:timePosition>
+    sp_add_whspace(env, lineage_node, curr_whspace);
+	axiom_namespace_t *gml_ns = sp_find_or_create_ns(
+			env, return_node, SP_GML_NAMESPACE_STR, "gml");
+
+    axiom_node_t    *time_pos_node = axiom_node_create(env);
+    axiom_element_t *time_pos_el = axiom_element_create(
+    		env, lineage_node, "timePosition", gml_ns, &time_pos_node);
+
+    char tmbuf[22];
+    sp_time_str(tmbuf, time(NULL));
+    axiom_element_set_text(time_pos_el, env, tmbuf, time_pos_node);
+
+    // Adjust the indentation of remaining closing tags
     sp_inc_whspace(curr_whspace, -whspace_indent);
     sp_add_whspace(env, lineage_node, curr_whspace);
 
