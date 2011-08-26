@@ -37,6 +37,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 
 #include "soap_proxy.h"
 #include "sp_svc.h"
@@ -209,6 +210,37 @@ int check_end_bound(FILE *fp)
         return -1;  // error
     }
 }
+
+//-----------------------------------------------------------------------------
+/**
+ * @param env
+ * @param dst_buf
+ * @param src_buf
+ * @param max_size
+ * @return number of chars copied into dst_buf, including a trailing '\0'.
+ */
+int sp_copyline(
+    const axutil_env_t *env,
+    char               *dst_buf,
+    char               *src_buf,
+    const int           max_size)
+{
+	char *c = src_buf;
+	int   n = 1;
+
+	if (max_size < 1) return 0;
+
+    while (n<max_size)
+    {
+    	*dst_buf = *src_buf++;
+    	n++;
+    	if ('\n' == *dst_buf || '\0' == *dst_buf) break;
+    	dst_buf++;
+    }
+    *dst_buf = '\0';
+    return n;
+}
+
 //-----------------------------------------------------------------------------
 //====================== Stream related  ================================
 
@@ -316,7 +348,7 @@ static const char *rp_httpHeaderKeys[] =
 /** Initialise hh
  * @param hh
  */
-void rp_initHttpHeaderStruct(hh_values *hh) 
+void sp_initHttpHeaderStruct(hh_values *hh) 
 {
     int i;
     for ( i=0; i<SP_HH_NKEYS; i++)
@@ -331,7 +363,7 @@ void rp_initHttpHeaderStruct(hh_values *hh)
  * @param env
  * @param hh
  */
-void rp_freeHttpHeaders(
+void sp_freeHttpHeaders(
     const axutil_env_t * env,
     hh_values *hh) 
 {
@@ -347,7 +379,7 @@ void rp_freeHttpHeaders(
  * @param fp
  * @param hh
  */
-void rp_printHttpHeaders(
+void sp_printHttpHeaders(
     FILE *fp,
     hh_values *hh)
 {
@@ -367,7 +399,7 @@ void rp_printHttpHeaders(
  * @param hh
  * @param fp
  */
-void rp_parseHttpHeaders(
+void sp_parseHttpHeaders_fp(
     const axutil_env_t *env,
     hh_values          *hh,
     FILE               *fp)
@@ -392,36 +424,6 @@ void rp_parseHttpHeaders(
             }
         }
     }
-}
-
-//-----------------------------------------------------------------------------
-/**
- * @param env
- * @param dst_buf
- * @param src_buf
- * @param max_size
- * @return number of chars copied into dst_buf, including a trailing '\0'.
- */
-int sp_copyline(
-    const axutil_env_t *env,
-    char               *dst_buf,
-    char               *src_buf,
-    const int           max_size)
-{
-	char *c = src_buf;
-	int   n = 1;
-
-	if (max_size < 1) return 0;
-
-    while (n<max_size)
-    {
-    	*dst_buf = *src_buf++;
-    	n++;
-    	if ('\n' == *dst_buf || '\0' == *dst_buf) break;
-    	dst_buf++;
-    }
-    *dst_buf = '\0';
-    return n;
 }
 
 //-----------------------------------------------------------------------------
@@ -548,11 +550,37 @@ void scan_boundId(
 
 //-----------------------------------------------------------------------------
 /**
- * @param el_node
+ * @param text_node of type AXIOM_TEXT
  * @param env
  * @return text contents of el_node
  */
-const axis2_char_t *rp_getText(
+const axis2_char_t *sp_get_text_text(
+		axiom_node_t       *text_node,
+		const axutil_env_t *env)
+{
+	const axis2_char_t *ret_val  = NULL;
+
+	if (text_node &&
+			axiom_node_get_node_type(text_node, env) == AXIOM_TEXT)
+	{
+		axiom_text_t *val_text = (axiom_text_t *)
+                				axiom_node_get_data_element(text_node, env);
+		if (val_text)
+		{
+			ret_val = axiom_text_get_value(val_text, env);
+		}
+	}
+
+	return ret_val;
+}
+
+//-----------------------------------------------------------------------------
+/**
+ * @param el_node of type AXIOM_ELEMENT
+ * @param env
+ * @return text contents of el_node
+ */
+const axis2_char_t *sp_get_text_el(
 		axiom_node_t       *el_node,
 		const axutil_env_t *env)
 {
@@ -569,7 +597,7 @@ const axis2_char_t *rp_getText(
 			axiom_text_t *val_text = NULL;
 			val_text = (axiom_text_t *)
                 		axiom_node_get_data_element(val_node, env);
-			if (val_text && axiom_text_get_value(val_text, env))
+			if (val_text)
 			{
 				ret_val = axiom_text_get_value(val_text, env);
 			}
@@ -786,6 +814,7 @@ axiom_node_t *rp_find_node_with_text(
 }
 
 
+//-----------------------------------------------------------------------------
 /**
  * Delete the first child of 'root_node' with a matching 'local_name'.
  * @param env
@@ -808,6 +837,39 @@ void rp_delete_named_child(
 }
 
 //-----------------------------------------------------------------------------
+/**
+ * Add whitespace if not null.
+ * @param env
+ * @param root_node
+ * @param whitespace
+ */
+void sp_add_whspace(
+	const axutil_env_t *env,
+    axiom_node_t       *root_node,
+    const axis2_char_t *whitespace)
+{
+	if (whitespace)
+	{
+		axiom_node_t *whitespace_node  = axiom_node_create(env);
+		axiom_text_create (env, root_node, whitespace, &whitespace_node);
+	}
+}
+
+//-----------------------------------------------------------------------------
+/**
+ * Add whitespace if not null.
+ * @param env
+ * @param root_node
+ * @param whitespace
+ */
+void sp_inc_whspace(
+		axis2_char_t *curr_whspace,
+		int whspace_indent)
+{
+	// TODO: not implemented
+}
+
+//-----------------------------------------------------------------------------
 /** Add a node with an element to root_node, either as child or as sibling.
  *   The element name is in the same namespace as the root node's name.
  *   The element may optionally include one attribute; if no attribute
@@ -826,6 +888,8 @@ void rp_delete_named_child(
  * @param attribute optional Name_value pair for setting an attribute,
  *   may be NULL.
  * @param sibling 1: add as sibling, 0: add as child.
+ * @param whitespace: whitespace added before the newly added element (the
+ *  newly added element is indented by this space.
  * @return ptr to the the newly added node.
  */
 static axiom_node_t *rp_add_node(
@@ -833,9 +897,12 @@ static axiom_node_t *rp_add_node(
     axiom_node_t       *root_node,
     Name_value         *node_id,
     Name_value         *attribute,
-    int                sibling
+    int                sibling,
+    const axis2_char_t *whitespace
  )
 {
+
+	sp_add_whspace(env, root_node, whitespace);
 
     axiom_namespace_t * ns = rp_get_namespace (env, root_node);
 
@@ -862,7 +929,7 @@ static axiom_node_t *rp_add_node(
 
     if (AXIS2_SUCCESS != success)
     {
-    	p_log_error(env, "*** S2P(%s:%d): Failed to add node name='%s'\n",
+    	rp_log_error(env, "*** S2P(%s:%d): Failed to add node name='%s'\n",
     			__FILE__, __LINE__, node_id->name);
     }
 
@@ -893,10 +960,11 @@ axiom_node_t *rp_add_sibbling(
     const axutil_env_t *env,
     axiom_node_t       *root_node,
     Name_value         *node_id,
-    Name_value         *attribute
+    Name_value         *attribute,
+    const axis2_char_t *whitespace
  )
 {
-	return rp_add_node(env, root_node, node_id, attribute, 1);
+	return rp_add_node(env, root_node, node_id, attribute, 1, whitespace);
 }
 
 //-----------------------------------------------------------------------------
@@ -923,10 +991,34 @@ axiom_node_t *rp_add_child(
     const axutil_env_t *env,
     axiom_node_t       *root_node,
     Name_value         *node_id,
-    Name_value         *attribute
+    Name_value         *attribute,
+    const axis2_char_t *whitespace
  )
 {
-	return rp_add_node(env, root_node, node_id, attribute, 0);
+	return rp_add_node(env, root_node, node_id, attribute, 0, whitespace);
+}
+
+//-----------------------------------------------------------------------------
+/** Add a child node/element to root_node.
+ *   The element name is in the same namespace as the root node's name.
+ *
+ * @param env
+ * @param root_node
+ * @param element_name
+ * @param whitespace  string to prepend as whitespace. Can be NULL.
+ * @return ptr to the the newly added node.
+ */
+axiom_node_t *rp_add_child_el(
+    const axutil_env_t *env,
+    axiom_node_t       *root_node,
+    const axis2_char_t *element_name,
+    const axis2_char_t *whitespace
+ )
+{
+	Name_value nn;
+	nn.name  = element_name;
+	nn.value = NULL;
+	return rp_add_node(env, root_node, &nn, NULL, 0, whitespace);
 }
 
 //-----------------------------------------------------------------------------
@@ -945,6 +1037,36 @@ axiom_namespace_t * rp_get_namespace(
 }
 
 //-----------------------------------------------------------------------------
+/** Find or create namespace.
+ * @param env
+ * @param node
+ * @param uri
+ * @param prefix
+ * @return ptr to the namespace of 'node'.
+ */
+axiom_namespace_t *sp_find_or_create_ns(
+    const axutil_env_t *env,
+    axiom_node_t *node,
+    const axis2_char_t *uri,
+    const axis2_char_t *prefix)
+{
+	axiom_namespace_t *ns = NULL;
+	axiom_node_t *root_el_node =
+			axiom_node_get_first_element (node, env);
+	if (axiom_node_get_node_type(root_el_node, env) == AXIOM_ELEMENT)
+	{
+		axiom_element_t *el = (axiom_element_t *)
+    		  axiom_node_get_data_element (root_el_node, env);
+		ns = axiom_element_find_declared_namespace(el, env, uri, prefix);
+
+	}
+	if (NULL == ns)
+	{
+		ns = axiom_namespace_create (env, uri, prefix);
+	}
+}
+
+//-----------------------------------------------------------------------------
 /** Excecute 'func' on all immediate children of 'root_node' with 'local_name'.
  * @param env
  * @param root_node
@@ -956,7 +1078,7 @@ axiom_namespace_t * rp_get_namespace(
  * @param func_arg passed as the third arg to the function.
  * @return the number of times func returned 0.
  */
-int rp_func_at_nodes(
+int sp_func_at_nodes(
     const axutil_env_t *env,
     axiom_node_t *root_node,
     const axis2_char_t *local_name,
@@ -980,9 +1102,9 @@ int rp_func_at_nodes(
                 axiom_element_t * el = (axiom_element_t *)
                   axiom_node_get_data_element (curr_node, env);
                 axis2_char_t *el_name = axiom_element_get_localname( el, env);
-                if ( 0 == strncasecmp( local_name, el_name, strlen(local_name) ) )
+                if ( 0 == strncasecmp(local_name, el_name, strlen(local_name)))
                 {
-                    if (0 == func(env, curr_node, NULL)) num_executed++;
+                    if (0 == func(env, curr_node, func_arg)) num_executed++;
                 }
             }  // if
         } // while
@@ -991,6 +1113,73 @@ int rp_func_at_nodes(
     }
 
     return num_executed;
+}
+
+#define MAX_LAST_TIMELEN 64
+
+//-----------------------------------------------------------------------------
+/** Find the most recent named node.
+ * @param env
+ * @param root_node
+ * @param local_name
+ * @param node_time return parameter, is set the time timePosition of the node.
+ * @return the most recent.
+ */
+axiom_node_t *sp_latest_named(
+    const axutil_env_t *env,
+    axiom_node_t       *root_node,
+    const axis2_char_t *local_name,
+    time_t             *node_time
+    )
+{
+	axiom_node_t *ret_node  = NULL;
+	axis2_char_t  last_time[MAX_LAST_TIMELEN];
+	strcpy(last_time, "0");
+
+    axiom_children_iterator_t *chit =
+      axiom_children_iterator_create (env,
+    		  axiom_node_get_first_child(root_node, env));
+
+    if (NULL != chit)
+    {
+        axiom_node_t *curr_node = NULL;
+        while (axiom_children_iterator_has_next(chit, env))
+        {
+            curr_node = axiom_children_iterator_next(chit, env);
+            if (axiom_node_get_node_type(curr_node, env) == AXIOM_ELEMENT)
+            {
+                axiom_element_t * el = (axiom_element_t *)
+                  axiom_node_get_data_element (curr_node, env);
+                axis2_char_t *el_name = axiom_element_get_localname( el, env);
+
+                if ( 0 == strncasecmp(local_name, el_name, strlen(local_name)))
+                {
+                    axiom_node_t *t_node =
+                    		rp_find_named_child(env, curr_node, "timePosition", 1);
+            		const axis2_char_t *txt = sp_get_text_el(t_node, env);
+
+            		if (strncmp(last_time, txt, strlen(last_time)) < 0)
+            		{
+            			if (strlen(txt) >= MAX_LAST_TIMELEN)
+            			{
+            				rp_log_error(env,
+            						"*WARNING sp_util.c(%s %d):"
+            						" timePosition text too long (%d)\n",
+            						__FILE__, __LINE__, strlen(txt));
+            			}
+
+            			strncpy(last_time, txt, MAX_LAST_TIMELEN-1);
+            			ret_node = curr_node;
+            		}
+                }
+            }  // if
+        } // while
+
+        axiom_children_iterator_free (chit, env);
+    }
+
+    *node_time = sp_parse_time_str(last_time);
+    return ret_node;
 }
 
 //-----------------------------------------------------------------------------
@@ -1074,4 +1263,75 @@ sp_stream_cleanup(
 	}
 	axutil_stream_free  (sstream, env);
 }
+
+//-----------------------------------------------------------------------------
+void
+sp_dump_bad_content(
+    const axutil_env_t *env,
+    char               *contentTypeStr,
+    axutil_stream_t    *st,
+    char               *header_blob)
+{
+    int data_len      = 0;
+    char *bad_data    = NULL;
+    const int max_len = 2048;
+
+    if (rp_content_is_text_type(contentTypeStr))
+    {
+    	bad_data = sp_load_binary_file(env, header_blob, st,  &data_len);
+    	if (data_len > max_len) data_len = max_len;
+    	fprintf(stderr,"Start of bad data: (max %d):\n", max_len);
+    	fwrite(bad_data, 1, data_len, stderr);
+    	fprintf(stderr,"\n");
+    	fflush(stderr);
+    }
+    else
+    {
+    	fprintf(stderr,"Bad data is not text.\n");
+    	fflush(stderr);
+    }
+
+}
+
+//-----------------------------------------------------------------------------
+void sp_print_node_type(axiom_types_t tt)
+{
+	switch(tt)
+	{
+	case  AXIOM_DOCUMENT:     fprintf(stderr,"AXIOM_DOCUMENT");    break;
+	case  AXIOM_ELEMENT:      fprintf(stderr,"AXIOM_ELEMENT");     break;
+	case  AXIOM_DOCTYPE:      fprintf(stderr,"AXIOM_DOCTYPE");     break;
+	case  AXIOM_COMMENT:      fprintf(stderr,"AXIOM_COMMENT");     break;
+	case  AXIOM_ATTRIBUTE:    fprintf(stderr,"AXIOM_ATTRIBUTE");   break;
+	case  AXIOM_NAMESPACE:    fprintf(stderr,"AXIOM_NAMESPACE");   break;
+	case  AXIOM_TEXT:         fprintf(stderr,"AXIOM_TEXT");        break;
+	case  AXIOM_DATA_SOURCE:  fprintf(stderr,"AXIOM_DATA_SOURCE"); break;
+	case  AXIOM_PROCESSING_INSTRUCTION:
+		fprintf(stderr,"AXIOM_PROCESSING_INSTRUCTION");
+		break;
+	default:
+		fprintf(stderr,"unknown type");
+	}
+	fprintf(stderr,"\n"); fflush(stderr);
+
+}
+
+//-----------------------------------------------------------------------------
+axiom_node_t *
+sp_get_last_text_node(
+    axiom_node_t       *node,
+    const axutil_env_t *env)
+{
+	if (NULL == node) return NULL;
+
+	axiom_node_t *child = axiom_node_get_last_child (node, env);
+	while (child != NULL &&
+			axiom_node_get_node_type(child, env) != AXIOM_TEXT)
+	{
+		child = axiom_node_get_previous_sibling(child, env);
+	}
+	return child;
+}
+
+
 

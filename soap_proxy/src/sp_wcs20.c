@@ -35,6 +35,8 @@
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
+
 #include <axutil_linked_list.h>
 
 #include "soap_proxy.h"
@@ -47,12 +49,13 @@
  *    Constraint[@name="PostEncoding"]/AllowedValues
  *  (See OGC 09-148r1 and OGC 09-149r1).
  *
- * This function is invoked via rp_func_at_nodes() from rp_inject_soap_cap20()
+* This function may be invoked via sp_func_at_nodes() if needed.
+ *
  */
 static int f_add_PostEncodingSOAP(
     const axutil_env_t * env,
     axiom_node_t *target_node,
-    void *arg2
+    void *arg3
  )
 {
 	//
@@ -136,17 +139,17 @@ static int f_add_PostEncodingSOAP(
     Name_value value_nv_n;
     value_nv_n.name  = "Value";
     value_nv_n.value = "SOAP";
-    rp_add_child (env, allowedValues_node, &value_nv_n, NULL);
+    rp_add_child (env, allowedValues_node, &value_nv_n, NULL, NULL);
 
     return 0;
 }
 
 //-----------------------------------------------------------------------------
-// This function is invoked via rp_func_at_nodes() from rp_delete_nonsoap()
+// This function is invoked via sp_func_at_nodes() from rp_delete_nonsoap()
 static int f_delete_nonsoap(
 	const axutil_env_t * env,
 	axiom_node_t *target_node,
-	void *arg2)
+	void *arg3)
 {
 	int n_done = 0;
     axiom_node_t *top_node = rp_find_named_child(env, target_node, "HTTP", 1);
@@ -189,11 +192,11 @@ static int rewrite_url_attr(
 */
 
 //-----------------------------------------------------------------------------
-// This function is invoked via rp_func_at_nodes() from sp_add_soapurl()
+// This function is invoked via sp_func_at_nodes() from sp_add_soapurl()
 static int f_add_soapurl(
 	const axutil_env_t * env,
 	axiom_node_t *target_node,
-	void *arg2)
+	void *arg3)
 {
     //
     // Find the paths
@@ -232,14 +235,13 @@ static int f_add_soapurl(
 
     Name_value c_nv;  c_nv.name = "Constraint";  c_nv.value = NULL;
     Name_value p_nv;  p_nv.name = "name";        p_nv.value = "PostEncoding";
-    axiom_node_t *c_node = rp_add_child(env, post_node, &c_nv, &p_nv);
+    axiom_node_t *c_node = rp_add_child(env, post_node, &c_nv, &p_nv, NULL);
 
-    c_nv.name = "AllowedValues";
-    axiom_node_t *a_node = rp_add_child(env, c_node, &c_nv, NULL);
+    axiom_node_t *a_node = rp_add_child_el(env, c_node, "AllowedValues", NULL);
 
     c_nv.name  = "Value";
     c_nv.value = "SOAP";
-    rp_add_child(env, a_node, &c_nv, NULL);
+    rp_add_child(env, a_node, &c_nv, NULL, NULL);
 
     return 0;
 }
@@ -275,8 +277,8 @@ void rp_inject_soap_cap20(
     ext_nv.name  = "Profile";
     ext_nv.value = SP_WCS_SOAP_EXTENSION;
     axiom_node_t *ext_node = (NULL == profile_node) ?
-    		rp_add_child    (env, svc_node,    &ext_nv, NULL) :
-    		rp_add_sibbling (env, profile_node, &ext_nv, NULL);
+    		rp_add_child    (env, svc_node,    &ext_nv, NULL, NULL) :
+    		rp_add_sibbling (env, profile_node, &ext_nv, NULL, NULL);
 
     // Add the EO WCS Application Profile for SOAP, but only
     // if another EO WCS profile is already present
@@ -285,36 +287,7 @@ void rp_inject_soap_cap20(
     )
     {
     	ext_nv.value = SP_EO_WCS_SOAP_PROFILE;
-    	rp_add_sibbling (env, ext_node, &ext_nv, NULL);
-    }
-
-}
-
-//-----------------------------------------------------------------------------
-void
-sp_dump_bad_content(
-    const axutil_env_t *env,
-    char               *contentTypeStr,
-    axutil_stream_t    *st,
-    char               *header_blob)
-{
-    int data_len      = 0;
-    char *bad_data    = NULL;
-    const int max_len = 2048;
-
-    if (rp_content_is_text_type(contentTypeStr))
-    {
-    	bad_data = sp_load_binary_file(env, header_blob, st,  &data_len);
-    	if (data_len > max_len) data_len = max_len;
-    	fprintf(stderr,"Start of bad data: (max %d):\n", max_len);
-    	fwrite(bad_data, 1, data_len, stderr);
-    	fprintf(stderr,"\n");
-    	fflush(stderr);
-    }
-    else
-    {
-    	fprintf(stderr,"Bad data is not text.\n");
-    	fflush(stderr);
+    	rp_add_sibbling (env, ext_node, &ext_nv, NULL, NULL);
     }
 
 }
@@ -441,7 +414,7 @@ sp_build_response20(
     axiom_node_t *return_node = NULL;
 
     hh_values hh;
-    rp_initHttpHeaderStruct(&hh);
+    sp_initHttpHeaderStruct(&hh);
 
     char header_buf[2560];
     if (sp_load_header_blob(env, st, header_buf, 2560) < 0)
@@ -457,7 +430,7 @@ sp_build_response20(
     char *contentTypeStr = hh.values[SP_HH_CONTENTTYPE];
     if ( NULL == contentTypeStr)
     {
-        rp_freeHttpHeaders(env, &hh);
+        sp_freeHttpHeaders(env, &hh);
         SP_ERROR(env, SP_USER_ERR_CONTENTHEADERS);
         return NULL;
     }
@@ -490,7 +463,7 @@ sp_build_response20(
     	}
     }
 
-    rp_freeHttpHeaders(env, &hh);
+    sp_freeHttpHeaders(env, &hh);
     return return_node;
 
 }
@@ -517,13 +490,12 @@ void rp_delete_nonsoap(
     	return;
     }
 
-    rp_func_at_nodes(env,
+    sp_func_at_nodes(env,
                      axiom_node_get_first_child(ops_node, env),
                      "Operation",
                      &f_delete_nonsoap,
                      NULL);
 }
-
 
 //-----------------------------------------------------------------------------
 void sp_add_soapurl(
@@ -545,11 +517,175 @@ void sp_add_soapurl(
     	return;
     }
 
-    rp_func_at_nodes(env,
+    sp_func_at_nodes(env,
                      axiom_node_get_first_child(ops_node, env),
                      "Operation",
                      &f_add_soapurl,
                      NULL);
 
+}
 
+//-----------------------------------------------------------------------------
+void
+sp_update_lineage(
+    const axutil_env_t * env,
+    axiom_node_t *return_node,
+    axiom_node_t *request_node,
+    time_t        request_time)
+{
+    axiom_node_t *eom_node =
+    		rp_find_named_child(env, return_node, "EOMetadata", 1);
+    if (NULL == eom_node)
+    {
+    	rp_log_error(env, "*Warning S2P(%s:%d): %s node not found.\n",
+    			__FILE__, __LINE__,  "EOMetadata");
+    	return;
+    }
+
+    time_t lineage_time = 0;
+    axiom_node_t *curr_lineage =
+    		sp_latest_named(env, eom_node, "lineage", &lineage_time);
+
+    // TODO: should improve handling of insignificant whitespace.
+
+    // grab some whitespace for future use
+    axiom_node_t *lin_whsp_node = sp_get_last_text_node(curr_lineage, env);
+    axiom_node_t *eom_whsp_node = sp_get_last_text_node(eom_node,     env);
+
+    const axis2_char_t *lin_whsp_str = sp_get_text_text(lin_whsp_node, env);
+    const axis2_char_t *eom_whsp_str = sp_get_text_text(eom_whsp_node, env);
+    int whspace_indent = SP_DEFAULT_WHSPACE;
+    if (NULL != lin_whsp_str && NULL != eom_whsp_str)
+    {
+    	whspace_indent =
+    			axutil_strlen(lin_whsp_str) - axutil_strlen(eom_whsp_str);
+    	if (whspace_indent < 0 || whspace_indent >12)
+    	{
+    		rp_log_error(env,
+    				"*Warning S2P: funny whitespace indent (%d) calculated.\n",
+    				whspace_indent);
+    		whspace_indent = SP_DEFAULT_WHSPACE;
+    	}
+    }
+
+    axis2_char_t curr_whspace[SP_MAX_LOCAL_STR_LEN];
+    strncpy(curr_whspace, lin_whsp_str, SP_MAX_LOCAL_STR_LEN-1);
+    curr_whspace[SP_MAX_LOCAL_STR_LEN-1] = '\0';
+
+    // The most recent Lineage data is deleted only if it has been added
+    // in the time period since we started processing this request.
+    fprintf(stderr,"l_lt=%lld\nrq_t=%lld\n", lineage_time, request_time);
+    if (NULL != curr_lineage && lineage_time >= request_time)
+    {
+    	// OK to delete lineage
+    	axiom_node_detach    (curr_lineage, env);
+		axiom_node_free_tree (curr_lineage, env);
+		curr_lineage  = NULL;
+		lin_whsp_node = NULL;
+		lin_whsp_str  = NULL;
+    }
+    else
+    {
+    	sp_add_whspace(env, eom_node, curr_whspace);
+    }
+    // Add a new lineage.
+    /*  here is an example:
+            <wcseo:lineage>
+                <!-- GetCoverage request via POST -->
+                <wcseo:referenceGetCoverage>
+                    <ows:ServiceReference xlink:href="http://www.someWCS.org">
+                        <ows:RequestMessage>
+                            <wcs:GetCoverage
+                                xmlns:wcs="http://www.opengis.net/wcs/2.0"
+                                xmlns:gml="http://www.opengis.net/gml/3.2"
+                                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                                xsi:schemaLocation="http://www.opengis.net/wcs/2.0 http://schemas.opengis.net/wcs/2.0/wcsAll.xsd"
+                                service="WCS" version="2.0.0">
+                                <wcs:format>application/gml+xml</wcs:format>
+                                <wcs:CoverageId>someEOCoverage1</wcs:CoverageId>
+                            </wcs:GetCoverage>
+                        </ows:RequestMessage>
+                    </ows:ServiceReference>
+                </wcseo:referenceGetCoverage>
+                <gml:timePosition>2011-08-24T14:18:52Z</gml:timePosition>
+            </wcseo:lineage>
+
+     */
+
+    // <wcseo:lineage>
+    axiom_node_t *lineage_node =
+    		rp_add_child_el(env, eom_node, "lineage", NULL);
+
+    sp_inc_whspace(curr_whspace, whspace_indent);
+    sp_add_whspace(env, lineage_node, curr_whspace);
+
+    // comment
+    axiom_node_t *comment  = axiom_node_create(env);
+    axiom_comment_create (
+    		env,
+    		lineage_node,
+    		"POST GetCoverage request added by SOAP-TO-POST proxy.",
+    		&comment);
+
+	//<wcseo:referenceGetCoverage>
+	axiom_node_t *ref_g1_node =
+			rp_add_child_el(env, lineage_node, "referenceGetCoverage", curr_whspace);
+
+	// <ows:ServiceReference xlink:href="http://www.someWCS.org">
+    sp_inc_whspace(curr_whspace, whspace_indent);
+    sp_add_whspace(env, ref_g1_node, curr_whspace);
+	axiom_namespace_t *ows_ns =
+			sp_find_or_create_ns(env, return_node, SP_OWS_NAMESPACE_STR, "ows");
+
+    axiom_node_t    *service_ref_node = axiom_node_create(env);
+    axiom_element_t *service_ref_el =
+      axiom_element_create(
+    		  env, ref_g1_node, "ServiceReference", ows_ns, &service_ref_node);
+
+	axiom_namespace_t *xlink_ns = sp_find_or_create_ns(
+			env, return_node, "http://www.w3.org/1999/xlink", "xlink");
+
+    axiom_attribute_t *attr =
+      axiom_attribute_create (env, "type", "simple", xlink_ns);
+    axiom_element_add_attribute (service_ref_el, env, attr, service_ref_node);
+
+    attr = axiom_attribute_create (env, "href", rp_getSoapOpsURL(), xlink_ns);
+    axiom_element_add_attribute (service_ref_el, env, attr, service_ref_node);
+
+    //<ows:RequestMessage>
+    axiom_node_t *req_msg_node =
+    		rp_add_child_el(env,
+    				service_ref_node, "RequestMessage", curr_whspace);
+    sp_inc_whspace(curr_whspace, whspace_indent);
+
+
+    // Detach the request GetCoverage element from its parent
+    //  and attach it here.
+    axiom_node_t *gc_node =
+    		rp_find_named_node(env, request_node, "GetCoverage", 1);
+    if (gc_node)
+    {
+    	// TODO - pretty-up the the indentation to match current.
+        sp_add_whspace(env, req_msg_node, curr_whspace);
+    	axiom_node_detach    (gc_node, env);
+    	axiom_node_add_child (req_msg_node, env, gc_node);
+    }
+
+    // Now adjust the indentation of all the closing tags
+    sp_inc_whspace(curr_whspace, -whspace_indent);
+    sp_add_whspace(env, req_msg_node, curr_whspace);
+    sp_inc_whspace(curr_whspace, -whspace_indent);
+    sp_add_whspace(env, service_ref_node, curr_whspace);
+    sp_inc_whspace(curr_whspace, -whspace_indent);
+    sp_add_whspace(env, ref_g1_node, curr_whspace);
+    sp_inc_whspace(curr_whspace, -whspace_indent);
+    sp_add_whspace(env, lineage_node, curr_whspace);
+
+    // Adjust whitespace before the element
+    // that follows our new lineage element, whatever it may be.
+    sp_add_whspace(env, eom_node, eom_whsp_str);
+
+    // Delete the whitespace before any our insertions.
+	axiom_node_detach    (eom_whsp_node, env);
+	axiom_node_free_tree (eom_whsp_node, env);
 }
