@@ -670,6 +670,8 @@ sp_update_lineage(
     	axiom_node_add_child (req_msg_node, env, gc_node);
     }
 
+    // TODO: add timestamp!
+
     // Now adjust the indentation of all the closing tags
     sp_inc_whspace(curr_whspace, -whspace_indent);
     sp_add_whspace(env, req_msg_node, curr_whspace);
