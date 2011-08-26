@@ -557,29 +557,22 @@ sp_update_lineage(
     {
     	sp_add_whspace(env, eom_node, curr_whspace);
     }
-    // Add a new lineage.
-    /*  here is an example:
-            <wcseo:lineage>
-                <!-- GetCoverage request via POST -->
-                <wcseo:referenceGetCoverage>
-                    <ows:ServiceReference xlink:href="http://www.someWCS.org">
-                        <ows:RequestMessage>
-                            <wcs:GetCoverage
-                                xmlns:wcs="http://www.opengis.net/wcs/2.0"
-                                xmlns:gml="http://www.opengis.net/gml/3.2"
-                                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                                xsi:schemaLocation="http://www.opengis.net/wcs/2.0 http://schemas.opengis.net/wcs/2.0/wcsAll.xsd"
-                                service="WCS" version="2.0.0">
-                                <wcs:format>application/gml+xml</wcs:format>
-                                <wcs:CoverageId>someEOCoverage1</wcs:CoverageId>
-                            </wcs:GetCoverage>
-                        </ows:RequestMessage>
-                    </ows:ServiceReference>
-                </wcseo:referenceGetCoverage>
-                <gml:timePosition>2011-08-24T14:18:52Z</gml:timePosition>
-            </wcseo:lineage>
 
-     */
+    // Add a new lineage.  here is an example:
+    //    <wcseo:lineage>
+    //        <wcseo:referenceGetCoverage>
+    //            <ows:ServiceReference xlink:href="http://www.someWCS.org">
+    //                <ows:RequestMessage>
+    //                    <wcs:GetCoverage service="WCS" version="2.0.0">
+    //                        <wcs:format>application/gml+xml</wcs:format>
+    //                        <wcs:CoverageId>someEOCoverage1</wcs:CoverageId>
+    //                    </wcs:GetCoverage>
+    //                </ows:RequestMessage>
+    //            </ows:ServiceReference>
+    //        </wcseo:referenceGetCoverage>
+    //        <gml:timePosition>2011-08-24T14:18:52Z</gml:timePosition>
+    //    </wcseo:lineage>
+
 
     // <wcseo:lineage>
     axiom_node_t *lineage_node =
