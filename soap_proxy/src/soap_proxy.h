@@ -72,6 +72,12 @@
 #define SP_OWS_NAMESPACE_STR \
 	"http://www.opengis.net/ows/2.0"
 
+#define SP_GML_NAMESPACE_STR \
+	"http://www.opengis.net/gml/3.2"
+
+#define SP_XLINK_NAMESPACE_STR \
+	"http://www.w3.org/1999/xlink"
+
 #define SP_WCSPROXY_NAMESPACE_STR \
 	"http://www.eoxserver.org/soap_proxy/wcsProxy"
 
