@@ -574,7 +574,6 @@ sp_update_lineage(
 
     // The most recent Lineage data is deleted only if it has been added
     // in the time period since we started processing this request.
-    fprintf(stderr,"l_lt=%lld\nrq_t=%lld\n", lineage_time, request_time);
     if (NULL != curr_lineage && lineage_time >= request_time)
     {
     	// OK to delete lineage
