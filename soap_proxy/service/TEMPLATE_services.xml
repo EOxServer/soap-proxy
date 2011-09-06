@@ -54,7 +54,7 @@
     <description>
        This proxy service accepts O3S WCS 2.0 SOAP requests, optionally with
        the Earth Observation Application Profile, and invokes a corresponding
-       POST operation on a connected mapserver.
+       POST operation on a connected mapserver or EOxServer.
        The operation GetMsVersion is a debugging information operation for
        this service, and is not a O3S WCS operation.  It reports the version
        of the mapserver connected this service. It may not be available in all
