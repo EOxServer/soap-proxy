@@ -8,6 +8,13 @@ Prerequisites:
   Be sure to have the environment variable XML_CATALOG_FILES set in .bashrc
   or otherwise available automatically when a shell starts.
 
+  The tests assume an exoserver is configured  as the backend for soap_proxy,
+  with the default test data loaded and available.  In particular the
+  following data sets are required:
+
+ MER_FRS_1P_reduced
+ mosaic_MER_FRS_1PNPDE20060816_090929_000001972050_00222_23322_0058_RGB_reduced
+
 
 Testing Instructions
 --------------------
@@ -19,7 +26,7 @@ Use soapui (www.soapui.org) for testing.
 See CONFIG_SOAPUI for instructions on using soapui with local xsd schema
 definitions.
 
-Ensure web access is available. (No matter what sopaui seems to load some
+Ensure web access is available. (No matter what, sopaui seems to load some
 schemas from the web. There may be a way to avoid this, but to discover
 how remains TBD).  If you use a proxy to access the web set it up under
 FIle -> preferences --> Proxy Settings.
