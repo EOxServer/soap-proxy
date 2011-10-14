@@ -14,7 +14,6 @@
             <ns1:Version>2.0.0</ns1:Version>
          </ns1:AcceptVersions>
       </ns:GetCapabilities>
-      </ns:GetCapabilities>
    </soapenv:Body>
 </soapenv:Envelope>]]></con:request><con:assertion type="SOAP Fault Assertion" name="Not SOAP Fault"/><con:assertion type="Schema Compliance" name="Schema Compliance"><con:configuration><definition/></con:configuration></con:assertion><con:assertion type="XQuery Match" name="Profile-wcs-soap"><con:configuration><path>declare namespace ogc='http://www.opengis.net/ogc';
 declare namespace swe='http://www.opengis.net/swe/2.0';
