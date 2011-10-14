@@ -108,11 +108,11 @@ xmlns:ns="http://www.opengis.net/wcs/2.0">
       </ns:DescribeCoverage>
    </soapenv:Body>
 </soapenv:Envelope>]]></con:request><con:assertion type="SOAP Fault Assertion" name="Not SOAP Fault"/><con:assertion type="GroovyScriptAssertion" name="Schema compliance via  xmllint"><con:configuration><scriptText>/*
- *  SOAPUI script to check DescribeCoverage response againtst the proposed
+ *  SOAPUI script to check DescribeCoverage response against the proposed
  *  WCS 2.0 schema.  
- *  Checking is done by runing xmllint externally. 
+ *  Checking is done by running xmllint externally. 
  *  The schema definition must be available via a catalog, defined by the 
- *   XML_CATALOG_FILES env variable. This varaible must be availabe in 
+ *   XML_CATALOG_FILES env variable. This variable must be available in 
  *  bash upon startup (i.e. set in .bashrc)
  *
  *  Copyright (C) 2011 ANF DATA spol. s r.o. 
@@ -154,7 +154,7 @@ xmlns:wcs="http://www.opengis.net/wcs/2.0">
    </soapenv:Body>
 </soapenv:Envelope>]]></con:request>
 <con:assertion type="GroovyScriptAssertion" name="Validate Request"><con:configuration><scriptText>// Run xmllint using local schemas, set up via the XML_CATALOG_FILES env variable.
-//  IThis varaible must be availabe in bash upon startup (i.e. set in .bashrc)
+//  This variable must be available in bash upon startup (i.e. set in .bashrc)
 
 ff = new File("/tmp", "soapui_GC2_lock");
 assert ff.createNewFile()
