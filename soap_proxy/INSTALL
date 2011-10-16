@@ -64,12 +64,15 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    You should get a page that says "Deployed Services" and is otherwise blank.
 
 2. Configure and Compile Soap Proxy:
-    In services/soapProxy.wsdl set '<soap:address location=.../>'.
-    In services.xml set the paths for 'MapFile' and one of
-       'MapServ' or 'BackendURL'.
 
-   cd src
-    -->  in Makefile set AXIS2C_HOME appropriately
+   cd <...>/soap_proxy/service
+
+   In 'soapProxy.wsdl' set '<soap:address location=.../>'.
+   Copy TEMLATE_services.xml to ``services.xml``.
+   In 'service/services.xml' set 'BackendURL' to the address of eoxserver.
+
+   cd ../src
+    -->  in Makefile or in your environment set AXIS2C_HOME appropriately.
     make inst
 
    Check that 
