@@ -31,26 +31,18 @@ schemas from the web. There may be a way to avoid this, but to discover
 how remains TBD).  If you use a proxy to access the web set it up under
 FIle -> preferences --> Proxy Settings.
 
-Create a new project (CRTL-N),  load the wsdl (under "Initial WSD/WADL:").
-  --> After start-up, create a new project. 
-      Use the wsdl supplied by the soapProxy service:
-                http://your.server/sp_wcs?wsdl
-      It is also possible to use either a local wsdl (e.g. from the services
-      directory - but then the port binding address location must be edited to
-      refer to a working WCS SOAP service)
-  --> Uncheck 'Create Requests:'  (i.e. do not create sample requests for the
-      operations).
+Use File -> Import Project:
+   load the project 'soap_proxy_test_project.xml'
 
-Right click the just-created project to get a context menu, choose
-'Import Test Suite'.
+Optional if you have set up the service for a custom url (i.e. in
+the httpd configaration file you have set ProxyPass for  soapProxy to
+someting other than '/sp_eowcs'):
+  Open each test step (one for each of the three test cases) and set the
+  endpoint URL at the top of its editor window to the URL of your service. Be
+  sure to close the editor windows and save the project.
 
-Navigate to locate and load 's2p_TestSuite001.xml'.
 
-Open each test step (one for each of the three test cases) and set the
-endpoint URL at the top of its editor window to the URL of your service. Be
-sure to close the editor windows and save the project.
-
-Once the test suite is loaded,  configured and saved, right-click the test
+Once the test suite is loaded, right-click the test
 suite for a context menu -> Launch TestRunner --> [ Launch ]
 
 A successful run ends with a dialog 'Execution finished successfully'.
