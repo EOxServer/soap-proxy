@@ -5,7 +5,7 @@ Specificaiton document (O3S_SVS), section 7.5 Test Cases for TD_005.
 The test cases may be run individually, or all together using 'Launch TestRunner'. </con:description>
   <con:settings/>
   <con:runType>SEQUENTIAL</con:runType>
-  <con:testCase failOnError="true" failTestCaseOnErrors="true" keepSession="false" maxResults="0" name="GetCapabilities Valid TestCase" searchProperties="true"><con:settings/><con:testStep type="request" name="GetCapabilities"><con:settings/><con:config xsi:type="con:RequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:interface>spSoapBinding</con:interface><con:operation>GetCapabilities</con:operation><con:request name="GetCapabilities"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding><con:endpoint>http://127.0.0.1/sp_foo</con:endpoint><con:request><![CDATA[<soapenv:Envelope 
+  <con:testCase failOnError="true" failTestCaseOnErrors="true" keepSession="false" maxResults="0" name="GetCapabilities Valid TestCase" searchProperties="true"><con:settings/><con:testStep type="request" name="GetCapabilities"><con:settings/><con:config xsi:type="con:RequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:interface>spSoapBinding</con:interface><con:operation>GetCapabilities</con:operation><con:request name="GetCapabilities"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding><con:endpoint>http://176.9.245.37/sp_eowcs</con:endpoint><con:request><![CDATA[<soapenv:Envelope 
   xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" 
   xmlns:ns="http://www.opengis.net/wcs/2.0" 
   xmlns:ns1="http://www.opengis.net/ows/2.0">
@@ -197,7 +197,7 @@ declare namespace gmlcov='http://www.opengis.net/gmlcov/1.0';
   <con:testStep type="request" name="DescribeCoverage">
     <con:settings/><con:config xsi:type="con:RequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:interface>spSoapBinding</con:interface><con:operation>DescribeCoverage</con:operation><con:request name="DescribeCoverage">
     <con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding>
-    <con:endpoint>http://127.0.0.1/sp_foo</con:endpoint>
+    <con:endpoint>http://176.9.245.37/sp_eowcs</con:endpoint>
     <con:request><![CDATA[<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" 
 xmlns:ns="http://www.opengis.net/wcs/2.0">
    <soapenv:Header/>
@@ -230,7 +230,7 @@ def resStr = result.text
 ff.delete()
 println resStr
 assert resStr.indexOf('validates') > 1</scriptText></con:configuration></con:assertion><con:assertion type="Simple Contains" name="Contains CoverageDescription"><con:configuration><token>CoverageDescription</token><ignoreCase>false</ignoreCase><useRegEx>false</useRegEx></con:configuration></con:assertion><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:wsaConfig action="ooosRP#DescribeCoverage" mustUnderstand="NONE" version="200508"/>
-<con:wsrmConfig version="1.2"/></con:request></con:config></con:testStep><con:properties/></con:testCase><con:testCase failOnError="true" failTestCaseOnErrors="true" keepSession="false" maxResults="0" name="DescribeEOCoverageSet Valid TestCase" searchProperties="true"><con:settings/><con:testStep type="request" name="DescribeEOCoverageSet"><con:settings/><con:config xsi:type="con:RequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:interface>spSoapBinding</con:interface><con:operation>DescribeEOCoverageSet</con:operation><con:request name="DescribeEOCoverageSet"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding><con:endpoint>http://127.0.0.1/sp_foo</con:endpoint><con:request><![CDATA[<soapenv:Envelope 
+<con:wsrmConfig version="1.2"/></con:request></con:config></con:testStep><con:properties/></con:testCase><con:testCase failOnError="true" failTestCaseOnErrors="true" keepSession="false" maxResults="0" name="DescribeEOCoverageSet Valid TestCase" searchProperties="true"><con:settings/><con:testStep type="request" name="DescribeEOCoverageSet"><con:settings/><con:config xsi:type="con:RequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:interface>spSoapBinding</con:interface><con:operation>DescribeEOCoverageSet</con:operation><con:request name="DescribeEOCoverageSet"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding><con:endpoint>http://176.9.245.37/sp_eowcs</con:endpoint><con:request><![CDATA[<soapenv:Envelope 
 xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" 
 xmlns:wcseo="http://www.opengis.net/wcseo/1.0"
 xmlns:wcs="http://www.opengis.net/wcs/2.0">
@@ -731,7 +731,7 @@ declare namespace gmlcov='http://www.opengis.net/gmlcov/1.0';
       </gml:TimePeriod>
     </wcseo:DatasetSeriesDescription>
   </wcseo:DatasetSeriesDescriptions>
-</wcseo:EOCoverageSetDescription>]]></content><allowWildcards>false</allowWildcards></con:configuration></con:assertion><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:wsaConfig mustUnderstand="NONE" version="200508"/><con:wsrmConfig version="1.2"/></con:request></con:config></con:testStep><con:properties/></con:testCase><con:testCase failOnError="true" failTestCaseOnErrors="true" keepSession="false" maxResults="0" name="GetCoverage Valid TestCase" searchProperties="true"><con:settings/><con:testStep type="request" name="GetCoverage"><con:settings/><con:config xsi:type="con:RequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:interface>spSoapBinding</con:interface><con:operation>GetCoverage</con:operation><con:request name="GetCoverage"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding><con:endpoint>http://127.0.0.1/sp_foo</con:endpoint><con:request><![CDATA[<soapenv:Envelope 
+</wcseo:EOCoverageSetDescription>]]></content><allowWildcards>false</allowWildcards></con:configuration></con:assertion><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:wsaConfig mustUnderstand="NONE" version="200508"/><con:wsrmConfig version="1.2"/></con:request></con:config></con:testStep><con:properties/></con:testCase><con:testCase failOnError="true" failTestCaseOnErrors="true" keepSession="false" maxResults="0" name="GetCoverage Valid TestCase" searchProperties="true"><con:settings/><con:testStep type="request" name="GetCoverage"><con:settings/><con:config xsi:type="con:RequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:interface>spSoapBinding</con:interface><con:operation>GetCoverage</con:operation><con:request name="GetCoverage"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding><con:endpoint>http://176.9.245.37/sp_eowcs</con:endpoint><con:request><![CDATA[<soapenv:Envelope 
 xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" 
 xmlns:wcs="http://www.opengis.net/wcs/2.0">
    <soapenv:Header/>
@@ -831,7 +831,7 @@ log.info "Verification OK: Attachment contains expected '"+check1+", lineage dat
 ]]></scriptText></con:configuration></con:assertion><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:wsaConfig action="ooosRP#GetCoverage" mustUnderstand="NONE" version="200508"/>
 <con:wsrmConfig version="1.2"/></con:request>
 </con:config>
-</con:testStep><con:properties/></con:testCase><con:testCase failOnError="true" failTestCaseOnErrors="true" keepSession="false" maxResults="0" name="Unknown Operation TestCase" searchProperties="true"><con:description>Test for gettting a soap fault in response to an unrecognised operation.</con:description><con:settings/><con:testStep type="request" name="BadOperation"><con:settings/><con:config xsi:type="con:RequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:interface>spSoapBinding</con:interface><con:operation>GetCapabilities</con:operation><con:request name="BadOperation"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding><con:endpoint>http://127.0.0.1/sp_foo</con:endpoint><con:request><![CDATA[<soapenv:Envelope 
+</con:testStep><con:properties/></con:testCase><con:testCase failOnError="true" failTestCaseOnErrors="true" keepSession="false" maxResults="0" name="Unknown Operation TestCase" searchProperties="true"><con:description>Test for gettting a soap fault in response to an unrecognised operation.</con:description><con:settings/><con:testStep type="request" name="BadOperation"><con:settings/><con:config xsi:type="con:RequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:interface>spSoapBinding</con:interface><con:operation>GetCapabilities</con:operation><con:request name="BadOperation"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding><con:endpoint>http://176.9.245.37/sp_eowcs</con:endpoint><con:request><![CDATA[<soapenv:Envelope 
   xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" 
   xmlns:ns="http://www.opengis.net/wcs/2.0" 
   xmlns:ns1="http://www.opengis.net/ows/2.0">
@@ -843,7 +843,7 @@ log.info "Verification OK: Attachment contains expected '"+check1+", lineage dat
   <con:testStep type="request" name="BadId">
     <con:settings/><con:config xsi:type="con:RequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:interface>spSoapBinding</con:interface><con:operation>DescribeCoverage</con:operation><con:request name="BadId">
     <con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding>
-    <con:endpoint>http://127.0.0.1/sp_foo</con:endpoint>
+    <con:endpoint>http://176.9.245.37/sp_eowcs</con:endpoint>
     <con:request><![CDATA[<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" 
 xmlns:ns="http://www.opengis.net/wcs/2.0">
    <soapenv:Header/>
