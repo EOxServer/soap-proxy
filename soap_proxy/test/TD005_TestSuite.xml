@@ -106,7 +106,7 @@ declare namespace gmlcov='http://www.opengis.net/gmlcov/1.0';
   <ows:Operation name="GetCapabilities">
     <ows:DCP>
       <ows:HTTP>
-        <ows:Post xlink:type="simple" xlink:href="http://SERVER_UNDEFINED/service">
+        <ows:Post xlink:type="simple" xlink:href="http://titania.eox.at/sp_eowcs">
           <ows:Constraint name="PostEncoding">
             <ows:AllowedValues>
               <ows:Value>SOAP</ows:Value>
@@ -119,7 +119,7 @@ declare namespace gmlcov='http://www.opengis.net/gmlcov/1.0';
   <ows:Operation name="DescribeCoverage">
     <ows:DCP>
       <ows:HTTP>
-        <ows:Post xlink:type="simple" xlink:href="http://SERVER_UNDEFINED/service">
+        <ows:Post xlink:type="simple" xlink:href="http://titania.eox.at/sp_eowcs">
           <ows:Constraint name="PostEncoding">
             <ows:AllowedValues>
               <ows:Value>SOAP</ows:Value>
@@ -132,7 +132,7 @@ declare namespace gmlcov='http://www.opengis.net/gmlcov/1.0';
   <ows:Operation name="GetCoverage">
     <ows:DCP>
       <ows:HTTP>
-        <ows:Post xlink:type="simple" xlink:href="http://SERVER_UNDEFINED/service">
+        <ows:Post xlink:type="simple" xlink:href="http://titania.eox.at/sp_eowcs">
           <ows:Constraint name="PostEncoding">
             <ows:AllowedValues>
               <ows:Value>SOAP</ows:Value>
@@ -145,7 +145,7 @@ declare namespace gmlcov='http://www.opengis.net/gmlcov/1.0';
   <ows:Operation name="DescribeEOCoverageSet">
     <ows:DCP>
       <ows:HTTP>
-        <ows:Post xlink:type="simple" xlink:href="http://SERVER_UNDEFINED/service">
+        <ows:Post xlink:type="simple" xlink:href="http://titania.eox.at/sp_eowcs">
           <ows:Constraint name="PostEncoding">
             <ows:AllowedValues>
               <ows:Value>SOAP</ows:Value>
