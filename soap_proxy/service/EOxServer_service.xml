@@ -1,7 +1,7 @@
 <service name="soapProxy">
     <!-- enableMTOM must be enabled globally in ../../axis2.xml -->
     <parameter name="enableMTOM" locked="xsd:false">true</parameter>
-    <parameter name="ServiceClass" locked="xsd:false">__SERVICE_NAME__</parameter>
+    <parameter name="ServiceClass" locked="xsd:false">__SP_SERVICE_NAME__</parameter>
 
     <!-- 
          The following parameters are used to configure soap_proxy:
