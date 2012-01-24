@@ -36,10 +36,9 @@ Source0:        eo_soap_proxy-1.0.0.tgz
 %define tteconfdir /usr/local/etc/eo_soap_proxy
 %define sp_eo_uri sp_eowcs
 
-BuildRequires:  axis2c_eo-1.6.0-2.x86_64
+BuildRequires:  axis2c_eo
 
-# axis2c_eo
-Requires:       axis2c_eo-1.6.0-2.x86_64
+Requires:       axis2c_eo
 
 Provides:       %{libname} = %{version}-%{release}
 # BuildArch:      noarch
