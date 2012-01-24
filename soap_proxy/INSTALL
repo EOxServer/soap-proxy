@@ -31,7 +31,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 0. Prerequisite: mapserver installed & configured.
 
 1. Install and configure axis2/c.
-   Downloaad from
+   Download from
      http://ws.apache.org/axis2/c/download.cgi
 
    cd someplace
@@ -57,9 +57,9 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    ${AXIS2C_HOME}/services
 
    Configure mod_axis2 in the apache server config files - see the 
-   coresponding section in the detailed instructions below.
+   corresponding section in the detailed instructions below.
 
-   Resart the webserver and open the following page:
+   Restart the webserver and open the following page:
      http://127.0.0.1/sp_axis/services
    You should get a page that says "Deployed Services" and is otherwise blank.
 
@@ -68,7 +68,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    cd <...>/soap_proxy/service
 
    In 'soapProxy.wsdl' set '<soap:address location=.../>'.
-   Copy TEMLATE_services.xml to ``services.xml``.
+   Copy TEMPLATE_services.xml to ``services.xml``.
    In 'service/services.xml' set 'BackendURL' to the address of eoxserver.
 
    cd ../src
@@ -132,7 +132,10 @@ make install
 
 Copy lib/libmod_axis2.so.0.6.0  to "<apache2 modules directory>" 
 as mod_axis2.so
-   
+The following are possible locations of "<apache2 modules directory>":
+OpenSUSE: /lib64/apache2
+CentOS:   /etc/httpd/modules
+
 Edit the file '${AXIS2C_HOME}/axis2.xml' and ensure that the parameter
 enableMTOM has the value true.
 
@@ -154,13 +157,16 @@ Edit
  /etc/apache2/default-server.conf
     1. add:
         LoadModule axis2_module  /lib64/apache2/mod_axis2.so
-        Axis2RepoPath /home/xxx/yyy/axis2c
-        Axis2LogFile /zzz/yyy/ax2logs
-        Axis2MaxLogFileSize 204800
-        Axis2LogLevel debug
-        <Location /sp_axis>
+        <IfModule mod_axis2.c>
+          Axis2RepoPath /home/xxx/yyy/axis2c
+          Axis2LogFile /zzz/yyy/ax2logs
+          Axis2MaxLogFileSize 204800
+          Axis2LogLevel debug
+          <Location /sp_axis>
             SetHandler axis2_module
-        </Location>
+          </Location>
+        </IfModule>
+
 
     2. If you are using BackendURL (see 'Configure the soapProxy service'
        below) to invoke mapserver: In the configuration file for apache httpd
@@ -252,6 +258,9 @@ If all went well this should install everything for the soapProxy service in
   Open a browser to the page http://127.0.0.1/sp_axis/services.
 You should get the page with "Deployed Services", and soapProxy listed
 as providing the four operations (three WCS operations and GetMsVersion).
+
+See if you can access the wsdl for the service via a browser:
+Open the page http://127.0.0.1/sp_eowcs?wsdl
 
 
  b. Testing with SOAPUI
