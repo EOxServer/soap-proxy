@@ -19,13 +19,13 @@ SERVICE_LIB     = lib${SERVICE_NAME}.so
 SERVICE_PATH    = ${AXIS2C_HOME}/services/${SERVICE_NAME}
 export SERVICE_PATH
 
-LIBDIR  = ${AXIS2C_HOME}/lib
-INCDIR  = ${AXIS2C_HOME}/include/axis2-1.6.0/
+LLIBDIR  = -L${AXIS2C_HOME}/lib
+IINCDIR  = -I${AXIS2C_HOME}/include/axis2-1.6.0/
 CONFIG_SRC_DIR  = ../service
 
 C_FLAGS = -fPIC -shared
-I_FLAGS = -I${INCDIR}
-L_FLAGS = -L${LIBDIR} -laxutil -laxis2_axiom -laxis2_parser \
+I_FLAGS = ${IINCDIR}
+L_FLAGS = ${LLIBDIR} -laxutil -laxis2_axiom -laxis2_parser \
   -laxis2_engine -lpthread -laxis2_http_sender -laxis2_http_receiver
 
 SP_INCLUDES = soap_proxy.h sp_svc.h
