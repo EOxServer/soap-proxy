@@ -91,8 +91,7 @@ rm -rf %{buildroot}
 
 %post
 sed -i \
-    's^__SP_SERVICE_NAME__^%{service_name}^ ; ' \
-    's^__SP_URI__^%{sp_eo_uri}^' \
+    's^__SP_SERVICE_NAME__^%{service_name}^ ; s^__SP_URI__^%{sp_eo_uri}^' \
     %{httpd_confdir}/%{httpd_conffile}
 
 AXIS2C_HOME=`pkg-config --variable=axis2c_home axis2c`
@@ -107,8 +106,8 @@ if [ -e  ${SP_SERVICES_XML} ] ; then
 else
   cp %{tteconfdir}/EOxServer_service.xml ${SP_SERVICES_XML}
   sed -i \
-      's^r name="ServiceClass" locked="xsd:false">__SP_SERVICE_NAME__^r name="ServiceClass" locked="xsd:false">%{service_name}^; ' \
-      's^r name="SOAPOperationsURL">http://SERVER_UNDEFINED/service^r name="SOAPOperationsURL">'$SP_SVC_URI'^' \
+      's^r name="ServiceClass" locked="xsd:false">__SP_SERVICE_NAME__^r name="ServiceClass" locked="xsd:false">%{service_name}^;
+      s^r name="SOAPOperationsURL">http://SERVER_UNDEFINED/service^r name="SOAPOperationsURL">'$SP_SVC_URI'^' \
       ${SP_SERVICES_XML}
 fi
 
@@ -118,7 +117,7 @@ if [ -e  ${SP_SERVICE_WSDL} ] ; then
 else
     cp %{tteconfdir}/SP_SERVICE_NAME.wsdl ${SP_SERVICE_WSDL}
     sed -i \
-        's^<soap:address location="http://www.your.server/sp_wcs"^s^<soap:address location="'$SP_SVC_URI'"^' \
+        's^<soap:address location="http://www.your.server/sp_wcs"^<soap:address location="'$SP_SVC_URI'"^' \
         ${SP_SERVICE_WSDL}
 fi
 
