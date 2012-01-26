@@ -8,12 +8,12 @@ To install soap_proxy, first install axis2c_eo, and then eo_soap_proxy.
 To build eo_soap_proxy.rpm:
   1. prepare the source from 'upstream':
       svn co http://eoxserver.org/svn/trunk/soap_proxy
-      mv soap_proxy eo_soap_proxy-1.0.0
-      tar --exclude-vcs --exclude=eo_soap_proxy-1.0.0/test \
-        -czf eo_soap_proxy-1.0.0.tgz eo_soap_proxy-1.0.0
+      mv soap_proxy eo_soap_proxy-src-1.0.0
+      tar --exclude-vcs --exclude=eo_soap_proxy-src-1.0.0/test \
+        -czf eo_soap_proxy-src-1.0.0.tgz eo_soap_proxy-src1.0.0
 
   2. copy eo_soap_proxy.spec into ~/rpmbuild/SPECS,
-     and copy eo_soap_proxy-1.0.0.tgz into ~/rpmbuild/SOURCES
+     and copy eo_soap_proxy-src-1.0.0.tgz into ~/rpmbuild/SOURCES
 
   3. build:
      cd ~/rpmbuild/SPECS

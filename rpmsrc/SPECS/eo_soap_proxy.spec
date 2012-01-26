@@ -22,10 +22,10 @@ License:        EOxServer-SoapProxy Open License (based on MIT).
 
 URL:            http://eoxserver.org/
 # svn co http://eoxserver.org/svn/trunk/soap_proxy
-# mv soap_proxy eo_soap_proxy-1.0.0
-# tar --exclude-vcs --exclude=eo_soap_proxy-1.0.0/test \
-#     -czf eo_soap_proxy-1.0.0.tgz eo_soap_proxy-1.0.0
-Source0:        eo_soap_proxy-1.0.0.tgz
+# mv soap_proxy eo_soap_proxy-src-1.0.0
+# tar --exclude-vcs --exclude=eo_soap_proxy-src-1.0.0/test \
+#     -czf eo_soap_proxy-src-1.0.0.tgz eo_soap_proxy-src-1.0.0
+Source0:        eo_soap_proxy-src-1.0.0.tgz
 
 %define major 0
 %define libname libsoapProxyEo.0
@@ -53,7 +53,7 @@ Soap_proxy is implemented as a Web Service using the Axis2/C framework [AXIS],
 plugged into a standard Apache HTTP server via its mod_axis2 module.
 
 %prep
-%setup -q -n soap_proxy-src-%{version}
+%setup -q -n eo_soap_proxy-src-%{version}
 
 %build
 
@@ -125,7 +125,14 @@ ln -s %{_libdir}/%{libname} ${SP_SVC_HOME}/lib%{service_name}.so
 
 /sbin/ldconfig
 
-%postun -p /sbin/ldconfig
+%postun
+AXIS2C_HOME=`pkg-config --variable=axis2c_home axis2c`
+SP_SVC_HOME=${AXIS2C_HOME}/services/%{service_name}
+rm ${SP_SVC_HOME}/lib%{service_name}.so
+rm ${SP_SVC_HOME}/services.xml
+rm ${SP_SVC_HOME}/%{service_name}.wsdl
+rmdir ${SP_SVC_HOME}
+/sbin/ldconfig
 
 %changelog
 * Tue Jan 24 2012 Milan Novacek 1.0.0

@@ -22,7 +22,7 @@
 
 Name:           axis2c_eo
 Version:        1.6.0
-Release:        2
+Release:        3
 Summary:        Web services engine for EOxServer
 Group:          Applications/Internet
 License:        ASL 2.0,
@@ -87,7 +87,8 @@ cp -p %SOURCE1 .
 %build
 
 #enable MTOM
-sed -i 's/<!--parameter name="enableMTOM" locked="false">true/<--parameter name="enableMTOM" locked="false">true/' %{_builddir}/axis2c-src-%{version}/samples/server/axis2.xml
+sed -i 's^<!--parameter name="enableMTOM" locked="false">true</parameter-->^<parameter name="enableMTOM" locked="false">true</parameter>^' \
+    %{_builddir}/axis2c-src-%{version}/samples/server/axis2.xml
 
 if [ -x %{_bindir}/apr-config ]; then
     APR_CONFIG="%{_bindir}/apr-config"
@@ -137,11 +138,11 @@ mv %{buildroot}%{_bindir}/axis2_http_server %{buildroot}%{_sbindir}/
 #mv %%{buildroot}%%{_prefix}/axis2.xml %%{buildroot}%%{_sysconfdir}/%%{name}/
 mkdir -p %{buildroot}%{_datarootdir}/%{name}
 mv %{buildroot}%{_prefix}/axis2.xml %{buildroot}%{_datarootdir}/%{name}/
+mv %{buildroot}%{_prefix}/modules   %{buildroot}%{_datarootdir}/%{name}/
 
 mkdir -p %{buildroot}%{logdir}
 
 #files not provided by eoxserver install
-rm -rf %{buildroot}%{_prefix}/modules
 rm -rf %{buildroot}%{_libdir}/*.la
 rm -rf %{buildroot}%{_libdir}/*.a
 rm -rf %{buildroot}%{_includedir}/axis2-1.6.0/platforms/windows/*
@@ -182,6 +183,11 @@ rm -rf %{buildroot}
 %doc COPYING CREDITS LICENSE
 %dir %{_datarootdir}/%{name}
 %attr(0644,root,root) %config(noreplace) %{_datarootdir}/%{name}/axis2.xml
+%dir %{_datarootdir}/%{name}/modules
+%dir %{_datarootdir}/%{name}/modules/addressing
+%dir %{_datarootdir}/%{name}/modules/logging
+%{_datarootdir}/%{name}/modules/addressing/*
+%{_datarootdir}/%{name}/modules/logging/*
 %dir %{_includedir}/axis2-1.6.0
 %{_includedir}/axis2-1.6.0/*.h
 %dir %{_includedir}/axis2-1.6.0/platforms/
@@ -198,9 +204,24 @@ rm -rf %{buildroot}
 
 %post
 cp %{_libdir}/libmod_axis2.so.0.6.0 %{_sysconfdir}/httpd/modules/mod_axis2.so
+ln -s %{_libdir} %{_datarootdir}/%{name}/lib
+semanage fcontext -a -t lib_t %{_datarootdir}/%{name}/modules/addressing/libaxis2_mod_addr.so.0.6.0
+semanage fcontext -a -t lib_t %{_datarootdir}/%{name}/modules/logging/libaxis2_mod_log.so.0.6.0
+semanage fcontext -a -t httpd_config_t %{httpd_confdir}/%{httpd_conffile}
+restorecon -v %{_datarootdir}/%{name}/modules/logging/libaxis2_mod_log.so.0.6.0
+restorecon -v %{_datarootdir}/%{name}/usr/share/axis2c_eo/modules/addressing/libaxis2_mod_addr.so.0.6.0
+restorecon -v %{httpd_confdir}/%{httpd_conffile}
 /sbin/ldconfig
+echo "httpd restart is required to operate axis2c. Please note a 'graceful-restart' is not sufficient."
 
-%postun -p /sbin/ldconfig
+%postun 
+semanage fcontext -d %{_datarootdir}/%{name}/modules/addressing/libaxis2_mod_addr.so.0.6.0
+semanage fcontext -d %{_datarootdir}/%{name}//modules/logging/libaxis2_mod_log.so.0.6.0
+semanage fcontext -d %{httpd_confdir}/%{httpd_conffile}
+restorecon -v /usr/share/axis2c_eo/modules/logging/libaxis2_mod_log.so.0.6.0
+restorecon -v /usr/share/axis2c_eo/modules/addressing/libaxis2_mod_addr.so.0.6.0
+restorecon -v %{httpd_confdir}/%{httpd_conffile}
+/sbin/ldconfig
 
 %changelog
 * Mon Jan 23 2012 Milan Novacek 1.6.0
