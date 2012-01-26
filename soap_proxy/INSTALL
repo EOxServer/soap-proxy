@@ -28,8 +28,31 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 # Quick installation guide for the impatient: #
 ###############################################
 
-0. Prerequisite: mapserver installed & configured.
+The installation for eoxserer under CentOS is done via rpm.
 
+Prerequisite: eoxserver installed and configured.
+
+Rpms are obtained from 'packages.eox.at'
+The rpms are intended for CentOS.
+
+As root:
+  rpm -i axis2c_eo-1.6.0-3.x86_64.rpm
+  rpm -i eo_soap_proxy-1.0.0-1.x86_64.rpm
+  /etc/init.d/httpd restart
+
+
+###############################################
+# Old installation without rpms - quick guide #
+###############################################                                                                                                                                              
+
+Caution:  some of this information is dated.
+See the rpm specs for the most up to date steps
+on what config files to customize and how.
+
+rpm specs are in eoxserver/rpmsrc
+
+------------------------------------
+ 
 1. Install and configure axis2/c.
    Download from
      http://ws.apache.org/axis2/c/download.cgi
@@ -88,9 +111,11 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 Contents
 =========
     0. Mapserver
-    1. Download / {compile?} /  install axis2/c.
-    2. Configure and Compile Soap Proxy
-    3. Test the installation
+    A - General instuctions e.g. for Suse
+      A1. Download / {compile?} /  install axis2/c.
+      A2. Configure and Compile Soap Proxy
+    B - Non-rpm instructions for CentOS
+    C -  Test the installation
 
 
 0. Mapserver
@@ -99,7 +124,11 @@ A running mapserver with the wcs-1.1_post patch is a prerequisite for
 running the service.
 
 
-1. Download / {compile?} /  install axis2/c.
+**************************************************
+A - General instuctions e.g. for (Open)Suse / SLES
+***************************************************
+
+A1. Download / {compile?} /  install axis2/c.
 ============================================
 
    http://ws.apache.org/axis2/c/download.cgi
@@ -214,7 +243,7 @@ performed the optional installation of the 'hello' service, there should
 not be any further details listed.
 
 
-2. Configure and Compile Soap Proxy
+A2. Configure and Compile Soap Proxy
 ====================================
 
  a. Configure the soapProxy service
@@ -250,11 +279,174 @@ If all went well this should install everything for the soapProxy service in
   ${AXIS2C_HOME}/services
 
 
-3. Test the installation
-========================
+**************************************************
+B - Non-rpm instructions for CentOS
+***************************************************
 
- a. Check the Service is up and running
- --------------------------------------
+
+Soap_proxy
+
+Installation instructions for CentOS
+-----------------------------------
+
+#!/bin/bash
+# Assume that a plain cd command takes us to the home directory where
+# we wish to install everything, and also $HOME is set to this home dir.
+
+# Prerequisites:
+#  mapserver/eoxserver installed
+#  httpd-devel package installed (yum install httpd-devel)
+
+###################################################
+# get, install and configure  axis2c distribution
+####################################################
+
+sudo mkdir /usr/local/share/axis2c
+
+export AXIS2C_HOME=/usr/local/share/axis2c
+
+# Please see http://ws.apache.org/axis2/c/download.cgi to determine
+# what to download here.  An example of what this might be is:
+wget http://tweedo.com/mirror/apache//ws/axis2/c/1_6_0/axis2c-src-1.6.0.tar.gz
+
+cd
+mkdir axis2
+cd axis2
+gunzip axis2c-src-1.6.0.tar.gz
+tar -xf axis2c-src-1.6.0.tar
+
+# compile
+cd 
+cd axis2/axis2c-src-1.6.0
+./configure --with-apache2="/usr/include/httpd" \
+--with-apr="/usr/include/apr-1" --prefix=${AXIS2C_HOME}
+make
+sudo make install
+
+# install into apache area: Copy lib/libmod_axis2.so.0.6.0  to
+#  "<apache2 modules directory>"  as mod_axis2.so
+# Possible locations of "<apache2 modules directory>" are:
+# OpenSuse: /etc/apache2/default-server.conf
+# CentOs:   /etc/httpd/modules
+
+sudo cp ${AXIS2C_HOME}/lib/libmod_axis2.so.0.6.0 /etc/httpd/modules/mod_axis2.so
+
+# Edit the file '${AXIS2C_HOME}/axis2.xml' and ensure that the parameter
+#   enableMTOM has the value true, and is not commented out.
+sudo vi ${AXIS2C_HOME}/axis2.xml
+
+# Check that the following dir exits, and is writeable by the <soapproxy user>,
+#  and readable by all. 
+# In our example the <soapproxy user> is  'soapprox'
+sudo mkdir -p ${AXIS2C_HOME}/services
+sudo chown soapprox: ${AXIS2C_HOME}/services
+chmod og+r ${AXIS2C_HOME}/services
+
+# Create a log direrectory, owned by httpd's user
+sudo mkdir /var/log/axis2
+sudo chown <httpd_user>: /var/log/axis2
+
+# on some systems (eg. RedHad based systems using SELinux, such as CentOS)
+# it is necessary to run ldconfig and also set the security context with
+#  semanage (once all is installed)
+sudo echo /usr/local/share/axis2c  >/etc/ld.so.conf.d/axis2c-x86_64.conf
+sudo ldconfig /usr/local/share/axis2c/lib
+
+# working with semanage (selinux) :
+#  list security context for *.so.*:
+#    ls -lZ *.so.*
+#
+# change a context for a lib file (use full pathname):
+# semanage fcontext -a -t lib_t \
+#  /usr/share/axis2c_eo/modules/logging/libaxis2_mod_log.so.0.6.0
+# or use a wildcard for a directory and all its contents:
+#   "/web(/.*)?"
+
+# Configure mod_axis2 in the apache server config files
+# NOTE: set paths below as appropriate for your system. 
+#       In particular, Axis2RepoPath is AXIS2C_HOME from above.
+#
+#  make sure apache httpd is confibured to load the Proxy module.
+#
+sudo cat >/etc/httpd/conf.d/030_axis2c.conf
+LoadModule axis2_module /etc/httpd/modules/mod_axis2.so
+<IfModule mod_axis2.c>
+  Axis2RepoPath /usr/local/share/axis2c
+  Axis2LogFile /var/log/axis2/axis2.log
+  Axis2MaxLogFileSize 204800
+  Axis2LogLevel info
+  <Location /sp_axis>
+    SetHandler axis2_module
+  </Location>
+</IfModule>
+
+<IfModule mod_proxy.c>
+  ProxyPass         /sp_eowcs http://127.0.0.1/sp_axis/services/soapProxy
+  ProxyPassReverse  /sp_eowcs http://127.0.0.1/sp_axis/services/soapProxy
+</IfModule>
+
+^D
+
+
+###############################
+# get soap_proxy distibution
+###############################
+#
+cd
+mkdir soap_proxy
+cd soap_proxy
+svn co  http://eoxserver.org/svn/trunk/soap_proxy .
+
+
+###############################################
+# configure and compile  soap_proxy distibution
+###############################################
+#
+# In the directory 'service', Copy TEMPLATE_services.xml to services.xml,
+#  then in services.xml set 'BackendURL' to the address of eoxserver and
+#  set 'DeleteNonSoapURLs' to true  (needed for the testsuite to see expected
+# results).
+cd service
+cp TEMPLATE_services.xml services.xml
+sed -i -e '/name="BackendURL"/c \    <parameter name="BackendURL">http://eoxserver</parameter>' services.xml
+sed -i -e 's/name="DeleteNonSoapURLs">false/name="DeleteNonSoapURLs">true/' services.xml
+
+# DEBUG note:
+#  for debugging add the following to services.xml:
+#   <parameter name="DebugSoapProxy">true</parameter>
+
+# Edit soapProxy.wsdl:
+# At the bottom of the file, set '<soap:address location=.../>'
+sed -i -e '/soap:address location=/c \           <soap:address location="http://176.9.245.37/sp_eowcs"/>' soapProxy.wsdl
+
+cd ../src
+make inst
+
+# set up the loader paths and security context if needed
+sudo echo /usr/local/share/axis2c/services/soapProxy/ >>/etc/ld.so.conf.d/axis2c-x86_64.conf
+sudo ldconfig /usr/local/share/axis2c/services/soapProxy
+sudo semanage fcontext -a -t lib_t /usr/local/share/axis2c/services/soapProxy/libsoapProxy.so
+sudo restorecon -v /usr/local/share/axis2c/services/soapProxy/libsoapProxy.so
+
+
+#################################################
+#  Perform basic verification of the installation
+#################################################
+#  Open a browser to the page http://<server_address>/sp_axis/services.
+# You should get the page with "Deployed Services", and soapProxy listing
+# the four operations (three WCS operations and GetMsVersion).
+#
+# Open the page http://<server_address>/sp_eowcs?wsdl
+#  and verify you can see the wsdl definition.
+#
+
+
+**************************************************
+C - Test the installation
+**************************************************
+
+ C1. Check the Service is up and running
+ ---------------------------------------
   Open a browser to the page http://127.0.0.1/sp_axis/services.
 You should get the page with "Deployed Services", and soapProxy listed
 as providing the four operations (three WCS operations and GetMsVersion).
@@ -263,7 +455,7 @@ See if you can access the wsdl for the service via a browser:
 Open the page http://127.0.0.1/sp_eowcs?wsdl
 
 
- b. Testing with SOAPUI
- ----------------------
+ C2. Testing with SOAPUI
+ -----------------------
 
 See test/README.txt for testing instructions.
