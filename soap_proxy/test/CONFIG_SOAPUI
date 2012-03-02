@@ -9,7 +9,7 @@ CAUTION:
 -------
 Be very careful in setting up apache as a proxy server.  If in doubt about
 deviating from these instructions and in particular about enabling
-ProxyRequests, be sure to study the apache httpd documentaion in detail.
+ProxyRequests, be sure to study the apache httpd documentation in detail.
 
 ProxyRequests should be kept turned Off.
 
@@ -23,11 +23,12 @@ ProxyRequests should be kept turned Off.
 1b. set up a virtual server for soapuiproxy for httpd:
   cd <apache config root>   # on my OpenSuse this is /etc/apache2
   --> add the folling line in listen.conf:
-     NameVirtualHost 127.0.0.1:8881
+     NameVirtualHost 127.0.0.1:8822
 
   cd vhosts.d
-  copy TEMPLATE_soapuiproxy.conf to this dir, and edit the paths to the local
-  schema directory.  
+  copy TEMPLATE_soapuiproxy.conf to this dir as 'soapuiproxy.conf', and in the
+  file edit the paths to the local schema directory (all strings starting with
+  '/path/to/..').
   
 
 2. Setting up soapui to use apache httpd.
@@ -36,4 +37,4 @@ ProxyRequests should be kept turned Off.
    --> ProxySettings
 
 Host: soapuiproxy
-Port: 8881
+Port: 8822
