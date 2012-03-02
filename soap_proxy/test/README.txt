@@ -1,10 +1,10 @@
 SOAP to POST PROXY test suite.
 -------------------------------
 
-TD005_TS_puck.xml is for use with the test data and exoserver
+TD400_TS_puck.xml is for use with the test data and exoserver
                   configuration on the server puck.
 
-TD005_TS_titania.xml was used during development on the server
+TD400_TS_titania.xml was used during development on the server
                      titania. The test data here may not be available
                      for the general public.
 
@@ -64,7 +64,7 @@ For the wsdl file use either a local wsdl that you have configured, or:
 
 Right-click on the sopapproxy project to get a context-menu, and use 
   Import Test Suite
-     Import the test suite 'TD005_TS_puck.xml'
+     Import the test suite 'TD400_TS_puck.xml'
 
 Optional if you have set up the service for a custom url (i.e. in
 the httpd configaration file you have set ProxyPass for  soapProxy to
