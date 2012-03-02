@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<con:testSuite name="TD006_TS_puck" xmlns:con="http://eviware.com/soapui/config">
+<con:testSuite name="TD400_TS_puck" xmlns:con="http://eviware.com/soapui/config">
   <con:description>This test suite is the collection of test cases described in the O3S Software Validation 
-Specificaiton document (O3S_SVS), section 7.5 Test Cases for TD_005.
+Specificaiton document (O3S_SVS), section 7.5 Test Cases for TD_400.
 The test cases may be run individually, or all together using 'Launch TestRunner'. </con:description>
   <con:settings/>
   <con:runType>SEQUENTIAL</con:runType>
@@ -188,13 +188,13 @@ xmlns:wcs="http://www.opengis.net/wcs/2.0">
        </wcseo:Sections>
        <wcs:DimensionTrim>
           <wcs:Dimension>Long</wcs:Dimension>
-          <wcs:TrimLow>16</wcs:TrimLow>
-          <wcs:TrimHigh>18</wcs:TrimHigh>
+          <wcs:TrimLow>0</wcs:TrimLow>
+          <wcs:TrimHigh>24</wcs:TrimHigh>
        </wcs:DimensionTrim>
        <wcs:DimensionTrim>
           <wcs:Dimension>Lat</wcs:Dimension>
-          <wcs:TrimLow>46</wcs:TrimLow>
-          <wcs:TrimHigh>48</wcs:TrimHigh>
+          <wcs:TrimLow>0</wcs:TrimLow>
+          <wcs:TrimHigh>24</wcs:TrimHigh>
        </wcs:DimensionTrim>
       </wcseo:DescribeEOCoverageSet>
    </soapenv:Body>
