@@ -229,18 +229,18 @@ xmlns:wcs="http://www.opengis.net/wcs/2.0">
    <soapenv:Header/>
    <soapenv:Body>
       <wcs:GetCoverage service="WCS" version="2.0.0">
-           <wcs:mediatype>multipart/mixed</wcs:mediatype>
+           <wcs:mediaType>multipart/mixed</wcs:mediaType>
           <wcs:format>image/tiff</wcs:format>
-        <wcs:CoverageId>ASA_IMG_1PNDPA20111022_092031_000000163107_00424_50438_0034</wcs:CoverageId>
+        <wcs:CoverageId>ASA_IMP_1PNPDE20110917_032135_000000173106_00348_49931_0256</wcs:CoverageId>
         <wcs:DimensionTrim>
           <wcs:Dimension>Long</wcs:Dimension>
           <wcs:TrimLow>0</wcs:TrimLow>
-          <wcs:TrimHigh>24</wcs:TrimHigh>
+          <wcs:TrimHigh>256</wcs:TrimHigh>
         </wcs:DimensionTrim>
         <wcs:DimensionTrim>
           <wcs:Dimension>Lat</wcs:Dimension>
           <wcs:TrimLow>0</wcs:TrimLow>
-          <wcs:TrimHigh>24</wcs:TrimHigh>
+          <wcs:TrimHigh>256</wcs:TrimHigh>
         </wcs:DimensionTrim>
       </wcs:GetCoverage>
    </soapenv:Body>
@@ -288,7 +288,7 @@ def xmlSection = attachmentString.substring(
 
 // A very simple check for a "RectifiedDataset" element,
 // by means of simple string manipulations
-def check1="RectifiedDataset"
+def check1="CoverageDescription"
 def firstRGC = xmlSection.indexOf(check1)
 def lastRGC = xmlSection.lastIndexOf(check1)
 assert firstRGC  > 0
@@ -297,18 +297,11 @@ def endofXml =  xmlSection.indexOf(">", lastRGC)
 xmlSection = xmlSection.substring(0,endofXml)
 assert  xmlSection.matches("(?s).+?<\\s*([\\w]+):"+check1+".*</\\s*\\1:"+check1+".*")
 	
-// Check for "lineage" element with a "GetCoverage":
-// "<(*):lineage<(*):RequestMessage<(*):GetCoverage*</\3:GetCoverage*</2RequestMessage*</\1:lineage>"
-def ck_lineage="lineage"
-def check3="RequestMessage"
-def check4="GetCoverage"
+// Check for "id=\"ASA_IMP_1PNPDE20110917_032135_000000173106_00348_49931_0256\""
+// 
+def ck_id="id=\"ASA_IMP_1PNPDE20110917_032135_000000173106_00348_49931_0256\""
 assert  xmlSection.matches(
-	"(?s).+?<\\s*([\\w]+):"+ck_lineage+
-	".*(?s).+?<\\s*([\\w]+):"+check3+
-	".*(?s).+?<\\s*([\\w]+):"+check4+
-	".*</\\s*\\3:"+check4+
-	".*</\\s*\\2:"+check3+
-	".*</\\s*\\1:"+ck_lineage+".*")
+	".*:"+ck_id+".*")
 
 
 // Check for "Content-Type: image/tiff" at the end
