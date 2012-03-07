@@ -41,12 +41,15 @@ schema repository on the web.
 Follow the procedure in the file CONFIG_SOAPUI to set this up.
 
 If you use a proxy to access the web then you can confgure acces to other
-sites in the vhosts config file, but the details are beyond the scope of this
-document.  An aternative is to use the local soap proxy (as per CONFIG_SOAPUI)
+sites in the vhosts config file using the ProxyRemoteMatch directive.
+If you still having trouble with this (e.g. your firewall proxy needs some
+authentication), then an aternative is to use the local soap proxy (as per CONFIG_SOAPUI)
 to set up the project at the start (New Project), where the use of the local
-schemas is required. After this has been set up, change the proxy from the
-local proxy to your proxy used to access the web normally for the rest of the
-test steps. The proxy is set up under:
+schemas is required. You'll need to first copy the wsdl file from the remote
+machine to a local directory and access it locally.
+After this has been set up, change the proxy from the local proxy to your
+proxy used to access the web normally for the rest of the test steps. 
+The proxy is set up under:
   FIle -> preferences --> Proxy Settings.
 
 
