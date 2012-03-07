@@ -29,7 +29,9 @@ ProxyRequests should be kept turned Off.
   copy TEMPLATE_soapuiproxy.conf to this dir as 'soapuiproxy.conf', and in the
   file edit the paths to the local schema directory (all strings starting with
   '/path/to/..').
-  
+
+  If you are beind a firewall and use a proxy to get out to the internet,
+  enable the ProxyRemoteMatch directive.
 
 2. Setting up soapui to use apache httpd.
 -----------------------------------------

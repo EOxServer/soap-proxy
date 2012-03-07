@@ -245,22 +245,7 @@ xmlns:wcs="http://www.opengis.net/wcs/2.0">
       </wcs:GetCoverage>
    </soapenv:Body>
 </soapenv:Envelope>]]></con:request>
-<con:assertion type="GroovyScriptAssertion" name="Validate Request"><con:configuration><scriptText>// Run xmllint using local schemas, set up via the XML_CATALOG_FILES env variable.
-//  This variable must be available in bash upon startup (i.e. set in .bashrc)
-
-ff = new File("/tmp", "soapui_GC2_lock");
-assert ff.createNewFile()
-
-def tmpf = File.createTempFile("getCovRq", ".xml")
-tmpf.deleteOnExit()
-tmpf.write( context.expand( '${GetCoverage#Request#//wcs:GetCoverage}') )
-def fn = tmpf.getPath()
-def cmdln = ["bash", "-c", "xmllint -noout --schema http://schemas.opengis.net/wcs/2.0/wcsAll.xsd $fn"]
-def result = cmdln.execute().getErrorStream()
-def resStr = result.text
-ff.delete()
-println resStr
-assert resStr.indexOf('validates') > 1</scriptText></con:configuration></con:assertion><con:assertion type="SOAP Fault Assertion" name="Not SOAP Fault"/><con:assertion type="XQuery Match" name="Contains Coverage and Include elements"><con:configuration><path>declare namespace xop="http://www.w3.org/2004/08/xop/include";
+<con:assertion type="SOAP Fault Assertion" name="Not SOAP Fault"/><con:assertion type="XQuery Match" name="Contains Coverage and Include elements"><con:configuration><path>declare namespace xop="http://www.w3.org/2004/08/xop/include";
 declare namespace wcs="http://www.opengis.net/wcs/2.0";
 //wcs:Coverage</path><content>&lt;wcs:Coverage xmlns:wcs="http://www.opengis.net/wcs/2.0">
   &lt;xop:Include href="*" xmlns:xop="http://www.w3.org/2004/08/xop/include"/>
@@ -308,7 +293,7 @@ assert  xmlSection.matches(
 def imgTIffType = "image/tiff"
 def lastType = attachmentString.lastIndexOf("Content-Type:")
 assert attachmentString.indexOf(imgTIffType, lastType) > 0
-log.info "Verification OK: Attachment contains expected '"+check1+", lineage data, and "+imgTIffType
+log.info "Verification OK: Attachment contains expected '"+check1+", id='"+ck_id+"', and "+imgTIffType
 
 
 
