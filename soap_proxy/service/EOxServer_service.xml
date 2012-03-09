@@ -1,0 +1,69 @@
+<service name="soapProxy">
+    <!-- enableMTOM must be enabled globally in ../../axis2.xml -->
+    <parameter name="enableMTOM" locked="xsd:false">true</parameter>
+    <parameter name="ServiceClass" locked="xsd:false">__SP_SERVICE_NAME__</parameter>
+
+    <!-- 
+         The following parameters are used to configure soap_proxy:
+           BackendURL, MapFile, MapServ, DeleteNonSoapURLs, SOAPOperationsURL
+         They may be defined globally in ../../axis2.xml instead of here.
+         At least one of BackendURL or MapServ is required to be
+         correctly configured.  If BackendURL is defined, then MapServ is
+         ignored.  This means if you wish to use MapServ you must delete or
+         comment out the BackendURL parameter.
+         If MapServ is used, then MapFile must also be defined.
+         In case of BackendURL we don't know if the backend is a mapserver
+         or an eoxserver instance, so MapFile is not mandatory - but beware
+         that things will fail downstream if the user attempts to send
+         requests to mapserver without a mapfile, even via a BackendURL.
+    -->
+
+    <!-- parameter name="DebugSoapProxy">true</parameter -->
+
+    <!-- URL of backend to communicate with.                                -->
+    <!-- If it is defined, then MapServ is ignored.                         -->
+    <parameter name="BackendURL">http://127.0.0.1/eoxserver/ows</parameter>
+
+    <!-- Absolute path to the mapservser executable                         -->
+    <!-- Used only if BackendURL is not defined.                            -->
+    <parameter name="MapServ">/path/to/mapserv</parameter>
+
+    <!-- Absolute path to the mapfile used for configuring mapserver        -->
+    <!-- Not required for eoxserver                                         -->
+    <parameter name="MapFile">/path/to/mapfile.map</parameter>
+
+    <!-- In the GetCapabilites response, each Operation in the 
+         OperationsMetadata section contains a pair of URLs as seen by the back
+         end for accepting GET requests and non-SOAP POST requests. These may
+         be deleted from the response by the soap proxy if you do not wish to
+         advertise the availability of the non-SOAP interface. 
+         Set DeleteNonSoapURLs to true to delete the original GET and POST
+         URLs for non-SOAP access.
+         Default (DeleteNonSoapURLs not present) is false                   -->
+    <parameter name="DeleteNonSoapURLs">true</parameter>
+    
+    <!-- In the GetCapabilites response, the Soap Proxy adds a POST URL to
+         the HTTP section of each Operation to advertise where to access
+         the service via SOAP.
+         The URL as seen by the proxy may not necessarily be the correct URL
+         where the service should be accessed from the outside.
+         Use SOAPOperationsURL to set this URL explicitly.
+         If undefined then soap_proxy uses the URL where it is invoked.
+         Note that this often may not be the correct URL for accessing
+          the service due to server proxy redirecion.                       -->
+    <parameter name="SOAPOperationsURL">http://SERVER_UNDEFINED/service</parameter>
+
+    <description>
+       This proxy service accepts O3S WCS 2.0 SOAP requests, optionally with
+       the Earth Observation Application Profile, and invokes a corresponding
+       POST operation on a connected mapserver or EOxServer.
+       The operation GetMsVersion is a debugging information operation for
+       this service, and is not a O3S WCS operation.  It reports the version
+       of the mapserver connected this service. It may not be available in all
+       configurations.
+    </description>
+    <operation name="DescribeCoverage"/>
+    <operation name="DescribeEOCoverageSet"/>
+    <operation name="GetCapabilities"/>
+    <operation name="GetCoverage"/>
+</service>

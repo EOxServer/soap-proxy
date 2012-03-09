@@ -19,11 +19,13 @@ SERVICE_LIB     = lib${SERVICE_NAME}.so
 SERVICE_PATH    = ${AXIS2C_HOME}/services/${SERVICE_NAME}
 export SERVICE_PATH
 
+LLIBDIR  = -L${AXIS2C_HOME}/lib
+IINCDIR  = -I${AXIS2C_HOME}/include/axis2-1.6.0/
 CONFIG_SRC_DIR  = ../service
 
 C_FLAGS = -fPIC -shared
-I_FLAGS = -I${AXIS2C_HOME}/include/axis2-1.6.0/
-L_FLAGS = -L${AXIS2C_HOME}/lib -laxutil -laxis2_axiom -laxis2_parser \
+I_FLAGS = ${IINCDIR}
+L_FLAGS = ${LLIBDIR} -laxutil -laxis2_axiom -laxis2_parser \
   -laxis2_engine -lpthread -laxis2_http_sender -laxis2_http_receiver
 
 SP_INCLUDES = soap_proxy.h sp_svc.h
@@ -31,7 +33,7 @@ SP_SOURCES  = sp_ctype.c sp_svc.c sp_dispatch.c sp_exec_ms.c \
               sp_props.c sp_util.c sp_time_util.c sp_image.c sp_fault.c \
               sp_wcs20.c sp_wcs11.c sp_ms_version.c sp_process_mime.c \
               sp_backend_sock.c
-             
+
 .PHONY: 	all configs inst install
 
 all:		${SERVICE_LIB}
@@ -45,7 +47,7 @@ ${AXIS2C_HOME}:
 
 ${SERVICE_PATH}:
 	if [ ! -d $@ ] ; then mkdir $@ ; fi
-	
+
 configs:	${AXIS2C_HOME} ${SERVICE_PATH}
 ifndef SOAP_PROXY_NOCONFIG
 	@ $(MAKE) -C ${CONFIG_SRC_DIR}
@@ -58,4 +60,4 @@ ${SERVICE_PATH}/${SERVICE_LIB}:  ${SERVICE_LIB} ${SERVICE_PATH}
 	cp $< ${SERVICE_PATH}
 
 inst:	configs ${SERVICE_PATH}/${SERVICE_LIB}
-	
+

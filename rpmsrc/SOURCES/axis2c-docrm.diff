@@ -1,0 +1,15 @@
+--- Makefile.in	2011-12-19 15:00:45.011412328 +0100
++++ Makefile.in.mn	2011-12-19 14:57:55.008412247 +0100
+@@ -828,9 +828,9 @@
+ 	rm -rf axis2c-bin-${PACKAGE_VERSION}-linux
+ 
+ install-data-hook:
+-	cp -r docs $(docsdir)
+-	rm -rf `find $(docsdir)/ -type d -name .svn`
+-	rm $(docsdir)/README
++	cp -r docs $(DESTDIR)$(docsdir)
++	rm -rf `find $(DESTDIR)$(docsdir)/ -type d -name .svn`
++	rm -f $(DESTDIR)$(docsdir)/README
+ # Tell versions [3.59,3.63) of GNU make to not export all variables.
+ # Otherwise a system limit (for SysV at least) may be exceeded.
+ .NOEXPORT:
