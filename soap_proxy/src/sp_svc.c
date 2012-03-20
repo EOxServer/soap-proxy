@@ -67,15 +67,21 @@
 #include <axis2_conf_ctx.h>
 #include "sp_svc.h"
 #include "soap_proxy.h"
+#include "sp_props.h"
 #include <axis2_svc_skeleton.h>
 
 void rp_init_errors();
+
+void rp_init_props(sp_props *props);
+
 int  rp_load_props(
-		const axutil_env_t    *env,
-	    const axis2_msg_ctx_t *msg_ctx);
+    sp_props              *props,
+    const axutil_env_t    *env,
+    const axis2_msg_ctx_t *msg_ctx);
 
 axiom_node_t *rp_dispatch_op(
     const axutil_env_t *env,
+    sp_props           *props,
     axis2_char_t       *op_name,
     axiom_node_t       *node,
     const int           protocol);
@@ -122,56 +128,58 @@ rpSvc_init(
  */
 axiom_node_t *AXIS2_CALL
 rpSvc_invoke(
-		axis2_svc_skeleton_t * svc_skeleton,
-		const axutil_env_t * env,
-		axiom_node_t * node,
-		axis2_msg_ctx_t * msg_ctx)
+        axis2_svc_skeleton_t * svc_skeleton,
+        const axutil_env_t * env,
+        axiom_node_t * node,
+        axis2_msg_ctx_t * msg_ctx)
 {
-	axiom_node_t *rt_node = NULL;
+    axiom_node_t *rt_node = NULL;
 
     rp_init_errors();
-    if (rp_load_props(env, msg_ctx))
+    sp_props props;
+    rp_init_props(&props);
+    if (rp_load_props(&props, env, msg_ctx))
     {
-    	SP_ERROR(env, SP_SYS_ERR_PROPSLOAD);
-    	rp_log_error(env, "*** S2P: Failed to load properties.\n");
-    	return NULL;
+        SP_ERROR(env, SP_SYS_ERR_PROPSLOAD);
+        rp_log_error(env, "*** S2P: Failed to load properties.\n");
+        return NULL;
     }
 
-	if (node)
-	{
+    if (node)
+    {
 
-		if (axiom_node_get_node_type(node, env) == AXIOM_ELEMENT)
-		{
-	    	const int  protocol = sp_glean_protocol(env, node);
-	    	SP_WCS_V200;
-	    	/* WCS-EO:
-	    	 * Requirement 30 /req/eowcs/getCapabilities-response-conformance-class-in-profile:
-	         * A WCS service implementing this extension shall include the following URI in a Profile
-	         * element in the ServiceIdentification in a GetCapabilities response:
-	         *    http://www.opengis.net/spec/WCS_profile_earth-observation/1.0/conf/eowcs
-	    	 *
-	    	 */
+        if (axiom_node_get_node_type(node, env) == AXIOM_ELEMENT)
+        {
+            const int  protocol = sp_glean_protocol(env, node);
+            SP_WCS_V200;
+            /* WCS-EO:
+             * Requirement 30 /req/eowcs/getCapabilities-response-conformance-class-in-profile:
+             * A WCS service implementing this extension shall include the following URI in a Profile
+             * element in the ServiceIdentification in a GetCapabilities response:
+             *    http://www.opengis.net/spec/WCS_profile_earth-observation/1.0/conf/eowcs
+             *
+             */
 
-			axiom_element_t *el =
-					(axiom_element_t *) axiom_node_get_data_element(node, env);
-			if (el)
-			{
-				axis2_char_t *op_name = axiom_element_get_localname(el, env);
-				rt_node = rp_dispatch_op(env, op_name, node, protocol);
-				return rt_node;
-			}
-		}
-		else
-		{
-			rp_log_error(env, "*** S2P: invalid XML in request\n");
-			SP_ERROR(env, AXIS2_ERROR_SVC_SKEL_INVALID_XML_FORMAT_IN_REQUEST);
-			return NULL;
-		}
-	}
+            axiom_element_t *el =
+                    (axiom_element_t *) axiom_node_get_data_element(node, env);
+            if (el)
+            {
+                axis2_char_t *op_name = axiom_element_get_localname(el, env);
+                rt_node = rp_dispatch_op(env, &props, op_name, node, protocol);
+                return rt_node;
+            }
+        }
+        else
+        {
+            rp_log_error(env, "*** S2P: invalid XML in request\n");
+            SP_ERROR(env, AXIS2_ERROR_SVC_SKEL_INVALID_XML_FORMAT_IN_REQUEST);
+            return NULL;
+        }
+    }
 
-	// else
-	SP_ERROR(env, SP_USER_ERR_NO_INPUT);
-	return NULL;
+    // else
+    SP_ERROR(env, SP_USER_ERR_NO_INPUT);
+    return NULL;
 
 }
 
@@ -185,9 +193,9 @@ rpSvc_on_fault(
     axiom_node_t    *error_node = NULL;
     axiom_element_t *error_ele  = NULL;
     error_ele = axiom_element_create(env, node, "S2PServiceError", NULL,
-    		&error_node);
+            &error_node);
     axiom_element_set_text(error_ele, env, "Soap-to-post service failed",
-    		error_node);
+            error_node);
     return error_node;
 }
 

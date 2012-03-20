@@ -37,78 +37,10 @@
 #ifndef SOAPPROXY_H_INCLUDED
 #define SOAPPROXY_H_INCLUDED
 
+#include "sp_constants.h"
 #include "sp_svc.h"
+#include "sp_props.h"
 #include <stdarg.h>
-
-/**
- * limit the operation name len to prevent buffer overrrun-type attacks
- */
-#define SP_MAX_OP_LEN 300
-
-/**
- * Whitespace indent for xml formatting
- */
-#define SP_DEFAULT_WHSPACE 4
-
-/**
- * limit the max length of incoming requests
- */
-#define SP_MAX_REQ_LEN 536870910
-
-/**
- * limit the max length of the mapfile mapserv path strings
- */
-#define SP_MAX_MPATHS_LEN 4096
-
-#define SP_IMG_BUF_SIZE 4096
-
-#define SP_MAX_LOCAL_STR_LEN 512
-
-#define MAPSERV_ID_STR "mapserv"
-
-#define SP_WCS_SOAP_EXTENSION \
-	"http://www.opengis.net/spec/WCS_protocol-binding_soap/1.0"
-
-#define SP_OWS_NAMESPACE_STR \
-	"http://www.opengis.net/ows/2.0"
-
-#define SP_GML_NAMESPACE_STR \
-	"http://www.opengis.net/gml/3.2"
-
-#define SP_XLINK_NAMESPACE_STR \
-	"http://www.w3.org/1999/xlink"
-
-#define SP_WCSPROXY_NAMESPACE_STR \
-	"http://www.eoxserver.org/soap_proxy/wcsProxy"
-
-#define SP_EO_WCS_SOAP_PROFILE \
-	"http://www.opengis.net/spec/WCS_application-profile_earth-observation/1.0/conf/eowcs_soap"
-
-#define SP_EO_WCS_PROFILE_ROOT \
-	"http://www.opengis.net/spec/WCS_application-profile_earth-observation"
-
-#define SP_BUF_READSIZE   4096
-
-// Max acceptable time diff in seconds.  If greater, lineage is not changed.
-#define SP_LINEAGE_TIME_DIFF 360
-
-/* -------------------------------misc constants ----------------------*/
-#define SP_RESP_XML_TYPE       0
-#define SP_RESP_MIXED_TYPE     2
-#define SP_RESP_TIFF_TYPE      3
-#define SP_RESP_APP_SEXML_TYPE 4
-#define SP_RESP_UNKNOWN_TYPE  -1
-
-/**
- * ID constants for retrieving the property strings.
- */
-enum sp_property_ids
-{
-	SP_MAPFILE_ID =  0,
-	SP_MAPSERVER_ID,
-	SP_BACKENDURL_ID,
-	SP_SOAPOPSURL_ID
-};
 
 /**
  * WCS Version identifiers (int)
@@ -228,17 +160,6 @@ void sp_dump_bad_content(
     axutil_stream_t    *st,
     char               *header_blob);
 
-const int           rp_getDebugMode();
-const int           rp_getUrlMode();
-const int           rp_getDeletingNonSoap();
-const axis2_char_t *rp_getMapfile();
-const axis2_char_t *rp_getMapserverExec();
-const axis2_char_t *rp_getSoapOpsURL();
-const axis2_char_t *rp_getBackendURL();
-const axis2_char_t *rp_getBackendPath();
-const int           rp_getBackendPort();
-const axis2_char_t *rp_getBackendHost();
-
 int rp_get_contentType(char *str);
 int rp_content_is_text_type(char *str);
 
@@ -260,11 +181,13 @@ int sp_execMs_dashV(
 
 axutil_stream_t *sp_execMapserv(
     const axutil_env_t * env,
+    const sp_props     *props,
     const axis2_char_t *req,
     const axis2_char_t *mapfile);
 
 axutil_stream_t *sp_backend_socket(
     const axutil_env_t *env,
+    const sp_props     *props,
     const axis2_char_t *req,
     const axis2_char_t *mapfile);
 
@@ -415,14 +338,17 @@ axis2_char_t *rp_get_ref_href(
 axiom_node_t *
 sp_build_response20(
     const axutil_env_t * env,
+    const sp_props     *props, 
     axutil_stream_t    *st);
 
 void rp_inject_soap_cap20(
     const axutil_env_t * env,
+    const sp_props     *props,
     axiom_node_t *r_node);
 
 void sp_add_soapurl(
     const axutil_env_t * env,
+    const sp_props     *props, 
     axiom_node_t *r_node);
 
 void rp_delete_nonsoap(
@@ -431,6 +357,7 @@ void rp_delete_nonsoap(
 
 void sp_update_lineage(
     const axutil_env_t * env,
+    const sp_props     *props,
     axiom_node_t *return_node,
     axiom_node_t *request_node,
     time_t request_time);

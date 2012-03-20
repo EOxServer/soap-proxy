@@ -42,20 +42,24 @@
 
 #include "soap_proxy.h"
 #include "sp_svc.h"
+#include "sp_props.h"
 
 //  ==================== Forward declarations ================================
 axiom_node_t *rp_getMsVers(
-    const axutil_env_t * env);
+    const axutil_env_t * env,
+    const sp_props     *props);
 
 axiom_node_t *rp_invokeBackend(
     const axutil_env_t *env,
     axiom_node_t       *node,
+    const sp_props     *props, 
     const int          wcs_version);
 
 //-----------------------------------------------------------------------------
 axiom_node_t *
 rp_dispatch_op(
     const axutil_env_t *env,
+    sp_props           *props,
     axis2_char_t       *op_name,
     axiom_node_t       *node,
     const int          protocol
@@ -70,29 +74,29 @@ rp_dispatch_op(
         		axutil_strcmp(op_name, "DescribeEOCoverageSet" ) == 0
         )
         {
-        	return_node = rp_invokeBackend(env, node, protocol);
+            return_node = rp_invokeBackend(env, node, props, protocol);
         }
         else if ( axutil_strcmp(op_name, "GetCoverage" ) == 0 )
         {
-        	time_t request_time = time(NULL);
-        	return_node = rp_invokeBackend(env, node, protocol);
-            sp_update_lineage(env, return_node, node, request_time);
+            time_t request_time = time(NULL);
+            return_node = rp_invokeBackend(env, node, props, protocol);
+            sp_update_lineage(env, props, return_node, node, request_time);
         }
         else if ( axutil_strcmp(op_name, "GetCapabilities" ) == 0 )
         {
-            return_node = rp_invokeBackend(env, node, protocol);
-            rp_inject_soap_cap20(env, return_node);
-            if (rp_getDeletingNonSoap()) rp_delete_nonsoap (env, return_node);
-            sp_add_soapurl(env, return_node);
+            return_node = rp_invokeBackend(env, node, props, protocol);
+            rp_inject_soap_cap20(env, props, return_node);
+            if (rp_getDeletingNonSoap(env, props)) rp_delete_nonsoap (env, return_node);
+            sp_add_soapurl(env, props, return_node);
         }
         else if ( axutil_strcmp(op_name, "GetMsVersion" ) == 0 )
         {
-        	return_node = rp_getMsVers(env);
+            return_node = rp_getMsVers(env, props);
         }
         else
         {
-        	SP_ERROR(env, SP_USER_ERR_BAD_OP);
-        	// return_node remains as NULL
+            SP_ERROR(env, SP_USER_ERR_BAD_OP);
+            // return_node remains as NULL
         }
     }
     else
@@ -109,6 +113,7 @@ axiom_node_t *
 rp_invokeBackend(
     const axutil_env_t *env,
     axiom_node_t       *node,
+    const sp_props     *props,
     const int           wcs_version)
 {
     AXIS2_ENV_CHECK(env, NULL);
@@ -116,48 +121,48 @@ rp_invokeBackend(
     axiom_node_t   *return_node  = NULL;
     axis2_char_t   *req_string   = axiom_node_to_string(node, env);
     axutil_stream_t *r_stream    = NULL;
-	const axis2_char_t *mapfile  = rp_getMapfile();
+    const axis2_char_t *mapfile  = rp_getMapfile(env, props);
 
-	if (rp_getUrlMode())
+	if (rp_getUrlMode(env, props))
 	{
-		r_stream = sp_backend_socket(env, req_string, mapfile);
+            r_stream = sp_backend_socket(env, props, req_string, mapfile);
 	}
 	else
 	{
-		r_stream = sp_execMapserv(env, req_string, mapfile);
+            r_stream = sp_execMapserv(env, props, req_string, mapfile);
 	}
 
 	if (NULL == r_stream)
 	{
-		SP_ERROR(env, SP_SYS_ERR_MS_EXEC);
-		rp_log_error(env,
-				" (%s:%d) rp_invokeBackend / mode:%s, "
-				"mapfile='%s', exec/addr=%s\n",
-				__FILE__, __LINE__,
-				(rp_getUrlMode() ? "URL" : "Exec"),
-				mapfile,
-				(rp_getUrlMode() ?
-						rp_getBackendURL() :
-						rp_getMapserverExec() )
-		);
+            SP_ERROR(env, SP_SYS_ERR_MS_EXEC);
+            rp_log_error(env,
+                         " (%s:%d) rp_invokeBackend / mode:%s, "
+                         "mapfile='%s', exec/addr=%s\n",
+                         __FILE__, __LINE__,
+                         (rp_getUrlMode(env, props) ? "URL" : "Exec"),
+                         mapfile,
+                         (rp_getUrlMode(env, props) ?
+                          rp_getBackendURL(env, props) :
+                          rp_getMapserverExec(env, props) )
+                         );
 
 	}
 	else
 	{
-		switch(wcs_version)
-		{
-		case SP_WCS_V200:
-			return_node = sp_build_response20(env, r_stream);
-			break;
-		default:
-			return_node = NULL;
-			SP_ERROR(env, SP_SYS_ERR_INTERNAL);
-			rp_log_error(env,
-					"(%s:%d)Unexpected wcs_version (%d) in switch.\n"
-					__FILE__, __LINE__, wcs_version);
-		}
+          switch(wcs_version)
+            {
+            case SP_WCS_V200:
+              return_node = sp_build_response20(env, props, r_stream);
+              break;
+            default:
+              return_node = NULL;
+              SP_ERROR(env, SP_SYS_ERR_INTERNAL);
+              rp_log_error(env,
+                           "(%s:%d)Unexpected wcs_version (%d) in switch.\n"
+                           __FILE__, __LINE__, wcs_version);
+            }
 
-		sp_stream_cleanup(env, r_stream);
+          sp_stream_cleanup(env, r_stream);
 	}
 
 	AXIS2_FREE(env->allocator, req_string);
