@@ -33,6 +33,7 @@
 
 #include "soap_proxy.h"
 
+
 #define SP_MIN_URL_LEN 6
 
 //--------------------------- forward declarations ----------------------------
@@ -54,15 +55,16 @@ sp_sock_connect(
 axutil_stream_t *
 sp_backend_socket(
     const axutil_env_t *env,
+    const sp_props     *props,
     const axis2_char_t *req,
     const axis2_char_t *mapfile)
 {
     axutil_stream_t     *sock_stream  = NULL;
     int                  n_writ       = -1;
     int                  n_read       = -1;
-    const int            backend_port = rp_getBackendPort();
-    const axis2_char_t  *backend_host = rp_getBackendHost();
-    const axis2_char_t  *backend_path = rp_getBackendPath();
+    const int            backend_port = rp_getBackendPort(env, props);
+    const axis2_char_t  *backend_host = rp_getBackendHost(env, props);
+    const axis2_char_t  *backend_path = rp_getBackendPath(env, props);
 
 	if (axutil_strlen(backend_host) < 3 || axutil_strlen(backend_path) < 1 )
 	{
@@ -85,7 +87,7 @@ sp_backend_socket(
     if (!sock_stream)
     {
         rp_log_error(env, "error creating stream for '%s'\n",
-        		rp_getBackendURL());
+                     rp_getBackendURL(env, props));
         return NULL;
     }
 

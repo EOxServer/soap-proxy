@@ -122,6 +122,7 @@ sp_execMs_dashV(
 axutil_stream_t *
 sp_execMapserv(
     const axutil_env_t *env,
+    const sp_props     *props, 
     const axis2_char_t *req,
     const axis2_char_t *mapfile)
 {
@@ -129,12 +130,12 @@ sp_execMapserv(
     int wwpipe[2];
     pid_t cpid;
 
-    const char *msexec  = (char *)rp_getMapserverExec();
-	if (NULL == msexec || '\0' == msexec[0])
-	{
-		SP_ERROR(env, SP_SYS_ERR_MS_EXEC);
-		rp_log_error(env, "(%s:%d) msexec=NULL/empty\n", __FILE__, __LINE__);
-	}
+    const char *msexec  = (char *)rp_getMapserverExec(env, props);
+    if (NULL == msexec || '\0' == msexec[0])
+      {
+        SP_ERROR(env, SP_SYS_ERR_MS_EXEC);
+        rp_log_error(env, "(%s:%d) msexec=NULL/empty\n", __FILE__, __LINE__);
+      }
 
     if (strlen(msexec) > SP_MAX_MPATHS_LEN)
     {
