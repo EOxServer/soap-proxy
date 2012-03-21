@@ -1633,7 +1633,7 @@ log.info "Verification OK: Attachment contains expected '"+check1+", id='"+ck_id
 ]]></scriptText></con:configuration></con:assertion><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:wsaConfig action="ooosRP#GetCoverage" mustUnderstand="NONE" version="200508"/>
 <con:wsrmConfig version="1.2"/></con:request>
 </con:config>
-</con:testStep><con:properties/></con:testCase><con:testCase failOnError="true" failTestCaseOnErrors="true" keepSession="false" maxResults="0" name="Unknown Operation TestCase" searchProperties="true"><con:description>Test for gettting a soap fault in response to an unrecognised operation.</con:description><con:settings/><con:testStep type="request" name="BadOperation"><con:settings/><con:config xsi:type="con:RequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:interface>spSoapBinding</con:interface><con:operation>GetCapabilities</con:operation><con:request name="BadOperation"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding><con:endpoint>http://puck.eox.at/sp_eowcs</con:endpoint><con:request><![CDATA[<soapenv:Envelope 
+</con:testStep><con:properties/></con:testCase><con:testCase failOnError="true" failTestCaseOnErrors="true" keepSession="false" maxResults="0" name="Unknown Operation TestCase" searchProperties="true"><con:description>Test for gettting a soap fault in response to an unrecognised operation.</con:description><con:settings/><con:testStep type="request" name="BadOperation"><con:settings/><con:config xsi:type="con:RequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:interface>spSoapBinding</con:interface><con:operation>GetCapabilities</con:operation><con:request name="BadOperation"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding><con:endpoint>http://titania.eox.at/sp_uc2</con:endpoint><con:request><![CDATA[<soapenv:Envelope 
   xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" 
   xmlns:ns="http://www.opengis.net/wcs/2.0" 
   xmlns:ns1="http://www.opengis.net/ows/2.0">
@@ -1645,7 +1645,7 @@ log.info "Verification OK: Attachment contains expected '"+check1+", id='"+ck_id
   <con:testStep type="request" name="BadId">
     <con:settings/><con:config xsi:type="con:RequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:interface>spSoapBinding</con:interface><con:operation>DescribeCoverage</con:operation><con:request name="BadId">
     <con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding>
-    <con:endpoint>http://puck.eox.at/sp_eowcs</con:endpoint>
+    <con:endpoint>http://titania.eox.at/sp_uc2</con:endpoint>
     <con:request><![CDATA[<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" 
 xmlns:ns="http://www.opengis.net/wcs/2.0">
    <soapenv:Header/>
