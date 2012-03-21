@@ -1646,11 +1646,11 @@ log.info "Verification OK: Attachment contains expected '"+check1+", id='"+ck_id
     <con:settings/><con:config xsi:type="con:RequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:interface>spSoapBinding</con:interface><con:operation>DescribeCoverage</con:operation><con:request name="BadId">
     <con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding>
     <con:endpoint>http://titania.eox.at/sp_uc2</con:endpoint>
-    <con:request><![CDATA[<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" 
-xmlns:ns="http://www.opengis.net/wcs/2.0">
+    <con:request><![CDATA[<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
    <soapenv:Header/>
    <soapenv:Body>
-      <ns:DescribeCoverage service="WCS" version="2.0.0">
+      <ns:DescribeCoverage service="WCS" version="2.0.0" 
+       xmlns:ns="http://www.opengis.net/wcs/2.0">
          <ns:CoverageId>BadId</ns:CoverageId>
       </ns:DescribeCoverage>
    </soapenv:Body>
