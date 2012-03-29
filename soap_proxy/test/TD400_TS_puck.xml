@@ -6,16 +6,15 @@ The test cases may be run individually, or all together using 'Launch TestRunner
   <con:settings/>
   <con:runType>SEQUENTIAL</con:runType>
   <con:testCase failOnError="true" failTestCaseOnErrors="true" keepSession="false" maxResults="0" name="GetCapabilities Valid TestCase" searchProperties="true"><con:settings/><con:testStep type="request" name="GetCapabilities"><con:settings/><con:config xsi:type="con:RequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:interface>spSoapBinding</con:interface><con:operation>GetCapabilities</con:operation><con:request name="GetCapabilities"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding><con:endpoint>http://puck.eox.at/sp_eowcs</con:endpoint><con:request><![CDATA[<soapenv:Envelope 
-  xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" 
-  xmlns:ns="http://www.opengis.net/wcs/2.0" 
-  xmlns:ns1="http://www.opengis.net/ows/2.0">
+  xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
    <soapenv:Header/>
    <soapenv:Body>
-      <ns:GetCapabilities updateSequence="u2001" service="WCS">
+      <ns:GetCapabilities updateSequence="u2001" service="WCS" 
+xmlns:ns="http://www.opengis.net/wcs/2.0"
+xmlns:ns1="http://www.opengis.net/ows/2.0">
          <ns1:AcceptVersions>
             <ns1:Version>2.0.0</ns1:Version>
          </ns1:AcceptVersions>
-      </ns:GetCapabilities>
       </ns:GetCapabilities>
    </soapenv:Body>
 </soapenv:Envelope>]]></con:request><con:assertion type="SOAP Fault Assertion" name="Not SOAP Fault"/><con:assertion type="XQuery Match" name="Profile-wcs-soap"><con:configuration><path>declare namespace ogc='http://www.opengis.net/ogc';

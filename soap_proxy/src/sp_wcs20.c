@@ -172,17 +172,22 @@ static int f_add_soapurl(
     // Find the paths
     //   HTTP
     //   and add the SOAP capability.
-    // If none found it  is not considered an error.
-	//
-/*
+    // If none found it is not considered an error.
+    //
+    /*
     <ows:Post xlink:type="simple" xlink:href="http://SERVER_UNDEFINED/service">
       <ows:Constraint name="PostEncoding">
         <ows:AllowedValues>
-          <ows:Value>XML</ows:Value>
           <ows:Value>SOAP</ows:Value>
         </ows:AllowedValues>
       </ows:Constraint>
-  */
+    */
+
+    axis2_char_t *soap_ops_url = (axis2_char_t *) arg3;
+    if (NULL == soap_ops_url)
+    {
+        soap_ops_url = "";
+    }
 
     axiom_node_t *top_node = rp_find_named_child(env, target_node, "HTTP", 1);
     if (NULL == top_node) return 0;
@@ -193,14 +198,14 @@ static int f_add_soapurl(
     axiom_element_t *post_ele  =
       axiom_element_create(env, top_node, "Post", root_ns, &post_node);
 
-	axiom_namespace_t *xlink_ns = axiom_namespace_create(
-			env, SP_XLINK_NAMESPACE_STR, "xlink");
+    axiom_namespace_t *xlink_ns = axiom_namespace_create(
+      env, SP_XLINK_NAMESPACE_STR, "xlink");
 
     axiom_attribute_t *attr =
       axiom_attribute_create (env, "type", "simple", xlink_ns);
     axiom_element_add_attribute (post_ele, env, attr, post_node);
 
-    attr = axiom_attribute_create (env, "href", rp_getSoapOpsURL(), xlink_ns);
+    attr = axiom_attribute_create (env, "href", soap_ops_url, xlink_ns);
     axiom_element_add_attribute (post_ele, env, attr, post_node);
 
     Name_value c_nv;  c_nv.name = "Constraint";  c_nv.value = NULL;
@@ -219,6 +224,7 @@ static int f_add_soapurl(
 //-----------------------------------------------------------------------------
 void rp_inject_soap_cap20(
     const axutil_env_t * env,
+    const sp_props *props,
     axiom_node_t *r_node)
 {
     // First find the node Capabilities/ServiceIdentification
@@ -378,6 +384,7 @@ sp_process_tiff20(
 axiom_node_t *
 sp_build_response20(
     const axutil_env_t *env,
+    const sp_props     *props,
     axutil_stream_t    *st)
 {
     char tmpBuf[255];
@@ -427,7 +434,7 @@ sp_build_response20(
     			"*** S2P(%s:%d): Unrecognised Content-type: %s\n",
     			__FILE__, __LINE__,
     			contentTypeStr);
-    	if (rp_getDebugMode())
+    	if (rp_getDebugMode(env, props))
     	{
     		sp_dump_bad_content(env, contentTypeStr, st, header_buf);
     	}
@@ -470,6 +477,7 @@ void rp_delete_nonsoap(
 //-----------------------------------------------------------------------------
 void sp_add_soapurl(
     const axutil_env_t * env,
+    const sp_props     *props,
     axiom_node_t *r_node)
 {
     //
@@ -491,7 +499,7 @@ void sp_add_soapurl(
                      axiom_node_get_first_child(ops_node, env),
                      "Operation",
                      &f_add_soapurl,
-                     NULL);
+                     (void *) rp_getSoapOpsURL(env, props));
 
 }
 
@@ -499,6 +507,7 @@ void sp_add_soapurl(
 void
 sp_update_lineage(
     const axutil_env_t * env,
+    const sp_props     *props,
     axiom_node_t *return_node,
     axiom_node_t *request_node,
     time_t        request_time)
@@ -611,7 +620,7 @@ sp_update_lineage(
       axiom_attribute_create (env, "type", "simple", xlink_ns);
     axiom_element_add_attribute (service_ref_el, env, attr, service_ref_node);
 
-    attr = axiom_attribute_create (env, "href", rp_getSoapOpsURL(), xlink_ns);
+    attr = axiom_attribute_create (env, "href", rp_getSoapOpsURL(env, props), xlink_ns);
     axiom_element_add_attribute (service_ref_el, env, attr, service_ref_node);
 
     //<ows:RequestMessage>

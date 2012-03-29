@@ -14,7 +14,7 @@
 #
 
 Name:           eo_soap_proxy
-Version:        1.0.0
+Version:        1.0.1
 Release:        1
 Summary:        Soap proxy for EOxServer
 Group:          Applications/Internet
@@ -22,10 +22,10 @@ License:        EOxServer-SoapProxy Open License (based on MIT).
 
 URL:            http://eoxserver.org/
 # svn co http://eoxserver.org/svn/trunk/soap_proxy
-# mv soap_proxy eo_soap_proxy-src-1.0.0
-# tar --exclude-vcs --exclude=eo_soap_proxy-src-1.0.0/test \
-#     -czf eo_soap_proxy-src-1.0.0.tgz eo_soap_proxy-src-1.0.0
-Source0:        eo_soap_proxy-src-1.0.0.tgz
+# mv soap_proxy eo_soap_proxy-src-1.0.1
+# tar --exclude-vcs --exclude=eo_soap_proxy-src-1.0.1/test \
+#     -czf eo_soap_proxy-src-1.0.1.tgz eo_soap_proxy-src-1.0.1
+Source0:        eo_soap_proxy-src-1.0.1.tgz
 
 %define major 0
 %define libname libsoapProxyEo.0
@@ -135,5 +135,7 @@ rmdir ${SP_SVC_HOME}
 /sbin/ldconfig
 
 %changelog
+* Tue Mar 20 2012 Milan Novacek 1.0.1
+- soap_proxy src update (remove static vars for props)
 * Tue Jan 24 2012 Milan Novacek 1.0.0
 - Initial version.

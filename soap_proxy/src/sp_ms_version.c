@@ -48,18 +48,19 @@
 //-----------------------------------------------------------------------------
 axiom_node_t *
 rp_getMsVers(
-    const axutil_env_t * env)
+    const axutil_env_t * env,
+    const sp_props     *props)
 {
     axiom_node_t *return_node = NULL;
 
-    if (rp_getUrlMode())
+    if (rp_getUrlMode(env, props))
     {
     	SP_ERROR(env, SP_SYS_ERR_NOT_IMPLEMENTED);
     	rp_log_error(env, "getMsVersion not implemented with backend_url.\n");
     	return NULL;
     }
 
-    const axis2_char_t *msexec = rp_getMapserverExec();
+    const axis2_char_t *msexec = rp_getMapserverExec(env, props);
 
     int resp_fd = rp_execMs_dashV(env, msexec);
     if (resp_fd < 0)

@@ -38,45 +38,22 @@
  *     <parameter name="NNN">VVV</parameter>
  *  where NNN is the name and VVV is the value of the parameter.
  *
- *  Two parameters are required for the WCS SOAP proxy:
+ *  For Eoxserver At lest the 'BackendURL' parameters is required.
+ *  
+ *  Alternatively, for direct use with mapserver, the following
+ *  two parameters may be set instead.  Note if BackendURL is set,
+ *  then these two are ignored.  If no BackendURL is set, then
+ *  both of these are required.
  *    MapFile  - abs path to the mapserver configuration file
  *    MapServ  - abs path to the mapserver executable
  *
  */
 
 #include "soap_proxy.h"
+#include "sp_props.h"
 #include "sp_svc.h"
 
 #include <axutil_param.h>
-
-/**
- * Names of the parameters in in the config file
- */
-#define SP_MAPFILE_STR    "MapFile"
-#define SP_MAPSERVER_STR  "MapServ"
-#define SP_BACKENDURL_STR "BackendURL"
-#define SP_SOAPOPSURL_STR "SOAPOperationsURL"
-#define SP_DELNONSOAP_STR "DeleteNonSoapURLs"
-#define SP_DEBUG_STR      "DebugSoapProxy"
-
-// TODO: Should lock the access functions for concurrent thread safety.
-
-//-----------------------------------------------------------------------------
-static int rp_props_loaded     = 0;
-static int rp_url_mode         = 0;
-static int rp_deleting_nonsoap = 0;
-static int rp_debug_mode       = 0;
-static axis2_char_t rp_mapfile         [SP_MAX_MPATHS_LEN] = "";
-static axis2_char_t rp_mapserv         [SP_MAX_MPATHS_LEN] = "";
-static axis2_char_t rp_backend_url_str [SP_MAX_MPATHS_LEN] = "";
-static axis2_char_t rp_soapops_url_str [SP_MAX_MPATHS_LEN] = "";
-
-// Derived values.
-static int          rp_backend_port                    = -1;
-static axis2_char_t rp_backend_host[SP_MAX_MPATHS_LEN] = "";
-static axis2_char_t rp_backend_path[SP_MAX_MPATHS_LEN] = "";
-
-const axis2_char_t *rp_get_prop_s(int i);
 
 // =========================  local functions = ===============================
 
@@ -133,12 +110,6 @@ static int rp_load_boolean(
     return  ! axutil_strcasecmp(val, "true");
 
 }
-//-----------------------------------------------------------------------------
-static int rp_set_props_loaded()
-{
-    rp_props_loaded = 1;
-    return 0;
-}
 
 //-----------------------------------------------------------------------------
 // copy src to dst, and free src.
@@ -148,176 +119,195 @@ static int rp_load_axis_str(
 	const int           max_chars,
 	const axutil_env_t  *env)
 {
-	strncpy(dst, src, max_chars);
-	AXIS2_FREE(env->allocator, src);
+    strncpy(dst, src, max_chars);
+    AXIS2_FREE(env->allocator, src);
     return 0;
 }
 
 // =========================  public functions = ===============================
 //-----------------------------------------------------------------------------
+/** init props
+ * @param props
+ * 
+ */
+void  rp_init_props(sp_props *props)
+{
+    props->msg_ctx = NULL;
+
+    props->url_mode         = 0;
+    props->deleting_nonsoap = 0;
+    props->debug_mode       = 0;
+    props->backend_port     = -1;
+
+    props->mapfile         [0] = '\0';
+    props->mapserv         [0] = '\0';
+    props->backend_url_str [0] = '\0';
+    props->soapops_url_str [0] = '\0';
+    props->backend_host    [0] = '\0';
+    props->backend_path    [0] = '\0';
+}
+
+//-----------------------------------------------------------------------------
 /** Get url mode.
+ * @param env
+ * @param props
  * @return false (0): not URL-mode, use exec of mapserver binary,
  *         true  (1): communicate with URL via a socket connection.
  */
-const int rp_getUrlMode()
+const int rp_getUrlMode( const axutil_env_t *env, const sp_props *props )
 {
-    return rp_url_mode;
+    return props->url_mode;
 }
 
 //-----------------------------------------------------------------------------
 /** Get Debug mode.
+ * @param env
+ * @param props
  * @return false (0): debug off.
  *         true  (1): debug on.
  */
-const int rp_getDebugMode()
+const int rp_getDebugMode(const axutil_env_t *env, const sp_props *props )
 {
-    return rp_debug_mode;
+    return props->debug_mode;
 }
 
 //-----------------------------------------------------------------------------
 /** Get DeleteNonSoapURLs mode.
+ * @param env
+ * @param props
  * @return false (0): to keep all GET & POST capabilities as advertised by the
  *  backend,
  *         true  (1): delete GET & POST capabilities coming from the backend.
  */
-const int rp_getDeletingNonSoap()
+const int rp_getDeletingNonSoap( const axutil_env_t *env, const sp_props *props )
 {
-    return rp_deleting_nonsoap;
+    return props->deleting_nonsoap;
 }
 
 //-----------------------------------------------------------------------------
 /** Get mapfile path.
+ * @param env
+ * @param props
  * @return pointer to the mapfile path as a static string, not a copy.
  */
-const axis2_char_t *rp_getMapfile()
+const axis2_char_t *rp_getMapfile( const axutil_env_t *env, const sp_props *props )
 {
-    return rp_get_prop_s(SP_MAPFILE_ID);
+    return props->mapfile;
 }
 
 //-----------------------------------------------------------------------------
 /** Get mapserver executable path.
+ * @param env
+ * @param props
  * @return pointer to the mapserver executable path as a static string,
  * not a copy.
  */
-const axis2_char_t *rp_getMapserverExec()
+const axis2_char_t *rp_getMapserverExec( const axutil_env_t *env, const sp_props *props )
 {
-	return rp_get_prop_s(SP_MAPSERVER_ID);
+	return props->mapserv;
 }
 
 //-----------------------------------------------------------------------------
 /** Get SOAPOperationsURL string.
+ * @param env
+ * @param props
  * @return pointer to a static string, not a copy.
  */
-const axis2_char_t *rp_getSoapOpsURL()
+const axis2_char_t *rp_getSoapOpsURL( const axutil_env_t *env, const sp_props *props )
 {
-	return rp_get_prop_s(SP_SOAPOPSURL_ID);
+        return props->soapops_url_str;
 }
 
 //-----------------------------------------------------------------------------
 /** Get backend URL string.
- * @return pointer to a static string, not a copy.
+ * @param env
+ * @param props
+ * @return pointer to a string, not a copy.
  */
-const axis2_char_t *rp_getBackendURL()
+const axis2_char_t *rp_getBackendURL( const axutil_env_t *env, const sp_props *props )
 {
-	return rp_get_prop_s(SP_BACKENDURL_ID);
+        return props->backend_url_str;
 }
 
 //-----------------------------------------------------------------------------
 /** Get backend path.
- * @return pointer to a static string, not a copy.
+ * @param env
+ * @param props
+ * @return pointer to a string, not a copy.
  */
-const axis2_char_t *rp_getBackendPath()
+const axis2_char_t *rp_getBackendPath( const axutil_env_t *env, const sp_props *props )
 {
-	return rp_backend_path;
+	return props->backend_path;
 }
 
 //-----------------------------------------------------------------------------
 /** Get backend port.
- * @return pointer to a static string, not a copy.
+ * @param env
+ * @param props
+ * @return pointer to a string, not a copy.
  */
-const int rp_getBackendPort()
+const int rp_getBackendPort( const axutil_env_t *env, const sp_props *props )
 {
-	return rp_backend_port;
+	return props->backend_port;
 }
 
 //-----------------------------------------------------------------------------
 /** Get backend host.
- * @return pointer to a static string, not a copy.
+ * @param env
+ * @param props
+ * @return pointer to a string, not a copy.
  */
-const axis2_char_t *rp_getBackendHost()
+const axis2_char_t *rp_getBackendHost( const axutil_env_t *env, const sp_props *props )
 {
-	return rp_backend_host;
+	return props->backend_host;
 }
 
 //-----------------------------------------------------------------------------
-/** Get property string by index.
- * Note some properties are also available as a derived value; this function
- * only delivers raw string values.
- *
- * @param i index, one of sp_property_ids.
- * @return pointer to a static string, not a copy.
- */
-const axis2_char_t *rp_get_prop_s(
-    const int i)
-{
-	switch (i)
-	{
-	case SP_MAPSERVER_ID:  return rp_mapserv;
-	case SP_MAPFILE_ID:    return rp_mapfile;
-	case SP_BACKENDURL_ID: return rp_backend_url_str;
-	case SP_SOAPOPSURL_ID: return rp_soapops_url_str;
-
-	default:
-		fprintf(stderr,
-				"%s: %d: **error: unknown property ID",
-				__FILE__, __LINE__);
-		return "(**error: unknown property ID)";
-	}
-}
-
-//-----------------------------------------------------------------------------
-/**  Caches the WCS-SOAP-To-POST specific properties, which have been read
+/**  Loads the WCS-SOAP-To-POST specific properties, which have been read
  * by the axis2 framework on start-up from one of the config files
  * (e.g. 'services.xml' in the service dir).
+ * @param props
  * @param env
  * @param msg_ctx
  * @return 0 on success, non-zero on failure.
  */
 int rp_load_props(
+    sp_props *props,
     const axutil_env_t    *env,
     const axis2_msg_ctx_t *msg_ctx)
 {
-    if (rp_props_loaded) return 0;
 
-    rp_debug_mode       = rp_load_boolean(env, msg_ctx, SP_DEBUG_STR);
-    rp_deleting_nonsoap = rp_load_boolean(env, msg_ctx, SP_DELNONSOAP_STR);
+    props->msg_ctx = msg_ctx;
 
-    if ( rp_load_prop(env, msg_ctx, rp_soapops_url_str, SP_SOAPOPSURL_STR) )
+    props->debug_mode       = rp_load_boolean(env, msg_ctx, SP_DEBUG_STR);
+    props->deleting_nonsoap = rp_load_boolean(env, msg_ctx, SP_DELNONSOAP_STR);
+
+    if ( rp_load_prop(env, msg_ctx, props->soapops_url_str, SP_SOAPOPSURL_STR) )
     {
-    	// Try get the endpoint URL.
-    	// Not sure why this in the 'from' rather than the 'to'. (TODO)
+        // Try get the endpoint URL.
+        // Not sure why this in the 'from' rather than the 'to'. (TODO)
 
-    	axis2_endpoint_ref_t *xaddr = axis2_msg_ctx_get_from (msg_ctx, env);
-    	if (NULL==xaddr)
-    	{
-    		rp_log_error(env,
-    				" SP: **WARNING: NULL==xaddr."
-    				" Could not determine URL of service.\n");
-    		strcpy(rp_soapops_url_str, "ERROR: URL-UNKNOWN");
-    	}
-    	else
-    	{
-    		if (strlen(axis2_endpoint_ref_get_address(xaddr, env))
-    				> SP_MAX_MPATHS_LEN)
-    		{
-    			rp_log_error(env,
-    					" SP: **WARNING: xaddr exceeds %d \n",
-    					SP_MAX_MPATHS_LEN);
-    		}
-    		strncpy(rp_soapops_url_str,
-    				axis2_endpoint_ref_get_address(xaddr, env),
-    				SP_MAX_MPATHS_LEN);
-    	}
+        axis2_endpoint_ref_t *xaddr = axis2_msg_ctx_get_from (msg_ctx, env);
+        if (NULL==xaddr)
+        {
+            rp_log_error(env,
+                    " SP: **WARNING: NULL==xaddr."
+                    " Could not determine URL of service.\n");
+            strcpy(props->soapops_url_str, "ERROR: URL-UNKNOWN");
+        }
+        else
+        {
+            if (strlen(axis2_endpoint_ref_get_address(xaddr, env))
+                    > SP_MAX_MPATHS_LEN)
+            {
+                rp_log_error(env,
+                        " SP: **WARNING: xaddr exceeds %d \n",
+                        SP_MAX_MPATHS_LEN);
+            }
+            strncpy(props->soapops_url_str,
+                    axis2_endpoint_ref_get_address(xaddr, env),
+                    SP_MAX_MPATHS_LEN);
+        }
     }
 
     // Must load at least one of BACKENDURL or MAPSERVER.
@@ -327,44 +317,41 @@ int rp_load_props(
     // fail downstream if the user attempts to send requests to mapserver
     // without a mapfile.
 
-    int mapfile_loaded = ! rp_load_prop(env, msg_ctx, rp_mapfile, SP_MAPFILE_STR);
+    int mapfile_loaded = ! rp_load_prop(env, msg_ctx, props->mapfile, SP_MAPFILE_STR);
 
-    if ( ! rp_load_prop(env, msg_ctx, rp_backend_url_str, SP_BACKENDURL_STR))
+    if ( ! rp_load_prop(env, msg_ctx, props->backend_url_str, SP_BACKENDURL_STR))
     {
-    	rp_url_mode = 0;
+        props->url_mode = 0;
 
-    	axutil_url_t *backend_url = axutil_url_parse_string(env, rp_backend_url_str);
-    	if (!backend_url)
-    	{
-    		rp_log_error(env, "Malformed " SP_BACKENDURL_STR ".");
-    		return -1;
-    	}
+        axutil_url_t *backend_url = axutil_url_parse_string(env, props->backend_url_str);
+        if (!backend_url)
+        {
+            rp_log_error(env, "Malformed " SP_BACKENDURL_STR ".");
+            return -1;
+        }
 
-    	rp_backend_port = axutil_url_get_port(backend_url, env);
-    	rp_load_axis_str(
-    			rp_backend_host,
-    			axutil_url_get_host(backend_url, env),
-    			SP_MAX_MPATHS_LEN,
-    			env);
-    	rp_load_axis_str(
-    			rp_backend_path,
-    			axutil_url_get_path(backend_url, env),
-    			SP_MAX_MPATHS_LEN,
-    			env);
+        props->backend_port = axutil_url_get_port(backend_url, env);
+        rp_load_axis_str(
+                props->backend_host,
+                axutil_url_get_host(backend_url, env),
+                SP_MAX_MPATHS_LEN,
+                env);
+        rp_load_axis_str(
+                props->backend_path,
+                axutil_url_get_path(backend_url, env),
+                SP_MAX_MPATHS_LEN,
+                env);
 
-    	axutil_url_free(backend_url, env);
+        axutil_url_free(backend_url, env);
 
-    	rp_url_mode = 1;
-    	rp_set_props_loaded();
-    	return 0;
+        props->url_mode = 1;
+        return 0;
     }
     else
     {
-    	rp_url_mode = 0;
-    	if ( ! mapfile_loaded ) return -1;
-    	return
-    			rp_load_prop(env, msg_ctx, rp_mapserv, SP_MAPSERVER_STR) ||
-    			rp_set_props_loaded();
+        props->url_mode = 0;
+        if ( ! mapfile_loaded ) return -1;
+        return rp_load_prop(env, msg_ctx, props->mapserv, SP_MAPSERVER_STR);
     }
 }
 

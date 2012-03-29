@@ -10,7 +10,7 @@ To build eo_soap_proxy.rpm:
       svn co http://eoxserver.org/svn/trunk/soap_proxy
       mv soap_proxy eo_soap_proxy-src-1.0.0
       tar --exclude-vcs --exclude=eo_soap_proxy-src-1.0.0/test \
-        -czf eo_soap_proxy-src-1.0.0.tgz eo_soap_proxy-src1.0.0
+        -czf eo_soap_proxy-src-1.0.0.tgz eo_soap_proxy-src-1.0.0
 
   2. copy eo_soap_proxy.spec into ~/rpmbuild/SPECS,
      and copy eo_soap_proxy-src-1.0.0.tgz into ~/rpmbuild/SOURCES

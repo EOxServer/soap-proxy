@@ -1,0 +1,1661 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:testSuite name="TD400_UC2_titania" xmlns:con="http://eviware.com/soapui/config">
+  <con:description>This test suite is the collection of test cases described in the O3S Software Validation 
+Specificaiton document (O3S_SVS), section 7.5 Test Cases for TD_400.
+The test cases may be run individually, or all together using 'Launch TestRunner'. 
+This test suite is set up for the dataset for UC2 on the machine titania.</con:description>
+  <con:settings/>
+  <con:runType>SEQUENTIAL</con:runType>
+  <con:testCase failOnError="true" failTestCaseOnErrors="true" keepSession="false" maxResults="0" name="GetCapabilities Valid TestCase" searchProperties="true"><con:settings/><con:testStep type="request" name="GetCapabilities"><con:settings/><con:config xsi:type="con:RequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:interface>spSoapBinding</con:interface><con:operation>GetCapabilities</con:operation><con:request name="GetCapabilities"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding><con:endpoint>http://titania.eox.at/sp_uc2</con:endpoint><con:request><![CDATA[<soapenv:Envelope
+xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
+   <soapenv:Body>
+    <wcs:GetCapabilities service="WCS" version="2.0.0" xmlns:wcs="http://www.opengis.net/wcs/2.0">
+    </wcs:GetCapabilities>
+   </soapenv:Body>
+</soapenv:Envelope>]]></con:request><con:assertion type="SOAP Fault Assertion" name="Not SOAP Fault"/><con:assertion type="XQuery Match" name="Profile-wcs-soap"><con:configuration><path>declare namespace ogc='http://www.opengis.net/ogc';
+declare namespace swe='http://www.opengis.net/swe/2.0';
+declare namespace gml='http://www.opengis.net/gml/3.2';
+declare namespace ows='http://www.opengis.net/ows/2.0';
+declare namespace wcs='http://www.opengis.net/wcs/2.0';
+declare namespace xlink='http://www.w3.org/1999/xlink';
+declare namespace soapenv='http://schemas.xmlsoap.org/soap/envelope/';
+declare namespace gmlcov='http://www.opengis.net/gmlcov/1.0';
+//ows:Profile[2]</path><content>&lt;ows:Profile xmlns:ows="http://www.opengis.net/ows/2.0">http://www.opengis.net/spec/WCS_protocol-binding_soap/1.0&lt;/ows:Profile></content><allowWildcards>false</allowWildcards></con:configuration></con:assertion><con:assertion type="XQuery Match" name="Profile-eowcs-soap"><con:configuration><path>declare namespace ogc='http://www.opengis.net/ogc';
+declare namespace swe='http://www.opengis.net/swe/2.0';
+declare namespace gml='http://www.opengis.net/gml/3.2';
+declare namespace ows='http://www.opengis.net/ows/2.0';
+declare namespace wcs='http://www.opengis.net/wcs/2.0';
+declare namespace xlink='http://www.w3.org/1999/xlink';
+declare namespace soapenv='http://schemas.xmlsoap.org/soap/envelope/';
+declare namespace gmlcov='http://www.opengis.net/gmlcov/1.0';
+//ows:Profile[3]</path><content>&lt;ows:Profile xmlns:ows="http://www.opengis.net/ows/2.0">http://www.opengis.net/spec/WCS_application-profile_earth-observation/1.0/conf/eowcs_soap&lt;/ows:Profile></content><allowWildcards>false</allowWildcards></con:configuration></con:assertion><con:assertion type="GroovyScriptAssertion" name="OperationsMetadata  contains SOAP"><con:configuration><scriptText>/*
+ *  SOAPUI script to check GetCapabilities response againtst OGC 09-149r requirement 2,
+ *  "[...] shall specify the HTTP POST request encodings accepted by including an
+ * ows:Constraint element, with “PostEncoding” as the value of the name attribute and
+ * with a value of “SOAP” to indicate that SOAP encoding is allowed."
+ *
+ *  Copyright (C) 2011 ANF DATA spol. s r.o. 
+ */
+def constrSelect = "ows:Post/ows:Constraint[@name='PostEncoding']/ows:AllowedValues"
+def checkString  = "SOAP"
+log.info "Checking that every node matching " + constrSelect +" contains an ows:Value '"+checkString+"'."
+def groovyUtils = new com.eviware.soapui.support.GroovyUtils( context )
+def holder = groovyUtils.getXmlHolder( "GetCapabilities#Response" )
+
+holder.namespaces["ows"] = "http://www.opengis.net/ows/2.0"
+import com.eviware.soapui.support.xml.XmlUtils
+
+def nodeCount = holder.getDomNodes("//ows:Operation/*/*/"+constrSelect).length
+log.info "Count of Operation nodes= "+nodeCount
+
+def nStrings = 0
+for (def nodeIndex = 1; nodeIndex &lt;= nodeCount; nodeIndex++) {
+	def node =  holder.getDomNodes("//ows:Operation["+nodeIndex+"]/*/*/"+constrSelect+"/ows:Value")
+	node.each {
+		if (it.firstChild.nodeValue ==checkString) {
+			nStrings++
+			log.info "Found: " + it.getQName()+" = "+it.firstChild.nodeValue
+		}
+	}
+}
+assert nStrings>0
+</scriptText></con:configuration></con:assertion><con:assertion type="GroovyScriptAssertion" name="CoverageId"><con:configuration><scriptText>/*
+ *  SOAPUI script to check that the CoverageSummary in the response 
+ *   contains the expcted dataset ID.
+ *
+ *  Copyright (C) 2011 ANF DATA spol. s r.o. 
+ */
+def constrSelect = "//wcs:Contents/wcs:CoverageSummary"
+def checkString  = "rect_dataset_a1bd5869b3904c788dc6020f70d5cf84"
+log.info "Checking for CoverageSummary contents. "
+def groovyUtils = new com.eviware.soapui.support.GroovyUtils( context )
+def holder = groovyUtils.getXmlHolder( "GetCapabilities#Response" )
+
+holder.namespaces["ows"] = "http://www.opengis.net/ows/2.0"
+holder.namespaces["wcs"]="http://www.opengis.net/wcs/2.0"
+import com.eviware.soapui.support.xml.XmlUtils
+
+def nodeCount = holder.getDomNodes(constrSelect).length
+assert nodeCount>1
+
+def found = 0
+for (def nodeIndex = 1; nodeIndex &lt;= nodeCount; nodeIndex++) {
+	def nodeTxt = holder.getNodeValue(constrSelect+"["+nodeIndex+"]/wcs:CoverageId")
+     if (nodeTxt ==checkString) { 
+     	found=1 
+     	log.info "Found: " + nodeTxt
+     	}
+}
+assert found>0
+
+log.info "OK"</scriptText></con:configuration></con:assertion><con:assertion type="XQuery Match" name="OperationsMetadata exact match"><con:configuration><path>declare namespace ogc='http://www.opengis.net/ogc';
+declare namespace swe='http://www.opengis.net/swe/2.0';
+declare namespace gml='http://www.opengis.net/gml/3.2';
+declare namespace ows='http://www.opengis.net/ows/2.0';
+declare namespace wcs='http://www.opengis.net/wcs/2.0';
+declare namespace xlink='http://www.w3.org/1999/xlink';
+declare namespace soapenv='http://schemas.xmlsoap.org/soap/envelope/';
+declare namespace gmlcov='http://www.opengis.net/gmlcov/1.0';
+//ows:OperationsMetadata</path><content><![CDATA[<ows:OperationsMetadata xmlns:ows="http://www.opengis.net/ows/2.0" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <ows:Operation name="GetCapabilities">
+    <ows:DCP>
+      <ows:HTTP>
+        <ows:Post xlink:type="simple" xlink:href="*">
+          <ows:Constraint name="PostEncoding">
+            <ows:AllowedValues>
+              <ows:Value>SOAP</ows:Value>
+            </ows:AllowedValues>
+          </ows:Constraint>
+        </ows:Post>
+      </ows:HTTP>
+    </ows:DCP>
+  </ows:Operation>
+  <ows:Operation name="DescribeCoverage">
+    <ows:DCP>
+      <ows:HTTP>
+        <ows:Post xlink:type="simple" xlink:href="*">
+          <ows:Constraint name="PostEncoding">
+            <ows:AllowedValues>
+              <ows:Value>SOAP</ows:Value>
+            </ows:AllowedValues>
+          </ows:Constraint>
+        </ows:Post>
+      </ows:HTTP>
+    </ows:DCP>
+  </ows:Operation>
+  <ows:Operation name="GetCoverage">
+    <ows:DCP>
+      <ows:HTTP>
+        <ows:Post xlink:type="simple" xlink:href="*">
+          <ows:Constraint name="PostEncoding">
+            <ows:AllowedValues>
+              <ows:Value>SOAP</ows:Value>
+            </ows:AllowedValues>
+          </ows:Constraint>
+        </ows:Post>
+      </ows:HTTP>
+    </ows:DCP>
+  </ows:Operation>
+  <ows:Operation name="DescribeEOCoverageSet">
+    <ows:DCP>
+      <ows:HTTP>
+        <ows:Post xlink:type="simple" xlink:href="*">
+          <ows:Constraint name="PostEncoding">
+            <ows:AllowedValues>
+              <ows:Value>SOAP</ows:Value>
+            </ows:AllowedValues>
+          </ows:Constraint>
+        </ows:Post>
+      </ows:HTTP>
+    </ows:DCP>
+  </ows:Operation>
+  <ows:Constraint name="CountDefault">
+    <ows:NoValues/>
+    <ows:DefaultValue>*</ows:DefaultValue>
+  </ows:Constraint>
+</ows:OperationsMetadata>]]></content><allowWildcards>true</allowWildcards></con:configuration></con:assertion><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:wsaConfig action="ooosRP#GetCapabilities" mustUnderstand="NONE" version="200508"/><con:wsrmConfig version="1.2"/></con:request></con:config></con:testStep><con:properties/></con:testCase>
+<con:testCase failOnError="true" failTestCaseOnErrors="true" keepSession="false" maxResults="0" name="DescribeCoverage Valid TestCase" searchProperties="true"><con:settings/>
+  <con:testStep type="request" name="DescribeCoverage">
+    <con:settings/><con:config xsi:type="con:RequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:interface>spSoapBinding</con:interface><con:operation>DescribeCoverage</con:operation><con:request name="DescribeCoverage">
+    <con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding>
+    <con:endpoint>http://titania.eox.at/sp_uc2</con:endpoint>
+    <con:request><![CDATA[<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
+   <soapenv:Header/>
+   <soapenv:Body>
+      <ns:DescribeCoverage service="WCS" version="2.0.0" xmlns:ns="http://www.opengis.net/wcs/2.0">
+         <ns:CoverageId>rect_dataset_a1bd5869b3904c788dc6020f70d5cf84</ns:CoverageId>
+      </ns:DescribeCoverage>
+   </soapenv:Body>
+</soapenv:Envelope>]]></con:request><con:assertion type="SOAP Fault Assertion" name="Not SOAP Fault"/><con:assertion type="Simple Contains" name="Contains CoverageDescription"><con:configuration><token>CoverageDescription</token><ignoreCase>false</ignoreCase><useRegEx>false</useRegEx></con:configuration></con:assertion><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:wsaConfig action="ooosRP#DescribeCoverage" mustUnderstand="NONE" version="200508"/>
+<con:wsrmConfig version="1.2"/></con:request></con:config></con:testStep><con:properties/></con:testCase><con:testCase failOnError="true" failTestCaseOnErrors="true" keepSession="false" maxResults="0" name="DescribeEOCoverageSet Valid TestCase" searchProperties="true"><con:settings/><con:testStep type="request" name="DescribeEOCoverageSet"><con:settings/><con:config xsi:type="con:RequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:interface>spSoapBinding</con:interface><con:operation>DescribeEOCoverageSet</con:operation><con:request name="DescribeEOCoverageSet"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding><con:endpoint>http://titania.eox.at/sp_uc2</con:endpoint><con:request><![CDATA[<soapenv:Envelope 
+xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" >
+   <soapenv:Header/>
+   <soapenv:Body>
+      <wcseo:DescribeEOCoverageSet service="WCS" version="2.0.0" count="8"
+xmlns:wcseo="http://www.opengis.net/wcseo/1.0"
+xmlns:wcs="http://www.opengis.net/wcs/2.0">
+       <wcseo:eoId>IKONOS_multispectral</wcseo:eoId>
+       <wcseo:containment>OVERLAPS</wcseo:containment>
+       <wcseo:Sections>
+          <wcseo:Section>All</wcseo:Section>
+       </wcseo:Sections>
+       <wcs:DimensionTrim>
+          <wcs:Dimension>Long</wcs:Dimension>
+          <wcs:TrimLow>0</wcs:TrimLow>
+          <wcs:TrimHigh>128</wcs:TrimHigh>
+       </wcs:DimensionTrim>
+       <wcs:DimensionTrim>
+          <wcs:Dimension>Lat</wcs:Dimension>
+          <wcs:TrimLow>0</wcs:TrimLow>
+          <wcs:TrimHigh>128</wcs:TrimHigh>
+       </wcs:DimensionTrim>
+      </wcseo:DescribeEOCoverageSet>
+   </soapenv:Body>
+</soapenv:Envelope>]]></con:request><con:assertion type="SOAP Response"/><con:assertion type="SOAP Fault Assertion"/><con:assertion type="XQuery Match" name="XQuery Match EOCoverageSetDescription"><con:configuration><path>declare namespace wcseo="http://www.opengis.net/wcseo/1.0";
+declare namespace xsi="http://www.w3.org/2001/XMLSchema-instance" ;
+declare namespace gml="http://www.opengis.net/gml/3.2";
+declare namespace eop="http://www.opengis.net/eop/2.0";
+declare namespace xlink="http://www.w3.org/1999/xlink" ;
+declare namespace om="http://www.opengis.net/om/2.0" ;
+declare namespace wcs="http://www.opengis.net/wcs/2.0" ;
+declare namespace swe='http://www.opengis.net/swe/2.0';
+declare namespace gmlcov='http://www.opengis.net/gmlcov/1.0';
+//wcseo:EOCoverageSetDescription</path><content><![CDATA[<wcseo:EOCoverageSetDescription numberReturned="8" xsi:schemaLocation="http://www.opengis.net/wcseo/1.0 http://schemas.opengis.net/wcseo/1.0/wcsEOAll.xsd" numberMatched="69" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:wcseo="http://www.opengis.net/wcseo/1.0" xmlns:eop="http://www.opengis.net/eop/2.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:gmlcov="http://www.opengis.net/gmlcov/1.0" xmlns:om="http://www.opengis.net/om/2.0" xmlns:wcs="http://www.opengis.net/wcs/2.0" xmlns:swe="http://www.opengis.net/swe/2.0">
+  <wcs:CoverageDescriptions>
+    <wcs:CoverageDescription gml:id="IKONOS_multispectral">
+      <gml:boundedBy>
+        <gml:Envelope uomLabels="deg deg" axisLabels="lat long" srsName="http://www.opengis.net/def/crs/EPSG/0/4326" srsDimension="2">
+          <gml:lowerCorner>35.45089600 6.46322300</gml:lowerCorner>
+          <gml:upperCorner>48.91026700 16.54555200</gml:upperCorner>
+        </gml:Envelope>
+      </gml:boundedBy>
+      <wcs:CoverageId>IKONOS_multispectral</wcs:CoverageId>
+      <gmlcov:metadata>
+        <wcseo:EOMetadata>
+          <eop:EarthObservation gml:id="eop_IKONOS_multispectral">
+            <om:phenomenonTime>
+              <gml:TimePeriod gml:id="phen_time_IKONOS_multispectral">
+                <gml:beginPosition>2002-01-18T11:17:20Z</gml:beginPosition>
+                <gml:endPosition>2008-07-04T12:51:49Z</gml:endPosition>
+              </gml:TimePeriod>
+            </om:phenomenonTime>
+            <om:resultTime>
+              <gml:TimeInstant gml:id="res_time_IKONOS_multispectral">
+                <gml:timePosition>2008-07-04T12:51:49Z</gml:timePosition>
+              </gml:TimeInstant>
+            </om:resultTime>
+            <om:procedure/>
+            <om:observedProperty/>
+            <om:featureOfInterest>
+              <eop:Footprint gml:id="footprint_IKONOS_multispectral">
+                <eop:multiExtentOf>
+                  <gml:MultiSurface srsName="EPSG:4326" gml:id="multisurface_IKONOS_multispectral">
+                    <gml:surfaceMember>
+                      <gml:Polygon gml:id="polygon_IKONOS_multispectral_1">
+                        <gml:exterior>
+                          <gml:LinearRing>
+                            <gml:posList>41.42742913 15.59683723 41.41879700 15.59684600 41.41901200 15.55420500 41.41920800 15.51156300 41.41938600 15.46892100 41.41954600 15.42628000 41.54876400 15.42706600 41.54870517 15.44165478 41.59965200 15.45312200 41.64521000 15.46325600 41.64531600 15.46331400 41.64533100 15.46369900 41.64523300 15.47870500 41.64526900 15.47870800 41.63903400 15.51235200 41.63890200 15.51277200 41.63725700 15.51238400 41.63682000 15.51244100 41.63107700 15.54353300 41.62813200 15.56000500 41.63017300 15.56043000 41.63015200 15.56081200 41.62798300 15.57241400 41.62424857 15.59338228 41.62419000 15.60780000 41.62422600 15.60780300 41.62062000 15.63452300 41.61879500 15.63411600 41.61454000 15.66576000 41.61279200 15.67931400 41.61447500 15.67966100 41.61458000 15.67971900 41.61455600 15.68014800 41.61422800 15.68208400 41.60864500 15.72525400 41.60654400 15.72525000 41.60532100 15.72508900 41.54528800 15.71112400 41.48524900 15.69719100 41.48553869 15.64685889 41.44106900 15.64711300 41.42716400 15.64694200 41.42742913 15.59683723</gml:posList>
+                          </gml:LinearRing>
+                        </gml:exterior>
+                      </gml:Polygon>
+                    </gml:surfaceMember>
+                    <gml:surfaceMember>
+                      <gml:Polygon gml:id="polygon_IKONOS_multispectral_2">
+                        <gml:exterior>
+                          <gml:LinearRing>
+                            <gml:posList>35.56838200 12.52864000 35.56710900 12.56701800 35.56516200 12.64147800 35.45365000 12.64138800 35.45229800 12.57297100 35.45089600 12.50455700 35.45414100 12.50444900 35.56787300 12.50445000 35.56834600 12.52863900 35.56838200 12.52864000</gml:posList>
+                          </gml:LinearRing>
+                        </gml:exterior>
+                      </gml:Polygon>
+                    </gml:surfaceMember>
+                    <gml:surfaceMember>
+                      <gml:Polygon gml:id="polygon_IKONOS_multispectral_3">
+                        <gml:exterior>
+                          <gml:LinearRing>
+                            <gml:posList>41.70111439 12.54336982 41.70111100 12.54349100 41.68327900 12.54352000 41.61249900 12.54337100 41.61080200 12.46462000 41.60904200 12.38587400 41.65527504 12.38607655 41.65393400 12.32726200 41.65225000 12.25560300 41.66700523 12.25550769 41.66657900 12.23755500 41.69032261 12.23754772 41.68937200 12.19801700 41.71563213 12.19780467 41.71546200 12.19068700 41.71374600 12.12095100 41.82504500 12.12115500 41.82657668 12.18317568 41.85308100 12.18286100 41.85354027 12.19668842 41.85896300 12.19665900 41.91036771 12.19616020 41.90964500 12.16640300 41.90787700 12.09562800 42.03394100 12.09587100 42.03569600 12.16650200 42.03740300 12.23713800 42.03743900 12.23713900 42.03743300 12.23738000 42.03674500 12.23745100 41.96307035 12.23729293 41.96382534 12.25317817 42.04927900 12.25250700 42.05104000 12.32757300 42.05274400 12.40264500 42.05278000 12.40264600 42.05277100 12.40303100 42.04987600 12.40315800 41.99754842 12.40248395 41.99923200 12.44096600 42.00116000 12.48547200 42.00463000 12.55608900 42.00477500 12.56461600 42.00481100 12.56461700 42.00480300 12.56490600 42.00303100 12.56492800 41.97895900 12.56454000 41.89199122 12.56358340 41.89276400 12.57682700 41.89521300 12.61633600 41.89799900 12.65889000 41.89836900 12.67894700 41.89840600 12.67894800 41.89838900 12.67957200 41.89802500 12.67965300 41.88667800 12.68069300 41.88097780 12.68127631 41.88188500 12.72704000 41.88192100 12.72704200 41.88191000 12.72742600 41.87861622 12.72756247 41.87905500 12.74988000 41.87909100 12.74988200 41.87908000 12.75026500 41.87886200 12.75030400 41.87405100 12.75037500 41.74763150 12.75002377 41.74837000 12.78769700 41.74966900 12.85641600 41.74970600 12.85641700 41.74659100 12.85656000 41.71168900 12.85647000 41.62631654 12.85659969 41.62631700 12.85662400 41.62635300 12.85662600 41.62522700 12.85676500 41.61922200 12.85677400 41.50152296 12.85677301 41.50034400 12.85686300 41.49129900 12.85687500 41.39911200 12.85686700 41.39780200 12.78818000 41.39644400 12.71949700 41.42908311 12.71946112 41.42809100 12.66968600 41.42664000 12.59935100 41.55857051 12.59809247 41.55857000 12.59806800 41.65286138 12.59708673 41.65286000 12.59702000 41.65843700 12.59677600 41.74891900 12.59580800 41.74924361 12.60986258 41.75594394 12.60985970 41.75552100 12.58947100 41.79079981 12.58937280 41.79023239 12.56247073 41.75239100 12.56210800 41.75199943 12.54378901 41.72764900 12.54382300 41.72763993 12.54340316 41.70111439 12.54336982</gml:posList>
+                          </gml:LinearRing>
+                        </gml:exterior>
+                      </gml:Polygon>
+                    </gml:surfaceMember>
+                    <gml:surfaceMember>
+                      <gml:Polygon gml:id="polygon_IKONOS_multispectral_4">
+                        <gml:exterior>
+                          <gml:LinearRing>
+                            <gml:posList>43.36845700 16.54472900 43.36844400 16.54492500 43.36750000 16.54496700 43.32926600 16.54503200 43.24476700 16.54555200 43.24057500 16.54542900 43.24151700 16.47421300 43.24240900 16.40299600 43.37024900 16.40326500 43.36935900 16.47399500 43.36842100 16.54472500 43.36845700 16.54472900</gml:posList>
+                          </gml:LinearRing>
+                        </gml:exterior>
+                      </gml:Polygon>
+                    </gml:surfaceMember>
+                    <gml:surfaceMember>
+                      <gml:Polygon gml:id="polygon_IKONOS_multispectral_5">
+                        <gml:exterior>
+                          <gml:LinearRing>
+                            <gml:posList>42.55432100 14.23620600 42.55430700 14.23654500 42.55192900 14.23978100 42.54875500 14.24388500 42.54464600 14.24957500 42.54411700 14.25012100 42.53839700 14.25798100 42.53782900 14.25857300 42.53318200 14.26500100 42.53269100 14.26550100 42.53157200 14.26717100 42.53104200 14.26771700 42.52693200 14.27340400 42.52479200 14.27612000 42.52068100 14.28180600 42.52015200 14.28235100 42.51443000 14.29020500 42.51390000 14.29075100 42.51274200 14.29246600 42.51228900 14.29292000 42.50921300 14.29722000 42.50707200 14.29993400 42.50246000 14.30630900 42.50189200 14.30690000 42.50192400 14.30700000 42.49736400 14.31298900 42.49620600 14.31470400 42.49563800 14.31529500 42.49448000 14.31700900 42.49406500 14.31741700 42.49098700 14.32171400 42.49049600 14.32221300 42.48937600 14.32388200 42.48888400 14.32438100 42.48580600 14.32867700 42.48366500 14.33138900 42.48250600 14.33310300 42.46726800 14.35352000 42.46696324 14.35352317 42.46696500 14.35383800 42.46700100 14.35384000 42.43163506 14.40141533 42.43188600 14.45277600 42.43218400 14.52379800 42.43222000 14.52380100 42.43221400 14.52394600 42.43185100 14.52396700 42.42834100 14.52399400 42.42364300 14.52388300 42.34050635 14.52371986 42.33719600 14.52829800 42.33662700 14.52888500 42.33203600 14.53522900 42.33150500 14.53577100 42.32687600 14.54215900 42.32638400 14.54265500 42.32464300 14.54514100 42.32122300 14.54958400 42.31952100 14.55202400 42.31910500 14.55242800 42.31709400 14.55528100 42.31664000 14.55573100 42.31493800 14.55817100 42.31444500 14.55866600 42.31193300 14.56220800 42.31151700 14.56261200 42.30981400 14.56505100 42.30882000 14.56623600 42.30677100 14.56913300 42.30639300 14.56949200 42.30465200 14.57197600 42.30415900 14.57247200 42.29298100 14.58756100 42.23279100 14.58792800 42.23275200 14.57287600 42.21928800 14.57297000 42.21897900 14.49060800 42.26268900 14.43213400 42.29964844 14.38258169 42.29964400 14.38171300 42.30029622 14.38171321 42.30636400 14.37357800 42.30638163 14.37357783 42.31477700 14.36227000 42.31511600 14.36195500 42.31631400 14.36020100 42.31684400 14.35965800 42.32203600 14.35252300 42.32252700 14.35202600 42.32368700 14.35031600 42.32414000 14.34986500 42.32721900 14.34558000 42.32767300 14.34512800 42.32883100 14.34341900 42.32936100 14.34287600 42.33451400 14.33578400 42.33504400 14.33524000 42.33965800 14.32888400 42.34022600 14.32829400 42.34487800 14.32189100 42.34536900 14.32139300 42.34591400 14.32051100 42.35105000 14.31375400 42.35220900 14.31204300 42.35270000 14.31154500 42.35735100 14.30513900 42.35791900 14.30455000 42.36253100 14.29818900 42.36467200 14.29548100 42.36932200 14.28907300 42.36985100 14.28852800 42.37450000 14.28211900 42.37503000 14.28157500 42.38129000 14.27300000 42.38181900 14.27245500 42.38642900 14.26608900 42.38699700 14.26549900 42.38754000 14.26461600 42.39098600 14.26010700 42.39211594 14.25843551 42.36638600 14.25846400 42.36591700 14.18801000 42.36539800 14.11755800 42.48964700 14.11820400 42.48949908 14.12737033 42.52526100 14.07916400 42.54721100 14.04952800 42.56915100 14.01987000 42.64108300 14.01876500 42.64148600 14.06846400 42.64186400 14.11816400 42.64190000 14.11816700 42.64187800 14.11870100 42.64172400 14.11893400 42.64016300 14.12087200 42.63904600 14.12254800 42.63851700 14.12309600 42.63277200 14.13097700 42.63224300 14.13152500 42.62706900 14.13866600 42.62650300 14.13926000 42.62021900 14.14788000 42.61969100 14.14842800 42.61911000 14.14936100 42.61398700 14.15611300 42.61340600 14.15704600 42.61287700 14.15759400 42.60770200 14.16473000 42.60713500 14.16532300 42.60027500 14.17472600 42.59982200 14.17518100 42.59916500 14.17620600 42.59572500 14.18068600 42.59514400 14.18161900 42.59457700 14.18221200 42.59460900 14.18231200 42.59345900 14.18388600 42.59300600 14.18434100 42.58936200 14.18939000 42.58890900 14.18984500 42.58775300 14.19156400 42.58726200 14.19206500 42.58311800 14.19780900 42.58262700 14.19830900 42.57633800 14.20691800 42.57580900 14.20746400 42.57522800 14.20839600 42.57312800 14.21107000 42.55457700 14.23612600 42.55428451 14.23612952 42.55428500 14.23620300 42.55432100 14.23620600</gml:posList>
+                          </gml:LinearRing>
+                        </gml:exterior>
+                      </gml:Polygon>
+                    </gml:surfaceMember>
+                    <gml:surfaceMember>
+                      <gml:Polygon gml:id="polygon_IKONOS_multispectral_6">
+                        <gml:exterior>
+                          <gml:LinearRing>
+                            <gml:posList>37.95866400 14.46281100 37.95864700 14.46317200 37.95817400 14.46318600 37.95169687 14.46323339 37.95194100 14.51599400 37.95222000 14.58774600 37.95225600 14.58774900 37.95223900 14.58811000 37.91592100 14.58829700 37.90782314 14.58536717 37.90798000 14.63255700 37.90811383 14.68489682 37.94031100 14.69635900 37.94047300 14.77279000 37.94057400 14.84922100 37.94061100 14.84922400 37.94059400 14.84953900 37.94044700 14.84957400 37.92812875 14.84959173 37.92818400 14.89494700 37.92821800 14.96555100 37.92825400 14.96555400 37.92823700 14.96586900 37.92805400 14.96590100 37.88224700 14.96592400 37.88148900 14.96582400 37.81612400 14.94237500 37.75074800 14.91897500 37.75067200 14.83688200 37.77001700 14.77718500 37.77668482 14.77716245 37.77657300 14.71944700 37.77643199 14.66829576 37.75361100 14.66024000 37.75345400 14.61129200 37.75327200 14.56234600 37.76057300 14.50761800 37.76802700 14.50756500 37.76871100 14.50770100 37.79311271 14.51660834 37.79297400 14.48427200 37.80092100 14.44897300 37.80113000 14.44839900 37.80201800 14.44416600 37.80300300 14.44020900 37.80357200 14.43735500 37.80378100 14.43678100 37.80402900 14.43535200 37.80423700 14.43477800 37.81209400 14.40023100 37.82751100 14.40009000 37.83528055 14.40290707 37.83507500 14.36410900 37.83468900 14.29955800 37.83817200 14.28197300 37.86605800 14.28172700 37.90471400 14.29567900 37.91444700 14.29905000 37.95789400 14.31463800 37.95829000 14.38872300 37.95862700 14.46280900 37.95866400 14.46281100</gml:posList>
+                          </gml:LinearRing>
+                        </gml:exterior>
+                      </gml:Polygon>
+                    </gml:surfaceMember>
+                    <gml:surfaceMember>
+                      <gml:Polygon gml:id="polygon_IKONOS_multispectral_7">
+                        <gml:exterior>
+                          <gml:LinearRing>
+                            <gml:posList>40.98706671 14.32296346 40.98680300 14.27876500 40.98628400 14.20166900 41.08795700 14.20132900 41.08795710 14.20134432 41.10127487 14.20130005 41.10100700 14.16193300 41.10047200 14.09080600 41.18459800 14.09057000 41.18474600 14.10803200 41.18272000 14.16448500 41.18164049 14.20103290 41.18371500 14.20102600 41.18396800 14.23428500 41.18210900 14.29274900 41.18052700 14.35484600 41.18056300 14.35484900 41.18051400 14.35598700 41.17942600 14.35600600 41.16946577 14.35594431 41.16834500 14.39460400 41.16662300 14.46885400 41.16666000 14.46885600 41.16662100 14.46970900 41.07690225 14.46886306 41.07651200 14.46886600 40.98215700 14.46801400 40.98179800 14.39552000 40.98138600 14.32302800 40.98706671 14.32296346</gml:posList>
+                          </gml:LinearRing>
+                        </gml:exterior>
+                      </gml:Polygon>
+                    </gml:surfaceMember>
+                    <gml:surfaceMember>
+                      <gml:Polygon gml:id="polygon_IKONOS_multispectral_8">
+                        <gml:exterior>
+                          <gml:LinearRing>
+                            <gml:posList>44.76324188 10.23086451 44.76326800 10.22849800 44.87602900 10.22865400 44.87603027 10.23104159 44.88074700 10.23104900 44.88150500 10.23105200 44.88068500 10.30485600 44.87981300 10.37865800 44.75994900 10.37830500 44.76082100 10.30458400 44.76164000 10.23086200 44.76324188 10.23086451</gml:posList>
+                          </gml:LinearRing>
+                        </gml:exterior>
+                      </gml:Polygon>
+                    </gml:surfaceMember>
+                    <gml:surfaceMember>
+                      <gml:Polygon gml:id="polygon_IKONOS_multispectral_9">
+                        <gml:exterior>
+                          <gml:LinearRing>
+                            <gml:posList>42.05400900 12.81502300 42.05399800 12.81540800 42.05385200 12.81544900 41.98442900 12.81782500 41.92284600 12.81777100 41.92130800 12.73812700 41.91970700 12.65848900 41.92220600 12.65835700 41.96668000 12.65851500 42.04229000 12.65844400 42.04348100 12.65854400 42.04876500 12.71784100 42.05297600 12.76231000 42.05397200 12.81502100 42.05400900 12.81502300</gml:posList>
+                          </gml:LinearRing>
+                        </gml:exterior>
+                      </gml:Polygon>
+                    </gml:surfaceMember>
+                    <gml:surfaceMember>
+                      <gml:Polygon gml:id="polygon_IKONOS_multispectral_10">
+                        <gml:exterior>
+                          <gml:LinearRing>
+                            <gml:posList>43.87267600 11.27174700 43.87226700 11.29309000 43.73833300 11.29297200 43.73989300 11.21371500 43.74139200 11.13445500 43.85298100 11.13485800 43.86499300 11.13529300 43.86644300 11.16386900 43.86874400 11.20552400 43.87264000 11.27174600 43.87267600 11.27174700</gml:posList>
+                          </gml:LinearRing>
+                        </gml:exterior>
+                      </gml:Polygon>
+                    </gml:surfaceMember>
+                    <gml:surfaceMember>
+                      <gml:Polygon gml:id="polygon_IKONOS_multispectral_11">
+                        <gml:exterior>
+                          <gml:LinearRing>
+                            <gml:posList>42.21373600 11.86853700 42.21325200 11.88870800 42.21320700 11.88918900 42.21298900 11.88923100 42.12273700 11.88902600 42.08301000 11.88909300 42.07383400 11.88875900 42.07586800 11.80657700 42.07783500 11.72438900 42.19533200 11.72507500 42.21100600 11.72576200 42.21195300 11.78552100 42.21370000 11.86853600 42.21373600 11.86853700</gml:posList>
+                          </gml:LinearRing>
+                        </gml:exterior>
+                      </gml:Polygon>
+                    </gml:surfaceMember>
+                    <gml:surfaceMember>
+                      <gml:Polygon gml:id="polygon_IKONOS_multispectral_12">
+                        <gml:exterior>
+                          <gml:LinearRing>
+                            <gml:posList>45.52525900 10.51811400 45.52425800 10.59205900 45.52320500 10.66600100 45.46178400 10.66602400 45.43515100 10.66529400 45.43620100 10.59175100 45.43720100 10.51820400 45.52439400 10.51810600 45.52525900 10.51811400</gml:posList>
+                          </gml:LinearRing>
+                        </gml:exterior>
+                      </gml:Polygon>
+                    </gml:surfaceMember>
+                    <gml:surfaceMember>
+                      <gml:Polygon gml:id="polygon_IKONOS_multispectral_13">
+                        <gml:exterior>
+                          <gml:LinearRing>
+                            <gml:posList>41.60375000 12.54320200 41.60373100 12.54396600 41.52784100 12.54399200 41.52634000 12.47419300 41.52479000 12.40439800 41.60067600 12.40443900 41.60221900 12.47381800 41.60371400 12.54320000 41.60375000 12.54320200</gml:posList>
+                          </gml:LinearRing>
+                        </gml:exterior>
+                      </gml:Polygon>
+                    </gml:surfaceMember>
+                    <gml:surfaceMember>
+                      <gml:Polygon gml:id="polygon_IKONOS_multispectral_14">
+                        <gml:exterior>
+                          <gml:LinearRing>
+                            <gml:posList>48.90946300 8.45953200 48.90970100 8.51230100 48.90991500 8.56507100 48.91010400 8.61784100 48.91026700 8.67061200 48.72604900 8.66993000 48.72588800 8.61834700 48.72570400 8.56676400 48.71983900 8.56682400 48.71961400 8.51263900 48.71936300 8.45845400 48.90892300 8.45954800 48.90946300 8.45953200</gml:posList>
+                          </gml:LinearRing>
+                        </gml:exterior>
+                      </gml:Polygon>
+                    </gml:surfaceMember>
+                    <gml:surfaceMember>
+                      <gml:Polygon gml:id="polygon_IKONOS_multispectral_15">
+                        <gml:exterior>
+                          <gml:LinearRing>
+                            <gml:posList>41.05389500 9.49351700 41.05356400 9.56486600 41.05318200 9.63621500 40.92290400 9.63602400 40.92326900 9.56501200 40.92358200 9.49400000 41.02567700 9.49350800 41.05317100 9.49352200 41.05389500 9.49351700</gml:posList>
+                          </gml:LinearRing>
+                        </gml:exterior>
+                      </gml:Polygon>
+                    </gml:surfaceMember>
+                    <gml:surfaceMember>
+                      <gml:Polygon gml:id="polygon_IKONOS_multispectral_16">
+                        <gml:exterior>
+                          <gml:LinearRing>
+                            <gml:posList>42.50103500 11.85334200 42.49929800 11.92216300 42.49751600 11.99098100 42.47243883 11.99096698 42.47079400 12.01007800 42.38825500 12.01003600 42.38826072 12.00981552 42.30687200 12.00974600 42.30904900 11.92589700 42.31115700 11.84204400 42.40288900 11.84145600 42.40364800 11.84147900 42.40364254 11.84169657 42.48000900 11.84119800 42.48383500 11.84141200 42.48444900 11.84143100 42.48414548 11.85334977 42.50031200 11.85331900 42.50103500 11.85334200</gml:posList>
+                          </gml:LinearRing>
+                        </gml:exterior>
+                      </gml:Polygon>
+                    </gml:surfaceMember>
+                    <gml:surfaceMember>
+                      <gml:Polygon gml:id="polygon_IKONOS_multispectral_17">
+                        <gml:exterior>
+                          <gml:LinearRing>
+                            <gml:posList>45.50238000 12.42391700 45.50237100 12.42432500 45.49446800 12.42459000 45.36034800 12.42354200 45.35860700 12.34747300 45.35681100 12.27141000 45.36193600 12.27121300 45.37394400 12.27119700 45.38658796 12.27106117 45.38627500 12.25782600 45.47619200 12.25671000 45.47650787 12.27009516 45.49877000 12.26985600 45.50058500 12.34688300 45.50234400 12.42391500 45.50238000 12.42391700</gml:posList>
+                          </gml:LinearRing>
+                        </gml:exterior>
+                      </gml:Polygon>
+                    </gml:surfaceMember>
+                    <gml:surfaceMember>
+                      <gml:Polygon gml:id="polygon_IKONOS_multispectral_18">
+                        <gml:exterior>
+                          <gml:LinearRing>
+                            <gml:posList>45.07628600 12.41009200 45.07627600 12.41049700 45.07613100 12.41054200 45.07039000 12.41080000 44.92536000 12.41046500 44.92349900 12.32926800 44.92157600 12.24807700 44.93352700 12.24749500 45.07248700 12.24802400 45.07439900 12.32905400 45.07624900 12.41009000 45.07628600 12.41009200</gml:posList>
+                          </gml:LinearRing>
+                        </gml:exterior>
+                      </gml:Polygon>
+                    </gml:surfaceMember>
+                    <gml:surfaceMember>
+                      <gml:Polygon gml:id="polygon_IKONOS_multispectral_19">
+                        <gml:exterior>
+                          <gml:LinearRing>
+                            <gml:posList>43.64842100 6.99771000 43.64962800 7.06769200 43.65078800 7.13767500 43.56639000 7.13757700 43.56522900 7.06762000 43.56401900 6.99766600 43.64813200 6.99772500 43.64842100 6.99771000</gml:posList>
+                          </gml:LinearRing>
+                        </gml:exterior>
+                      </gml:Polygon>
+                    </gml:surfaceMember>
+                    <gml:surfaceMember>
+                      <gml:Polygon gml:id="polygon_IKONOS_multispectral_20">
+                        <gml:exterior>
+                          <gml:LinearRing>
+                            <gml:posList>43.30956100 6.58549600 43.31085800 6.64818600 43.31211600 6.71087700 43.27527400 6.71225400 43.27560100 6.72920700 43.24907800 6.73019300 43.24836300 6.72929800 43.24657200 6.72753000 43.24600600 6.72677400 43.24421500 6.72500600 43.24342500 6.72401700 43.24208200 6.72271600 43.23070200 6.71037300 43.22715100 6.70668800 43.22613600 6.70546700 43.22475600 6.70411900 43.22396500 6.70313100 43.22236100 6.70155000 43.22157000 6.70056200 43.21996500 6.69898100 43.21939900 6.69822700 43.21757000 6.69641300 43.21722800 6.69589100 43.21539900 6.69407700 43.21505700 6.69355600 43.21296600 6.69146200 43.21284800 6.69117400 43.21053300 6.68884700 43.21041500 6.68855900 43.20836100 6.68651200 43.20801900 6.68599100 43.20615200 6.68413100 43.20558600 6.68337700 43.20394300 6.68174900 43.20337700 6.68099500 43.18690700 6.66345400 43.18611600 6.66246800 43.18447300 6.66084200 43.18390700 6.66008800 43.17986700 6.65589700 43.17930000 6.65514300 43.17747100 6.65333100 43.17712800 6.65281100 43.17507400 6.65076600 43.17495600 6.65047800 43.17293900 6.64848100 43.17259700 6.64796100 43.17054300 6.64591700 43.17020000 6.64539600 43.16840800 6.64363200 43.16784100 6.64287900 43.16623600 6.64130100 43.16544400 6.64031500 43.16406300 6.63896900 43.16304700 6.63775100 43.14683200 6.62051300 43.14607900 6.61957400 43.14443500 6.61795100 43.14386800 6.61719800 43.14203700 6.61538800 43.14169500 6.61486800 43.13960200 6.61278000 43.13948400 6.61249200 43.13300700 6.60569900 43.13152500 6.53579700 43.12999400 6.46589800 43.19418700 6.46322300 43.19921800 6.46867000 43.20078800 6.47019700 43.20154300 6.47113400 43.21335200 6.48350000 43.21406900 6.48439100 43.21815200 6.48857100 43.21845700 6.48904400 43.22043900 6.49099000 43.22074400 6.49146300 43.22501400 6.49583000 43.22531900 6.49630300 43.22730100 6.49825000 43.22764400 6.49877000 43.22958800 6.50067000 43.23011800 6.50137600 43.23618600 6.50765200 43.23716600 6.50882300 43.24893200 6.52115600 43.24968700 6.52209500 43.25125600 6.52362500 43.25178600 6.52433200 43.25376700 6.52628000 43.25407200 6.52675400 43.25834000 6.53112500 43.25868300 6.53164600 43.26066400 6.53359500 43.26096900 6.53406900 43.26295000 6.53601800 43.26325500 6.53649200 43.26504900 6.53825500 43.26580400 6.53919400 43.26965900 6.54314900 43.27041300 6.54408800 43.27408200 6.54785700 43.27862100 6.55280600 43.28449900 6.55890700 43.28525300 6.55984700 43.29409000 6.56907300 43.29420800 6.56936100 43.29637500 6.57149900 43.29668000 6.57197300 43.29866000 6.57392400 43.29896500 6.57439900 43.30090800 6.57630300 43.30143700 6.57701100 43.30952500 6.58549800 43.30956100 6.58549600</gml:posList>
+                          </gml:LinearRing>
+                        </gml:exterior>
+                      </gml:Polygon>
+                    </gml:surfaceMember>
+                  </gml:MultiSurface>
+                </eop:multiExtentOf>
+              </eop:Footprint>
+            </om:featureOfInterest>
+            <om:result/>
+            <eop:metaDataProperty>
+              <eop:EarthObservationMetaData>
+                <eop:identifier>IKONOS_multispectral</eop:identifier>
+                <eop:acquisitionType>NOMINAL</eop:acquisitionType>
+                <eop:status>ARCHIVED</eop:status>
+              </eop:EarthObservationMetaData>
+            </eop:metaDataProperty>
+          </eop:EarthObservation>
+        </wcseo:EOMetadata>
+      </gmlcov:metadata>
+      <gml:domainSet>
+        <gml:RectifiedGrid dimension="2" gml:id="IKONOS_multispectral_grid">
+          <gml:limits>
+            <gml:GridEnvelope>
+              <gml:low>0 0</gml:low>
+              <gml:high>205150 371586</gml:high>
+            </gml:GridEnvelope>
+          </gml:limits>
+          <gml:axisLabels>x y</gml:axisLabels>
+          <gml:origin>
+            <gml:Point srsName="http://www.opengis.net/def/crs/EPSG/0/3035" gml:id="IKONOS_multispectral_grid_origin">
+              <gml:pos>4032736.000 2867432.000</gml:pos>
+            </gml:Point>
+          </gml:origin>
+          <gml:offsetVector srsName="http://www.opengis.net/def/crs/EPSG/0/3035">4.000 0.0</gml:offsetVector>
+          <gml:offsetVector srsName="http://www.opengis.net/def/crs/EPSG/0/3035">0.0 -4.000</gml:offsetVector>
+        </gml:RectifiedGrid>
+      </gml:domainSet>
+      <gmlcov:rangeType>
+        <swe:DataRecord>
+          <swe:field name="red">
+            <swe:Quantity definition="http://www.opengis.net/def/property/OGC/0/Radiance">
+              <swe:description>Red Channel</swe:description>
+              <swe:nilValues>
+                <swe:NilValues>
+                  <swe:nilValue reason="http://www.opengis.net/def/nil/OGC/0/unknown">0</swe:nilValue>
+                </swe:NilValues>
+              </swe:nilValues>
+              <swe:uom code="W.m-2.Sr-1"/>
+              <swe:constraint>
+                <swe:AllowedValues>
+                  <swe:interval>0 65535</swe:interval>
+                  <swe:significantFigures>5</swe:significantFigures>
+                </swe:AllowedValues>
+              </swe:constraint>
+            </swe:Quantity>
+          </swe:field>
+          <swe:field name="green">
+            <swe:Quantity definition="http://www.opengis.net/def/property/OGC/0/Radiance">
+              <swe:description>Green Channel</swe:description>
+              <swe:nilValues>
+                <swe:NilValues>
+                  <swe:nilValue reason="http://www.opengis.net/def/nil/OGC/0/unknown">0</swe:nilValue>
+                </swe:NilValues>
+              </swe:nilValues>
+              <swe:uom code="W.m-2.Sr-1"/>
+              <swe:constraint>
+                <swe:AllowedValues>
+                  <swe:interval>0 65535</swe:interval>
+                  <swe:significantFigures>5</swe:significantFigures>
+                </swe:AllowedValues>
+              </swe:constraint>
+            </swe:Quantity>
+          </swe:field>
+          <swe:field name="blue">
+            <swe:Quantity definition="http://www.opengis.net/def/property/OGC/0/Radiance">
+              <swe:description>Blue Channel</swe:description>
+              <swe:nilValues>
+                <swe:NilValues>
+                  <swe:nilValue reason="http://www.opengis.net/def/nil/OGC/0/unknown">0</swe:nilValue>
+                </swe:NilValues>
+              </swe:nilValues>
+              <swe:uom code="W.m-2.Sr-1"/>
+              <swe:constraint>
+                <swe:AllowedValues>
+                  <swe:interval>0 65535</swe:interval>
+                  <swe:significantFigures>5</swe:significantFigures>
+                </swe:AllowedValues>
+              </swe:constraint>
+            </swe:Quantity>
+          </swe:field>
+          <swe:field name="near_infrared">
+            <swe:Quantity definition="http://www.opengis.net/def/property/OGC/0/Radiance">
+              <swe:description>Near Infrared Channel</swe:description>
+              <swe:nilValues>
+                <swe:NilValues>
+                  <swe:nilValue reason="http://www.opengis.net/def/nil/OGC/0/unknown">0</swe:nilValue>
+                </swe:NilValues>
+              </swe:nilValues>
+              <swe:uom code="W.m-2.Sr-1"/>
+              <swe:constraint>
+                <swe:AllowedValues>
+                  <swe:interval>0 65535</swe:interval>
+                  <swe:significantFigures>5</swe:significantFigures>
+                </swe:AllowedValues>
+              </swe:constraint>
+            </swe:Quantity>
+          </swe:field>
+        </swe:DataRecord>
+      </gmlcov:rangeType>
+      <wcs:ServiceParameters>
+        <wcs:CoverageSubtype>RectifiedStitchedMosaic</wcs:CoverageSubtype>
+      </wcs:ServiceParameters>
+    </wcs:CoverageDescription>
+    <wcs:CoverageDescription gml:id="rect_dataset_0462b2e4ebd64ff5b384ad2aff6782d0">
+      <gml:boundedBy>
+        <gml:Envelope uomLabels="deg deg" axisLabels="lat long" srsName="http://www.opengis.net/def/crs/EPSG/0/4326" srsDimension="2">
+          <gml:lowerCorner>41.39644400 12.71938400</gml:lowerCorner>
+          <gml:upperCorner>41.50190300 12.85687500</gml:upperCorner>
+        </gml:Envelope>
+      </gml:boundedBy>
+      <wcs:CoverageId>rect_dataset_0462b2e4ebd64ff5b384ad2aff6782d0</wcs:CoverageId>
+      <gmlcov:metadata>
+        <wcseo:EOMetadata>
+          <eop:EarthObservation gml:id="eop_IKONOS_multispectral_2006092410130420000011315154_2000001729102">
+            <om:phenomenonTime>
+              <gml:TimePeriod gml:id="phen_time_IKONOS_multispectral_2006092410130420000011315154_2000001729102">
+                <gml:beginPosition>2006-09-24T10:13:04Z</gml:beginPosition>
+                <gml:endPosition>2006-09-24T10:13:04Z</gml:endPosition>
+              </gml:TimePeriod>
+            </om:phenomenonTime>
+            <om:resultTime>
+              <gml:TimeInstant gml:id="res_time_IKONOS_multispectral_2006092410130420000011315154_2000001729102">
+                <gml:timePosition>2006-09-24T10:13:04Z</gml:timePosition>
+              </gml:TimeInstant>
+            </om:resultTime>
+            <om:procedure/>
+            <om:observedProperty/>
+            <om:featureOfInterest>
+              <eop:Footprint gml:id="footprint_IKONOS_multispectral_2006092410130420000011315154_2000001729102">
+                <eop:multiExtentOf>
+                  <gml:MultiSurface srsName="EPSG:4326" gml:id="multisurface_IKONOS_multispectral_2006092410130420000011315154_2000001729102">
+                    <gml:surfaceMember>
+                      <gml:Polygon gml:id="polygon_IKONOS_multispectral_2006092410130420000011315154_2000001729102">
+                        <gml:exterior>
+                          <gml:LinearRing>
+                            <gml:posList>41.501903008699443 12.856744017428442 41.50034392905529 12.8568629823154 41.491298937747111 12.856874775285661 41.399111622909395 12.856867404940147 41.39780150331439 12.788180430065895 41.396444002640678 12.719496882644469 41.499230239299472 12.71938366751775 41.500572212120872 12.788061307318051 41.501866878113631 12.856742347650812 41.501903008699443 12.856744017428442</gml:posList>
+                          </gml:LinearRing>
+                        </gml:exterior>
+                      </gml:Polygon>
+                    </gml:surfaceMember>
+                  </gml:MultiSurface>
+                </eop:multiExtentOf>
+              </eop:Footprint>
+            </om:featureOfInterest>
+            <om:result/>
+            <eop:metaDataProperty>
+              <eop:EarthObservationMetaData>
+                <eop:identifier>IKONOS_multispectral_2006092410130420000011315154_2000001729102</eop:identifier>
+                <eop:acquisitionType>NOMINAL</eop:acquisitionType>
+                <eop:status>ARCHIVED</eop:status>
+              </eop:EarthObservationMetaData>
+            </eop:metaDataProperty>
+          </eop:EarthObservation>
+        </wcseo:EOMetadata>
+      </gmlcov:metadata>
+      <gml:domainSet>
+        <gml:RectifiedGrid dimension="2" gml:id="rect_dataset_0462b2e4ebd64ff5b384ad2aff6782d0_grid">
+          <gml:limits>
+            <gml:GridEnvelope>
+              <gml:low>0 0</gml:low>
+              <gml:high>3128 3020</gml:high>
+            </gml:GridEnvelope>
+          </gml:limits>
+          <gml:axisLabels>x y</gml:axisLabels>
+          <gml:origin>
+            <gml:Point srsName="http://www.opengis.net/def/crs/EPSG/0/3035" gml:id="rect_dataset_0462b2e4ebd64ff5b384ad2aff6782d0_grid_origin">
+              <gml:pos>4548608.000 2049008.000</gml:pos>
+            </gml:Point>
+          </gml:origin>
+          <gml:offsetVector srsName="http://www.opengis.net/def/crs/EPSG/0/3035">4.000 0.0</gml:offsetVector>
+          <gml:offsetVector srsName="http://www.opengis.net/def/crs/EPSG/0/3035">0.0 -4.000</gml:offsetVector>
+        </gml:RectifiedGrid>
+      </gml:domainSet>
+      <gmlcov:rangeType>
+        <swe:DataRecord>
+          <swe:field name="red">
+            <swe:Quantity definition="http://www.opengis.net/def/property/OGC/0/Radiance">
+              <swe:description>Red Channel</swe:description>
+              <swe:nilValues>
+                <swe:NilValues>
+                  <swe:nilValue reason="http://www.opengis.net/def/nil/OGC/0/unknown">0</swe:nilValue>
+                </swe:NilValues>
+              </swe:nilValues>
+              <swe:uom code="W.m-2.Sr-1"/>
+              <swe:constraint>
+                <swe:AllowedValues>
+                  <swe:interval>0 65535</swe:interval>
+                  <swe:significantFigures>5</swe:significantFigures>
+                </swe:AllowedValues>
+              </swe:constraint>
+            </swe:Quantity>
+          </swe:field>
+          <swe:field name="green">
+            <swe:Quantity definition="http://www.opengis.net/def/property/OGC/0/Radiance">
+              <swe:description>Green Channel</swe:description>
+              <swe:nilValues>
+                <swe:NilValues>
+                  <swe:nilValue reason="http://www.opengis.net/def/nil/OGC/0/unknown">0</swe:nilValue>
+                </swe:NilValues>
+              </swe:nilValues>
+              <swe:uom code="W.m-2.Sr-1"/>
+              <swe:constraint>
+                <swe:AllowedValues>
+                  <swe:interval>0 65535</swe:interval>
+                  <swe:significantFigures>5</swe:significantFigures>
+                </swe:AllowedValues>
+              </swe:constraint>
+            </swe:Quantity>
+          </swe:field>
+          <swe:field name="blue">
+            <swe:Quantity definition="http://www.opengis.net/def/property/OGC/0/Radiance">
+              <swe:description>Blue Channel</swe:description>
+              <swe:nilValues>
+                <swe:NilValues>
+                  <swe:nilValue reason="http://www.opengis.net/def/nil/OGC/0/unknown">0</swe:nilValue>
+                </swe:NilValues>
+              </swe:nilValues>
+              <swe:uom code="W.m-2.Sr-1"/>
+              <swe:constraint>
+                <swe:AllowedValues>
+                  <swe:interval>0 65535</swe:interval>
+                  <swe:significantFigures>5</swe:significantFigures>
+                </swe:AllowedValues>
+              </swe:constraint>
+            </swe:Quantity>
+          </swe:field>
+          <swe:field name="near_infrared">
+            <swe:Quantity definition="http://www.opengis.net/def/property/OGC/0/Radiance">
+              <swe:description>Near Infrared Channel</swe:description>
+              <swe:nilValues>
+                <swe:NilValues>
+                  <swe:nilValue reason="http://www.opengis.net/def/nil/OGC/0/unknown">0</swe:nilValue>
+                </swe:NilValues>
+              </swe:nilValues>
+              <swe:uom code="W.m-2.Sr-1"/>
+              <swe:constraint>
+                <swe:AllowedValues>
+                  <swe:interval>0 65535</swe:interval>
+                  <swe:significantFigures>5</swe:significantFigures>
+                </swe:AllowedValues>
+              </swe:constraint>
+            </swe:Quantity>
+          </swe:field>
+        </swe:DataRecord>
+      </gmlcov:rangeType>
+      <wcs:ServiceParameters>
+        <wcs:CoverageSubtype>RectifiedDataset</wcs:CoverageSubtype>
+      </wcs:ServiceParameters>
+    </wcs:CoverageDescription>
+    <wcs:CoverageDescription gml:id="rect_dataset_067e24e8b9fd4327b24f3915a2d9d910">
+      <gml:boundedBy>
+        <gml:Envelope uomLabels="deg deg" axisLabels="lat long" srsName="http://www.opengis.net/def/crs/EPSG/0/4326" srsDimension="2">
+          <gml:lowerCorner>41.49781800 12.71922700</gml:lowerCorner>
+          <gml:upperCorner>41.62635300 12.85677400</gml:upperCorner>
+        </gml:Envelope>
+      </gml:boundedBy>
+      <wcs:CoverageId>rect_dataset_067e24e8b9fd4327b24f3915a2d9d910</wcs:CoverageId>
+      <gmlcov:metadata>
+        <wcseo:EOMetadata>
+          <eop:EarthObservation gml:id="eop_IKONOS_multispectral_2006092410130420000011315154_2000001729101">
+            <om:phenomenonTime>
+              <gml:TimePeriod gml:id="phen_time_IKONOS_multispectral_2006092410130420000011315154_2000001729101">
+                <gml:beginPosition>2006-09-24T10:13:04Z</gml:beginPosition>
+                <gml:endPosition>2006-09-24T10:13:04Z</gml:endPosition>
+              </gml:TimePeriod>
+            </om:phenomenonTime>
+            <om:resultTime>
+              <gml:TimeInstant gml:id="res_time_IKONOS_multispectral_2006092410130420000011315154_2000001729101">
+                <gml:timePosition>2006-09-24T10:13:04Z</gml:timePosition>
+              </gml:TimeInstant>
+            </om:resultTime>
+            <om:procedure/>
+            <om:observedProperty/>
+            <om:featureOfInterest>
+              <eop:Footprint gml:id="footprint_IKONOS_multispectral_2006092410130420000011315154_2000001729101">
+                <eop:multiExtentOf>
+                  <gml:MultiSurface srsName="EPSG:4326" gml:id="multisurface_IKONOS_multispectral_2006092410130420000011315154_2000001729101">
+                    <gml:surfaceMember>
+                      <gml:Polygon gml:id="polygon_IKONOS_multispectral_2006092410130420000011315154_2000001729101">
+                        <gml:exterior>
+                          <gml:LinearRing>
+                            <gml:posList>41.626352814278867 12.856625899918452 41.625227434262953 12.856765109047931 41.619222251983103 12.856773700804254 41.50045505265529 12.856772610029216 41.499160396470955 12.788093137555517 41.497818434711718 12.71941706540132 41.623675215943059 12.719227164482497 41.625019578669239 12.787923986231551 41.626316688003676 12.856624224404246 41.626352814278867 12.856625899918452</gml:posList>
+                          </gml:LinearRing>
+                        </gml:exterior>
+                      </gml:Polygon>
+                    </gml:surfaceMember>
+                  </gml:MultiSurface>
+                </eop:multiExtentOf>
+              </eop:Footprint>
+            </om:featureOfInterest>
+            <om:result/>
+            <eop:metaDataProperty>
+              <eop:EarthObservationMetaData>
+                <eop:identifier>IKONOS_multispectral_2006092410130420000011315154_2000001729101</eop:identifier>
+                <eop:acquisitionType>NOMINAL</eop:acquisitionType>
+                <eop:status>ARCHIVED</eop:status>
+              </eop:EarthObservationMetaData>
+            </eop:metaDataProperty>
+          </eop:EarthObservation>
+        </wcseo:EOMetadata>
+      </gmlcov:metadata>
+      <gml:domainSet>
+        <gml:RectifiedGrid dimension="2" gml:id="rect_dataset_067e24e8b9fd4327b24f3915a2d9d910_grid">
+          <gml:limits>
+            <gml:GridEnvelope>
+              <gml:low>0 0</gml:low>
+              <gml:high>3177 3658</gml:high>
+            </gml:GridEnvelope>
+          </gml:limits>
+          <gml:axisLabels>x y</gml:axisLabels>
+          <gml:origin>
+            <gml:Point srsName="http://www.opengis.net/def/crs/EPSG/0/3035" gml:id="rect_dataset_067e24e8b9fd4327b24f3915a2d9d910_grid_origin">
+              <gml:pos>4548072.000 2062768.000</gml:pos>
+            </gml:Point>
+          </gml:origin>
+          <gml:offsetVector srsName="http://www.opengis.net/def/crs/EPSG/0/3035">4.000 0.0</gml:offsetVector>
+          <gml:offsetVector srsName="http://www.opengis.net/def/crs/EPSG/0/3035">0.0 -4.000</gml:offsetVector>
+        </gml:RectifiedGrid>
+      </gml:domainSet>
+      <gmlcov:rangeType>
+        <swe:DataRecord>
+          <swe:field name="red">
+            <swe:Quantity definition="http://www.opengis.net/def/property/OGC/0/Radiance">
+              <swe:description>Red Channel</swe:description>
+              <swe:nilValues>
+                <swe:NilValues>
+                  <swe:nilValue reason="http://www.opengis.net/def/nil/OGC/0/unknown">0</swe:nilValue>
+                </swe:NilValues>
+              </swe:nilValues>
+              <swe:uom code="W.m-2.Sr-1"/>
+              <swe:constraint>
+                <swe:AllowedValues>
+                  <swe:interval>0 65535</swe:interval>
+                  <swe:significantFigures>5</swe:significantFigures>
+                </swe:AllowedValues>
+              </swe:constraint>
+            </swe:Quantity>
+          </swe:field>
+          <swe:field name="green">
+            <swe:Quantity definition="http://www.opengis.net/def/property/OGC/0/Radiance">
+              <swe:description>Green Channel</swe:description>
+              <swe:nilValues>
+                <swe:NilValues>
+                  <swe:nilValue reason="http://www.opengis.net/def/nil/OGC/0/unknown">0</swe:nilValue>
+                </swe:NilValues>
+              </swe:nilValues>
+              <swe:uom code="W.m-2.Sr-1"/>
+              <swe:constraint>
+                <swe:AllowedValues>
+                  <swe:interval>0 65535</swe:interval>
+                  <swe:significantFigures>5</swe:significantFigures>
+                </swe:AllowedValues>
+              </swe:constraint>
+            </swe:Quantity>
+          </swe:field>
+          <swe:field name="blue">
+            <swe:Quantity definition="http://www.opengis.net/def/property/OGC/0/Radiance">
+              <swe:description>Blue Channel</swe:description>
+              <swe:nilValues>
+                <swe:NilValues>
+                  <swe:nilValue reason="http://www.opengis.net/def/nil/OGC/0/unknown">0</swe:nilValue>
+                </swe:NilValues>
+              </swe:nilValues>
+              <swe:uom code="W.m-2.Sr-1"/>
+              <swe:constraint>
+                <swe:AllowedValues>
+                  <swe:interval>0 65535</swe:interval>
+                  <swe:significantFigures>5</swe:significantFigures>
+                </swe:AllowedValues>
+              </swe:constraint>
+            </swe:Quantity>
+          </swe:field>
+          <swe:field name="near_infrared">
+            <swe:Quantity definition="http://www.opengis.net/def/property/OGC/0/Radiance">
+              <swe:description>Near Infrared Channel</swe:description>
+              <swe:nilValues>
+                <swe:NilValues>
+                  <swe:nilValue reason="http://www.opengis.net/def/nil/OGC/0/unknown">0</swe:nilValue>
+                </swe:NilValues>
+              </swe:nilValues>
+              <swe:uom code="W.m-2.Sr-1"/>
+              <swe:constraint>
+                <swe:AllowedValues>
+                  <swe:interval>0 65535</swe:interval>
+                  <swe:significantFigures>5</swe:significantFigures>
+                </swe:AllowedValues>
+              </swe:constraint>
+            </swe:Quantity>
+          </swe:field>
+        </swe:DataRecord>
+      </gmlcov:rangeType>
+      <wcs:ServiceParameters>
+        <wcs:CoverageSubtype>RectifiedDataset</wcs:CoverageSubtype>
+      </wcs:ServiceParameters>
+    </wcs:CoverageDescription>
+    <wcs:CoverageDescription gml:id="rect_dataset_0751af8e43d94f4194d87943cf6051dc">
+      <gml:boundedBy>
+        <gml:Envelope uomLabels="deg deg" axisLabels="lat long" srsName="http://www.opengis.net/def/crs/EPSG/0/4326" srsDimension="2">
+          <gml:lowerCorner>41.91037500 12.25250700</gml:lowerCorner>
+          <gml:upperCorner>42.05278000 12.40315800</gml:upperCorner>
+        </gml:Envelope>
+      </gml:boundedBy>
+      <wcs:CoverageId>rect_dataset_0751af8e43d94f4194d87943cf6051dc</wcs:CoverageId>
+      <gmlcov:metadata>
+        <wcseo:EOMetadata>
+          <eop:EarthObservation gml:id="eop_IKONOS_multispectral_2007052110183750000011330515_2000001994802">
+            <om:phenomenonTime>
+              <gml:TimePeriod gml:id="phen_time_IKONOS_multispectral_2007052110183750000011330515_2000001994802">
+                <gml:beginPosition>2007-05-21T10:18:37Z</gml:beginPosition>
+                <gml:endPosition>2007-05-21T10:18:37Z</gml:endPosition>
+              </gml:TimePeriod>
+            </om:phenomenonTime>
+            <om:resultTime>
+              <gml:TimeInstant gml:id="res_time_IKONOS_multispectral_2007052110183750000011330515_2000001994802">
+                <gml:timePosition>2007-05-21T10:18:37Z</gml:timePosition>
+              </gml:TimeInstant>
+            </om:resultTime>
+            <om:procedure/>
+            <om:observedProperty/>
+            <om:featureOfInterest>
+              <eop:Footprint gml:id="footprint_IKONOS_multispectral_2007052110183750000011330515_2000001994802">
+                <eop:multiExtentOf>
+                  <gml:MultiSurface srsName="EPSG:4326" gml:id="multisurface_IKONOS_multispectral_2007052110183750000011330515_2000001994802">
+                    <gml:surfaceMember>
+                      <gml:Polygon gml:id="polygon_IKONOS_multispectral_2007052110183750000011330515_2000001994802">
+                        <gml:exterior>
+                          <gml:LinearRing>
+                            <gml:posList>42.052780108788994 12.402646270864455 42.052770904658075 12.403031302775547 42.049875515978997 12.403157829284789 41.913787010921183 12.401405141275507 41.912108115423514 12.327659252285589 41.910374990033013 12.253917931883679 41.918265891760406 12.253536137796898 42.049279105986621 12.252506809528304 42.05103959192332 12.327573457194045 42.052743988385224 12.402644844664904 42.052780108788994 12.402646270864455</gml:posList>
+                          </gml:LinearRing>
+                        </gml:exterior>
+                      </gml:Polygon>
+                    </gml:surfaceMember>
+                  </gml:MultiSurface>
+                </eop:multiExtentOf>
+              </eop:Footprint>
+            </om:featureOfInterest>
+            <om:result/>
+            <eop:metaDataProperty>
+              <eop:EarthObservationMetaData>
+                <eop:identifier>IKONOS_multispectral_2007052110183750000011330515_2000001994802</eop:identifier>
+                <eop:acquisitionType>NOMINAL</eop:acquisitionType>
+                <eop:status>ARCHIVED</eop:status>
+              </eop:EarthObservationMetaData>
+            </eop:metaDataProperty>
+          </eop:EarthObservation>
+        </wcseo:EOMetadata>
+      </gmlcov:metadata>
+      <gml:domainSet>
+        <gml:RectifiedGrid dimension="2" gml:id="rect_dataset_0751af8e43d94f4194d87943cf6051dc_grid">
+          <gml:limits>
+            <gml:GridEnvelope>
+              <gml:low>0 0</gml:low>
+              <gml:high>3447 4033</gml:high>
+            </gml:GridEnvelope>
+          </gml:limits>
+          <gml:axisLabels>x y</gml:axisLabels>
+          <gml:origin>
+            <gml:Point srsName="http://www.opengis.net/def/crs/EPSG/0/3035" gml:id="rect_dataset_0751af8e43d94f4194d87943cf6051dc_grid_origin">
+              <gml:pos>4507736.000 2108616.000</gml:pos>
+            </gml:Point>
+          </gml:origin>
+          <gml:offsetVector srsName="http://www.opengis.net/def/crs/EPSG/0/3035">4.000 0.0</gml:offsetVector>
+          <gml:offsetVector srsName="http://www.opengis.net/def/crs/EPSG/0/3035">0.0 -4.000</gml:offsetVector>
+        </gml:RectifiedGrid>
+      </gml:domainSet>
+      <gmlcov:rangeType>
+        <swe:DataRecord>
+          <swe:field name="red">
+            <swe:Quantity definition="http://www.opengis.net/def/property/OGC/0/Radiance">
+              <swe:description>Red Channel</swe:description>
+              <swe:nilValues>
+                <swe:NilValues>
+                  <swe:nilValue reason="http://www.opengis.net/def/nil/OGC/0/unknown">0</swe:nilValue>
+                </swe:NilValues>
+              </swe:nilValues>
+              <swe:uom code="W.m-2.Sr-1"/>
+              <swe:constraint>
+                <swe:AllowedValues>
+                  <swe:interval>0 65535</swe:interval>
+                  <swe:significantFigures>5</swe:significantFigures>
+                </swe:AllowedValues>
+              </swe:constraint>
+            </swe:Quantity>
+          </swe:field>
+          <swe:field name="green">
+            <swe:Quantity definition="http://www.opengis.net/def/property/OGC/0/Radiance">
+              <swe:description>Green Channel</swe:description>
+              <swe:nilValues>
+                <swe:NilValues>
+                  <swe:nilValue reason="http://www.opengis.net/def/nil/OGC/0/unknown">0</swe:nilValue>
+                </swe:NilValues>
+              </swe:nilValues>
+              <swe:uom code="W.m-2.Sr-1"/>
+              <swe:constraint>
+                <swe:AllowedValues>
+                  <swe:interval>0 65535</swe:interval>
+                  <swe:significantFigures>5</swe:significantFigures>
+                </swe:AllowedValues>
+              </swe:constraint>
+            </swe:Quantity>
+          </swe:field>
+          <swe:field name="blue">
+            <swe:Quantity definition="http://www.opengis.net/def/property/OGC/0/Radiance">
+              <swe:description>Blue Channel</swe:description>
+              <swe:nilValues>
+                <swe:NilValues>
+                  <swe:nilValue reason="http://www.opengis.net/def/nil/OGC/0/unknown">0</swe:nilValue>
+                </swe:NilValues>
+              </swe:nilValues>
+              <swe:uom code="W.m-2.Sr-1"/>
+              <swe:constraint>
+                <swe:AllowedValues>
+                  <swe:interval>0 65535</swe:interval>
+                  <swe:significantFigures>5</swe:significantFigures>
+                </swe:AllowedValues>
+              </swe:constraint>
+            </swe:Quantity>
+          </swe:field>
+          <swe:field name="near_infrared">
+            <swe:Quantity definition="http://www.opengis.net/def/property/OGC/0/Radiance">
+              <swe:description>Near Infrared Channel</swe:description>
+              <swe:nilValues>
+                <swe:NilValues>
+                  <swe:nilValue reason="http://www.opengis.net/def/nil/OGC/0/unknown">0</swe:nilValue>
+                </swe:NilValues>
+              </swe:nilValues>
+              <swe:uom code="W.m-2.Sr-1"/>
+              <swe:constraint>
+                <swe:AllowedValues>
+                  <swe:interval>0 65535</swe:interval>
+                  <swe:significantFigures>5</swe:significantFigures>
+                </swe:AllowedValues>
+              </swe:constraint>
+            </swe:Quantity>
+          </swe:field>
+        </swe:DataRecord>
+      </gmlcov:rangeType>
+      <wcs:ServiceParameters>
+        <wcs:CoverageSubtype>RectifiedDataset</wcs:CoverageSubtype>
+      </wcs:ServiceParameters>
+    </wcs:CoverageDescription>
+    <wcs:CoverageDescription gml:id="rect_dataset_07eab5a1ed6c43e7974ed4f58658adea">
+      <gml:boundedBy>
+        <gml:Envelope uomLabels="deg deg" axisLabels="lat long" srsName="http://www.opengis.net/def/crs/EPSG/0/4326" srsDimension="2">
+          <gml:lowerCorner>41.65225000 12.25476400</gml:lowerCorner>
+          <gml:upperCorner>41.78551900 12.40026300</gml:upperCorner>
+        </gml:Envelope>
+      </gml:boundedBy>
+      <wcs:CoverageId>rect_dataset_07eab5a1ed6c43e7974ed4f58658adea</wcs:CoverageId>
+      <gmlcov:metadata>
+        <wcseo:EOMetadata>
+          <eop:EarthObservation gml:id="eop_IKONOS_multispectral_2007052110183750000011330515_2000001994800">
+            <om:phenomenonTime>
+              <gml:TimePeriod gml:id="phen_time_IKONOS_multispectral_2007052110183750000011330515_2000001994800">
+                <gml:beginPosition>2007-05-21T10:18:37Z</gml:beginPosition>
+                <gml:endPosition>2007-05-21T10:18:37Z</gml:endPosition>
+              </gml:TimePeriod>
+            </om:phenomenonTime>
+            <om:resultTime>
+              <gml:TimeInstant gml:id="res_time_IKONOS_multispectral_2007052110183750000011330515_2000001994800">
+                <gml:timePosition>2007-05-21T10:18:37Z</gml:timePosition>
+              </gml:TimeInstant>
+            </om:resultTime>
+            <om:procedure/>
+            <om:observedProperty/>
+            <om:featureOfInterest>
+              <eop:Footprint gml:id="footprint_IKONOS_multispectral_2007052110183750000011330515_2000001994800">
+                <eop:multiExtentOf>
+                  <gml:MultiSurface srsName="EPSG:4326" gml:id="multisurface_IKONOS_multispectral_2007052110183750000011330515_2000001994800">
+                    <gml:surfaceMember>
+                      <gml:Polygon gml:id="polygon_IKONOS_multispectral_2007052110183750000011330515_2000001994800">
+                        <gml:exterior>
+                          <gml:LinearRing>
+                            <gml:posList>41.78551908000194 12.400071316021647 41.785514486300833 12.400262992564954 41.781717444528319 12.400258266301233 41.655567790919505 12.398924863554571 41.653934343537088 12.327261669238537 41.652249504947136 12.255602765254416 41.782133555478211 12.254764478931309 41.783834617901732 12.327414987335356 41.785482950573389 12.400069901971284 41.78551908000194 12.400071316021647</gml:posList>
+                          </gml:LinearRing>
+                        </gml:exterior>
+                      </gml:Polygon>
+                    </gml:surfaceMember>
+                  </gml:MultiSurface>
+                </eop:multiExtentOf>
+              </eop:Footprint>
+            </om:featureOfInterest>
+            <om:result/>
+            <eop:metaDataProperty>
+              <eop:EarthObservationMetaData>
+                <eop:identifier>IKONOS_multispectral_2007052110183750000011330515_2000001994800</eop:identifier>
+                <eop:acquisitionType>NOMINAL</eop:acquisitionType>
+                <eop:status>ARCHIVED</eop:status>
+              </eop:EarthObservationMetaData>
+            </eop:metaDataProperty>
+          </eop:EarthObservation>
+        </wcseo:EOMetadata>
+      </gmlcov:metadata>
+      <gml:domainSet>
+        <gml:RectifiedGrid dimension="2" gml:id="rect_dataset_07eab5a1ed6c43e7974ed4f58658adea_grid">
+          <gml:limits>
+            <gml:GridEnvelope>
+              <gml:low>0 0</gml:low>
+              <gml:high>3348 3777</gml:high>
+            </gml:GridEnvelope>
+          </gml:limits>
+          <gml:axisLabels>x y</gml:axisLabels>
+          <gml:origin>
+            <gml:Point srsName="http://www.opengis.net/def/crs/EPSG/0/3035" gml:id="rect_dataset_07eab5a1ed6c43e7974ed4f58658adea_grid_origin">
+              <gml:pos>4508732.000 2079044.000</gml:pos>
+            </gml:Point>
+          </gml:origin>
+          <gml:offsetVector srsName="http://www.opengis.net/def/crs/EPSG/0/3035">4.000 0.0</gml:offsetVector>
+          <gml:offsetVector srsName="http://www.opengis.net/def/crs/EPSG/0/3035">0.0 -4.000</gml:offsetVector>
+        </gml:RectifiedGrid>
+      </gml:domainSet>
+      <gmlcov:rangeType>
+        <swe:DataRecord>
+          <swe:field name="red">
+            <swe:Quantity definition="http://www.opengis.net/def/property/OGC/0/Radiance">
+              <swe:description>Red Channel</swe:description>
+              <swe:nilValues>
+                <swe:NilValues>
+                  <swe:nilValue reason="http://www.opengis.net/def/nil/OGC/0/unknown">0</swe:nilValue>
+                </swe:NilValues>
+              </swe:nilValues>
+              <swe:uom code="W.m-2.Sr-1"/>
+              <swe:constraint>
+                <swe:AllowedValues>
+                  <swe:interval>0 65535</swe:interval>
+                  <swe:significantFigures>5</swe:significantFigures>
+                </swe:AllowedValues>
+              </swe:constraint>
+            </swe:Quantity>
+          </swe:field>
+          <swe:field name="green">
+            <swe:Quantity definition="http://www.opengis.net/def/property/OGC/0/Radiance">
+              <swe:description>Green Channel</swe:description>
+              <swe:nilValues>
+                <swe:NilValues>
+                  <swe:nilValue reason="http://www.opengis.net/def/nil/OGC/0/unknown">0</swe:nilValue>
+                </swe:NilValues>
+              </swe:nilValues>
+              <swe:uom code="W.m-2.Sr-1"/>
+              <swe:constraint>
+                <swe:AllowedValues>
+                  <swe:interval>0 65535</swe:interval>
+                  <swe:significantFigures>5</swe:significantFigures>
+                </swe:AllowedValues>
+              </swe:constraint>
+            </swe:Quantity>
+          </swe:field>
+          <swe:field name="blue">
+            <swe:Quantity definition="http://www.opengis.net/def/property/OGC/0/Radiance">
+              <swe:description>Blue Channel</swe:description>
+              <swe:nilValues>
+                <swe:NilValues>
+                  <swe:nilValue reason="http://www.opengis.net/def/nil/OGC/0/unknown">0</swe:nilValue>
+                </swe:NilValues>
+              </swe:nilValues>
+              <swe:uom code="W.m-2.Sr-1"/>
+              <swe:constraint>
+                <swe:AllowedValues>
+                  <swe:interval>0 65535</swe:interval>
+                  <swe:significantFigures>5</swe:significantFigures>
+                </swe:AllowedValues>
+              </swe:constraint>
+            </swe:Quantity>
+          </swe:field>
+          <swe:field name="near_infrared">
+            <swe:Quantity definition="http://www.opengis.net/def/property/OGC/0/Radiance">
+              <swe:description>Near Infrared Channel</swe:description>
+              <swe:nilValues>
+                <swe:NilValues>
+                  <swe:nilValue reason="http://www.opengis.net/def/nil/OGC/0/unknown">0</swe:nilValue>
+                </swe:NilValues>
+              </swe:nilValues>
+              <swe:uom code="W.m-2.Sr-1"/>
+              <swe:constraint>
+                <swe:AllowedValues>
+                  <swe:interval>0 65535</swe:interval>
+                  <swe:significantFigures>5</swe:significantFigures>
+                </swe:AllowedValues>
+              </swe:constraint>
+            </swe:Quantity>
+          </swe:field>
+        </swe:DataRecord>
+      </gmlcov:rangeType>
+      <wcs:ServiceParameters>
+        <wcs:CoverageSubtype>RectifiedDataset</wcs:CoverageSubtype>
+      </wcs:ServiceParameters>
+    </wcs:CoverageDescription>
+    <wcs:CoverageDescription gml:id="rect_dataset_0b3934904b9c48e5a4fb8cd39b29491d">
+      <gml:boundedBy>
+        <gml:Envelope uomLabels="deg deg" axisLabels="lat long" srsName="http://www.opengis.net/def/crs/EPSG/0/4326" srsDimension="2">
+          <gml:lowerCorner>41.44847600 15.46545800</gml:lowerCorner>
+          <gml:upperCorner>41.57846900 15.60579900</gml:upperCorner>
+        </gml:Envelope>
+      </gml:boundedBy>
+      <wcs:CoverageId>rect_dataset_0b3934904b9c48e5a4fb8cd39b29491d</wcs:CoverageId>
+      <gmlcov:metadata>
+        <wcseo:EOMetadata>
+          <eop:EarthObservation gml:id="eop_IKONOS_multispectral_2004071710080200000011320152_2000000626303">
+            <om:phenomenonTime>
+              <gml:TimePeriod gml:id="phen_time_IKONOS_multispectral_2004071710080200000011320152_2000000626303">
+                <gml:beginPosition>2004-07-17T10:08:02Z</gml:beginPosition>
+                <gml:endPosition>2004-07-17T10:08:02Z</gml:endPosition>
+              </gml:TimePeriod>
+            </om:phenomenonTime>
+            <om:resultTime>
+              <gml:TimeInstant gml:id="res_time_IKONOS_multispectral_2004071710080200000011320152_2000000626303">
+                <gml:timePosition>2004-07-17T10:08:02Z</gml:timePosition>
+              </gml:TimeInstant>
+            </om:resultTime>
+            <om:procedure/>
+            <om:observedProperty/>
+            <om:featureOfInterest>
+              <eop:Footprint gml:id="footprint_IKONOS_multispectral_2004071710080200000011320152_2000000626303">
+                <eop:multiExtentOf>
+                  <gml:MultiSurface srsName="EPSG:4326" gml:id="multisurface_IKONOS_multispectral_2004071710080200000011320152_2000000626303">
+                    <gml:surfaceMember>
+                      <gml:Polygon gml:id="polygon_IKONOS_multispectral_2004071710080200000011320152_2000000626303">
+                        <gml:exterior>
+                          <gml:LinearRing>
+                            <gml:posList>41.577836164216471 15.605540860883524 41.57782544578081 15.60573158197497 41.576264806001547 15.605781159074532 41.448476101638228 15.605799119006557 41.448832981348488 15.535628227289768 41.449140414432172 15.465457561435045 41.578469467028825 15.465525227166236 41.578159357568907 15.53553129678868 41.577800119557445 15.605537578578078 41.577836164216471 15.605540860883524</gml:posList>
+                          </gml:LinearRing>
+                        </gml:exterior>
+                      </gml:Polygon>
+                    </gml:surfaceMember>
+                  </gml:MultiSurface>
+                </eop:multiExtentOf>
+              </eop:Footprint>
+            </om:featureOfInterest>
+            <om:result/>
+            <eop:metaDataProperty>
+              <eop:EarthObservationMetaData>
+                <eop:identifier>IKONOS_multispectral_2004071710080200000011320152_2000000626303</eop:identifier>
+                <eop:acquisitionType>NOMINAL</eop:acquisitionType>
+                <eop:status>ARCHIVED</eop:status>
+              </eop:EarthObservationMetaData>
+            </eop:metaDataProperty>
+          </eop:EarthObservation>
+        </wcseo:EOMetadata>
+      </gmlcov:metadata>
+      <gml:domainSet>
+        <gml:RectifiedGrid dimension="2" gml:id="rect_dataset_0b3934904b9c48e5a4fb8cd39b29491d_grid">
+          <gml:limits>
+            <gml:GridEnvelope>
+              <gml:low>0 0</gml:low>
+              <gml:high>3182 3770</gml:high>
+            </gml:GridEnvelope>
+          </gml:limits>
+          <gml:axisLabels>x y</gml:axisLabels>
+          <gml:origin>
+            <gml:Point srsName="http://www.opengis.net/def/crs/EPSG/0/3035" gml:id="rect_dataset_0b3934904b9c48e5a4fb8cd39b29491d_grid_origin">
+              <gml:pos>4778136.000 2070288.000</gml:pos>
+            </gml:Point>
+          </gml:origin>
+          <gml:offsetVector srsName="http://www.opengis.net/def/crs/EPSG/0/3035">4.000 0.0</gml:offsetVector>
+          <gml:offsetVector srsName="http://www.opengis.net/def/crs/EPSG/0/3035">0.0 -4.000</gml:offsetVector>
+        </gml:RectifiedGrid>
+      </gml:domainSet>
+      <gmlcov:rangeType>
+        <swe:DataRecord>
+          <swe:field name="red">
+            <swe:Quantity definition="http://www.opengis.net/def/property/OGC/0/Radiance">
+              <swe:description>Red Channel</swe:description>
+              <swe:nilValues>
+                <swe:NilValues>
+                  <swe:nilValue reason="http://www.opengis.net/def/nil/OGC/0/unknown">0</swe:nilValue>
+                </swe:NilValues>
+              </swe:nilValues>
+              <swe:uom code="W.m-2.Sr-1"/>
+              <swe:constraint>
+                <swe:AllowedValues>
+                  <swe:interval>0 65535</swe:interval>
+                  <swe:significantFigures>5</swe:significantFigures>
+                </swe:AllowedValues>
+              </swe:constraint>
+            </swe:Quantity>
+          </swe:field>
+          <swe:field name="green">
+            <swe:Quantity definition="http://www.opengis.net/def/property/OGC/0/Radiance">
+              <swe:description>Green Channel</swe:description>
+              <swe:nilValues>
+                <swe:NilValues>
+                  <swe:nilValue reason="http://www.opengis.net/def/nil/OGC/0/unknown">0</swe:nilValue>
+                </swe:NilValues>
+              </swe:nilValues>
+              <swe:uom code="W.m-2.Sr-1"/>
+              <swe:constraint>
+                <swe:AllowedValues>
+                  <swe:interval>0 65535</swe:interval>
+                  <swe:significantFigures>5</swe:significantFigures>
+                </swe:AllowedValues>
+              </swe:constraint>
+            </swe:Quantity>
+          </swe:field>
+          <swe:field name="blue">
+            <swe:Quantity definition="http://www.opengis.net/def/property/OGC/0/Radiance">
+              <swe:description>Blue Channel</swe:description>
+              <swe:nilValues>
+                <swe:NilValues>
+                  <swe:nilValue reason="http://www.opengis.net/def/nil/OGC/0/unknown">0</swe:nilValue>
+                </swe:NilValues>
+              </swe:nilValues>
+              <swe:uom code="W.m-2.Sr-1"/>
+              <swe:constraint>
+                <swe:AllowedValues>
+                  <swe:interval>0 65535</swe:interval>
+                  <swe:significantFigures>5</swe:significantFigures>
+                </swe:AllowedValues>
+              </swe:constraint>
+            </swe:Quantity>
+          </swe:field>
+          <swe:field name="near_infrared">
+            <swe:Quantity definition="http://www.opengis.net/def/property/OGC/0/Radiance">
+              <swe:description>Near Infrared Channel</swe:description>
+              <swe:nilValues>
+                <swe:NilValues>
+                  <swe:nilValue reason="http://www.opengis.net/def/nil/OGC/0/unknown">0</swe:nilValue>
+                </swe:NilValues>
+              </swe:nilValues>
+              <swe:uom code="W.m-2.Sr-1"/>
+              <swe:constraint>
+                <swe:AllowedValues>
+                  <swe:interval>0 65535</swe:interval>
+                  <swe:significantFigures>5</swe:significantFigures>
+                </swe:AllowedValues>
+              </swe:constraint>
+            </swe:Quantity>
+          </swe:field>
+        </swe:DataRecord>
+      </gmlcov:rangeType>
+      <wcs:ServiceParameters>
+        <wcs:CoverageSubtype>RectifiedDataset</wcs:CoverageSubtype>
+      </wcs:ServiceParameters>
+    </wcs:CoverageDescription>
+    <wcs:CoverageDescription gml:id="rect_dataset_0c03279650e34e50902f902817bc144a">
+      <gml:boundedBy>
+        <gml:Envelope uomLabels="deg deg" axisLabels="lat long" srsName="http://www.opengis.net/def/crs/EPSG/0/4326" srsDimension="2">
+          <gml:lowerCorner>42.21897900 14.37286400</gml:lowerCorner>
+          <gml:upperCorner>42.37988800 14.58792800</gml:upperCorner>
+        </gml:Envelope>
+      </gml:boundedBy>
+      <wcs:CoverageId>rect_dataset_0c03279650e34e50902f902817bc144a</wcs:CoverageId>
+      <gmlcov:metadata>
+        <wcseo:EOMetadata>
+          <eop:EarthObservation gml:id="eop_IKONOS_multispectral_2007062810023830000011311907_2000002086305">
+            <om:phenomenonTime>
+              <gml:TimePeriod gml:id="phen_time_IKONOS_multispectral_2007062810023830000011311907_2000002086305">
+                <gml:beginPosition>2007-06-28T10:02:38Z</gml:beginPosition>
+                <gml:endPosition>2007-06-28T10:02:38Z</gml:endPosition>
+              </gml:TimePeriod>
+            </om:phenomenonTime>
+            <om:resultTime>
+              <gml:TimeInstant gml:id="res_time_IKONOS_multispectral_2007062810023830000011311907_2000002086305">
+                <gml:timePosition>2007-06-28T10:02:38Z</gml:timePosition>
+              </gml:TimeInstant>
+            </om:resultTime>
+            <om:procedure/>
+            <om:observedProperty/>
+            <om:featureOfInterest>
+              <eop:Footprint gml:id="footprint_IKONOS_multispectral_2007062810023830000011311907_2000002086305">
+                <eop:multiExtentOf>
+                  <gml:MultiSurface srsName="EPSG:4326" gml:id="multisurface_IKONOS_multispectral_2007062810023830000011311907_2000002086305">
+                    <gml:surfaceMember>
+                      <gml:Polygon gml:id="polygon_IKONOS_multispectral_2007062810023830000011311907_2000002086305">
+                        <gml:exterior>
+                          <gml:LinearRing>
+                            <gml:posList>42.379887646914419 14.470682528292931 42.379874794500822 14.470972598390407 42.379450302004926 14.471571622711425 42.378996175450929 14.472022927467812 42.375411210514926 14.476994725974086 42.374880651483274 14.477537280510889 42.36456169979509 14.491560271019615 42.364031059435547 14.492102605986862 42.362330400154299 14.49454579081684 42.361914378541925 14.494951163681835 42.358328255498392 14.499920261600238 42.357258252622721 14.501197974550514 42.35320889029731 14.506810491540403 42.352639947242267 14.507398221414661 42.341777266154658 14.522146336250005 42.341284679783435 14.522642603677797 42.33719586706399 14.528297871397589 42.336626794078384 14.528885252636618 42.332036282383612 14.535228998359912 42.331505398321902 14.535770675719144 42.326876208812067 14.542158971335398 42.326383520125923 14.542654960917824 42.324643372502955 14.545140853055555 42.321222922372606 14.54958368405218 42.319520838222218 14.552023601934739 42.319104576309677 14.552428310302407 42.317094321172299 14.555280912766905 42.316639805543034 14.55573115187758 42.314937569066913 14.558170720543131 42.314444798540606 14.558666487835684 42.311932833446832 14.562207547054928 42.311516528983091 14.562612137805761 42.309814122028492 14.565051315930035 42.308819758919455 14.566235794101916 42.306770857317389 14.569133028558806 42.306392770461748 14.569491987028618 42.304651945397381 14.57197632426902 42.304159104328662 14.572471900060922 42.292980627480325 14.587561336875062 42.2327912362327 14.587928123774599 42.232752274455187 14.57287562455644 42.219287510537654 14.572970196818364 42.21897855465879 14.49060805888308 42.262688891081339 14.432134261256287 42.306364311010135 14.373578083408965 42.379362719933397 14.372864397733059 42.379619009227333 14.421771739204022 42.379851588461335 14.470679850589752 42.379887646914419 14.470682528292931</gml:posList>
+                          </gml:LinearRing>
+                        </gml:exterior>
+                      </gml:Polygon>
+                    </gml:surfaceMember>
+                  </gml:MultiSurface>
+                </eop:multiExtentOf>
+              </eop:Footprint>
+            </om:featureOfInterest>
+            <om:result/>
+            <eop:metaDataProperty>
+              <eop:EarthObservationMetaData>
+                <eop:identifier>IKONOS_multispectral_2007062810023830000011311907_2000002086305</eop:identifier>
+                <eop:acquisitionType>NOMINAL</eop:acquisitionType>
+                <eop:status>ARCHIVED</eop:status>
+              </eop:EarthObservationMetaData>
+            </eop:metaDataProperty>
+          </eop:EarthObservation>
+        </wcseo:EOMetadata>
+      </gmlcov:metadata>
+      <gml:domainSet>
+        <gml:RectifiedGrid dimension="2" gml:id="rect_dataset_0c03279650e34e50902f902817bc144a_grid">
+          <gml:limits>
+            <gml:GridEnvelope>
+              <gml:low>0 0</gml:low>
+              <gml:high>4686 4736</gml:high>
+            </gml:GridEnvelope>
+          </gml:limits>
+          <gml:axisLabels>x y</gml:axisLabels>
+          <gml:origin>
+            <gml:Point srsName="http://www.opengis.net/def/crs/EPSG/0/3035" gml:id="rect_dataset_0c03279650e34e50902f902817bc144a_grid_origin">
+              <gml:pos>4682112.000 2153228.000</gml:pos>
+            </gml:Point>
+          </gml:origin>
+          <gml:offsetVector srsName="http://www.opengis.net/def/crs/EPSG/0/3035">4.000 0.0</gml:offsetVector>
+          <gml:offsetVector srsName="http://www.opengis.net/def/crs/EPSG/0/3035">0.0 -4.000</gml:offsetVector>
+        </gml:RectifiedGrid>
+      </gml:domainSet>
+      <gmlcov:rangeType>
+        <swe:DataRecord>
+          <swe:field name="red">
+            <swe:Quantity definition="http://www.opengis.net/def/property/OGC/0/Radiance">
+              <swe:description>Red Channel</swe:description>
+              <swe:nilValues>
+                <swe:NilValues>
+                  <swe:nilValue reason="http://www.opengis.net/def/nil/OGC/0/unknown">0</swe:nilValue>
+                </swe:NilValues>
+              </swe:nilValues>
+              <swe:uom code="W.m-2.Sr-1"/>
+              <swe:constraint>
+                <swe:AllowedValues>
+                  <swe:interval>0 65535</swe:interval>
+                  <swe:significantFigures>5</swe:significantFigures>
+                </swe:AllowedValues>
+              </swe:constraint>
+            </swe:Quantity>
+          </swe:field>
+          <swe:field name="green">
+            <swe:Quantity definition="http://www.opengis.net/def/property/OGC/0/Radiance">
+              <swe:description>Green Channel</swe:description>
+              <swe:nilValues>
+                <swe:NilValues>
+                  <swe:nilValue reason="http://www.opengis.net/def/nil/OGC/0/unknown">0</swe:nilValue>
+                </swe:NilValues>
+              </swe:nilValues>
+              <swe:uom code="W.m-2.Sr-1"/>
+              <swe:constraint>
+                <swe:AllowedValues>
+                  <swe:interval>0 65535</swe:interval>
+                  <swe:significantFigures>5</swe:significantFigures>
+                </swe:AllowedValues>
+              </swe:constraint>
+            </swe:Quantity>
+          </swe:field>
+          <swe:field name="blue">
+            <swe:Quantity definition="http://www.opengis.net/def/property/OGC/0/Radiance">
+              <swe:description>Blue Channel</swe:description>
+              <swe:nilValues>
+                <swe:NilValues>
+                  <swe:nilValue reason="http://www.opengis.net/def/nil/OGC/0/unknown">0</swe:nilValue>
+                </swe:NilValues>
+              </swe:nilValues>
+              <swe:uom code="W.m-2.Sr-1"/>
+              <swe:constraint>
+                <swe:AllowedValues>
+                  <swe:interval>0 65535</swe:interval>
+                  <swe:significantFigures>5</swe:significantFigures>
+                </swe:AllowedValues>
+              </swe:constraint>
+            </swe:Quantity>
+          </swe:field>
+          <swe:field name="near_infrared">
+            <swe:Quantity definition="http://www.opengis.net/def/property/OGC/0/Radiance">
+              <swe:description>Near Infrared Channel</swe:description>
+              <swe:nilValues>
+                <swe:NilValues>
+                  <swe:nilValue reason="http://www.opengis.net/def/nil/OGC/0/unknown">0</swe:nilValue>
+                </swe:NilValues>
+              </swe:nilValues>
+              <swe:uom code="W.m-2.Sr-1"/>
+              <swe:constraint>
+                <swe:AllowedValues>
+                  <swe:interval>0 65535</swe:interval>
+                  <swe:significantFigures>5</swe:significantFigures>
+                </swe:AllowedValues>
+              </swe:constraint>
+            </swe:Quantity>
+          </swe:field>
+        </swe:DataRecord>
+      </gmlcov:rangeType>
+      <wcs:ServiceParameters>
+        <wcs:CoverageSubtype>RectifiedDataset</wcs:CoverageSubtype>
+      </wcs:ServiceParameters>
+    </wcs:CoverageDescription>
+    <wcs:CoverageDescription gml:id="rect_dataset_0d0c1953b9bb460fa83be89de5f3966c">
+      <gml:boundedBy>
+        <gml:Envelope uomLabels="deg deg" axisLabels="lat long" srsName="http://www.opengis.net/def/crs/EPSG/0/4326" srsDimension="2">
+          <gml:lowerCorner>37.75067200 14.77709500</gml:lowerCorner>
+          <gml:upperCorner>37.92825400 14.96592400</gml:upperCorner>
+        </gml:Envelope>
+      </gml:boundedBy>
+      <wcs:CoverageId>rect_dataset_0d0c1953b9bb460fa83be89de5f3966c</wcs:CoverageId>
+      <gmlcov:metadata>
+        <wcseo:EOMetadata>
+          <eop:EarthObservation gml:id="eop_IKONOS_multispectral_2008052209483270000011303102_2000002519801">
+            <om:phenomenonTime>
+              <gml:TimePeriod gml:id="phen_time_IKONOS_multispectral_2008052209483270000011303102_2000002519801">
+                <gml:beginPosition>2008-05-22T09:48:32Z</gml:beginPosition>
+                <gml:endPosition>2008-05-22T09:48:32Z</gml:endPosition>
+              </gml:TimePeriod>
+            </om:phenomenonTime>
+            <om:resultTime>
+              <gml:TimeInstant gml:id="res_time_IKONOS_multispectral_2008052209483270000011303102_2000002519801">
+                <gml:timePosition>2008-05-22T09:48:32Z</gml:timePosition>
+              </gml:TimeInstant>
+            </om:resultTime>
+            <om:procedure/>
+            <om:observedProperty/>
+            <om:featureOfInterest>
+              <eop:Footprint gml:id="footprint_IKONOS_multispectral_2008052209483270000011303102_2000002519801">
+                <eop:multiExtentOf>
+                  <gml:MultiSurface srsName="EPSG:4326" gml:id="multisurface_IKONOS_multispectral_2008052209483270000011303102_2000002519801">
+                    <gml:surfaceMember>
+                      <gml:Polygon gml:id="polygon_IKONOS_multispectral_2008052209483270000011303102_2000002519801">
+                        <gml:exterior>
+                          <gml:LinearRing>
+                            <gml:posList>37.928253782707593 14.965553560037353 37.928237316557386 14.965869278425195 37.928053886860702 14.965901224393239 37.882247026353284 14.965924272962686 37.881488809744333 14.965824012127483 37.816124250127054 14.942375407619567 37.750748022519282 14.918975320289302 37.750672444247883 14.836882330089509 37.770016550770343 14.777185258059719 37.796633037132032 14.777095458187874 37.797842157592392 14.777631440890268 37.801132108392167 14.778719007232597 37.829800772394698 14.789124596316933 37.884831487620446 14.808716717491697 37.886040281532679 14.809254042503943 37.891864805685231 14.811246900966953 37.893716457152095 14.812010520853335 37.894400120784162 14.812149091933637 37.895608879281561 14.812686562928699 37.901433255358356 14.814680041270124 37.902641987780541 14.815217619749459 37.928097697009228 14.824343810160217 37.928183816392547 14.894946840631571 37.928217567238612 14.965550928889579 37.928253782707593 14.965553560037353</gml:posList>
+                          </gml:LinearRing>
+                        </gml:exterior>
+                      </gml:Polygon>
+                    </gml:surfaceMember>
+                  </gml:MultiSurface>
+                </eop:multiExtentOf>
+              </eop:Footprint>
+            </om:featureOfInterest>
+            <om:result/>
+            <eop:metaDataProperty>
+              <eop:EarthObservationMetaData>
+                <eop:identifier>IKONOS_multispectral_2008052209483270000011303102_2000002519801</eop:identifier>
+                <eop:acquisitionType>NOMINAL</eop:acquisitionType>
+                <eop:status>ARCHIVED</eop:status>
+              </eop:EarthObservationMetaData>
+            </eop:metaDataProperty>
+          </eop:EarthObservation>
+        </wcseo:EOMetadata>
+      </gmlcov:metadata>
+      <gml:domainSet>
+        <gml:RectifiedGrid dimension="2" gml:id="rect_dataset_0d0c1953b9bb460fa83be89de5f3966c_grid">
+          <gml:limits>
+            <gml:GridEnvelope>
+              <gml:low>0 0</gml:low>
+              <gml:high>4464 5152</gml:high>
+            </gml:GridEnvelope>
+          </gml:limits>
+          <gml:axisLabels>x y</gml:axisLabels>
+          <gml:origin>
+            <gml:Point srsName="http://www.opengis.net/def/crs/EPSG/0/3035" gml:id="rect_dataset_0d0c1953b9bb460fa83be89de5f3966c_grid_origin">
+              <gml:pos>4743720.000 1664156.000</gml:pos>
+            </gml:Point>
+          </gml:origin>
+          <gml:offsetVector srsName="http://www.opengis.net/def/crs/EPSG/0/3035">4.000 0.0</gml:offsetVector>
+          <gml:offsetVector srsName="http://www.opengis.net/def/crs/EPSG/0/3035">0.0 -4.000</gml:offsetVector>
+        </gml:RectifiedGrid>
+      </gml:domainSet>
+      <gmlcov:rangeType>
+        <swe:DataRecord>
+          <swe:field name="red">
+            <swe:Quantity definition="http://www.opengis.net/def/property/OGC/0/Radiance">
+              <swe:description>Red Channel</swe:description>
+              <swe:nilValues>
+                <swe:NilValues>
+                  <swe:nilValue reason="http://www.opengis.net/def/nil/OGC/0/unknown">0</swe:nilValue>
+                </swe:NilValues>
+              </swe:nilValues>
+              <swe:uom code="W.m-2.Sr-1"/>
+              <swe:constraint>
+                <swe:AllowedValues>
+                  <swe:interval>0 65535</swe:interval>
+                  <swe:significantFigures>5</swe:significantFigures>
+                </swe:AllowedValues>
+              </swe:constraint>
+            </swe:Quantity>
+          </swe:field>
+          <swe:field name="green">
+            <swe:Quantity definition="http://www.opengis.net/def/property/OGC/0/Radiance">
+              <swe:description>Green Channel</swe:description>
+              <swe:nilValues>
+                <swe:NilValues>
+                  <swe:nilValue reason="http://www.opengis.net/def/nil/OGC/0/unknown">0</swe:nilValue>
+                </swe:NilValues>
+              </swe:nilValues>
+              <swe:uom code="W.m-2.Sr-1"/>
+              <swe:constraint>
+                <swe:AllowedValues>
+                  <swe:interval>0 65535</swe:interval>
+                  <swe:significantFigures>5</swe:significantFigures>
+                </swe:AllowedValues>
+              </swe:constraint>
+            </swe:Quantity>
+          </swe:field>
+          <swe:field name="blue">
+            <swe:Quantity definition="http://www.opengis.net/def/property/OGC/0/Radiance">
+              <swe:description>Blue Channel</swe:description>
+              <swe:nilValues>
+                <swe:NilValues>
+                  <swe:nilValue reason="http://www.opengis.net/def/nil/OGC/0/unknown">0</swe:nilValue>
+                </swe:NilValues>
+              </swe:nilValues>
+              <swe:uom code="W.m-2.Sr-1"/>
+              <swe:constraint>
+                <swe:AllowedValues>
+                  <swe:interval>0 65535</swe:interval>
+                  <swe:significantFigures>5</swe:significantFigures>
+                </swe:AllowedValues>
+              </swe:constraint>
+            </swe:Quantity>
+          </swe:field>
+          <swe:field name="near_infrared">
+            <swe:Quantity definition="http://www.opengis.net/def/property/OGC/0/Radiance">
+              <swe:description>Near Infrared Channel</swe:description>
+              <swe:nilValues>
+                <swe:NilValues>
+                  <swe:nilValue reason="http://www.opengis.net/def/nil/OGC/0/unknown">0</swe:nilValue>
+                </swe:NilValues>
+              </swe:nilValues>
+              <swe:uom code="W.m-2.Sr-1"/>
+              <swe:constraint>
+                <swe:AllowedValues>
+                  <swe:interval>0 65535</swe:interval>
+                  <swe:significantFigures>5</swe:significantFigures>
+                </swe:AllowedValues>
+              </swe:constraint>
+            </swe:Quantity>
+          </swe:field>
+        </swe:DataRecord>
+      </gmlcov:rangeType>
+      <wcs:ServiceParameters>
+        <wcs:CoverageSubtype>RectifiedDataset</wcs:CoverageSubtype>
+      </wcs:ServiceParameters>
+    </wcs:CoverageDescription>
+  </wcs:CoverageDescriptions>
+</wcseo:EOCoverageSetDescription>]]></content><allowWildcards>false</allowWildcards></con:configuration></con:assertion><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:wsaConfig mustUnderstand="NONE" version="200508"/><con:wsrmConfig version="1.2"/></con:request></con:config></con:testStep><con:properties/></con:testCase><con:testCase failOnError="true" failTestCaseOnErrors="true" keepSession="false" maxResults="0" name="GetCoverage Valid TestCase" searchProperties="true"><con:settings/><con:testStep type="request" name="GetCoverage"><con:settings/><con:config xsi:type="con:RequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:interface>spSoapBinding</con:interface><con:operation>GetCoverage</con:operation><con:request name="GetCoverage"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding><con:endpoint>http://titania.eox.at/sp_uc2</con:endpoint><con:request><![CDATA[<soapenv:Envelope 
+xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
+   <soapenv:Header/>
+   <soapenv:Body>
+      <wcs:GetCoverage service="WCS" version="2.0.0" 
+       xmlns:wcs="http://www.opengis.net/wcs/2.0">
+           <wcs:mediaType>multipart/mixed</wcs:mediaType>
+          <wcs:format>image/tiff</wcs:format>
+        <wcs:CoverageId>rect_dataset_a1bd5869b3904c788dc6020f70d5cf84</wcs:CoverageId>
+        <wcs:DimensionTrim>
+          <wcs:Dimension>Long</wcs:Dimension>
+          <wcs:TrimLow>0</wcs:TrimLow>
+          <wcs:TrimHigh>256</wcs:TrimHigh>
+        </wcs:DimensionTrim>
+        <wcs:DimensionTrim>
+          <wcs:Dimension>Lat</wcs:Dimension>
+          <wcs:TrimLow>0</wcs:TrimLow>
+          <wcs:TrimHigh>256</wcs:TrimHigh>
+        </wcs:DimensionTrim>
+      </wcs:GetCoverage>
+   </soapenv:Body>
+</soapenv:Envelope>]]></con:request>
+<con:assertion type="SOAP Fault Assertion" name="Not SOAP Fault"/><con:assertion type="XQuery Match" name="Contains Coverage and Include elements"><con:configuration><path>declare namespace xop="http://www.w3.org/2004/08/xop/include";
+declare namespace wcs="http://www.opengis.net/wcs/2.0";
+//wcs:Coverage</path><content>&lt;wcs:Coverage xmlns:wcs="http://www.opengis.net/wcs/2.0">
+  &lt;xop:Include href="*" xmlns:xop="http://www.w3.org/2004/08/xop/include"/>
+&lt;/wcs:Coverage></content><allowWildcards>true</allowWildcards></con:configuration></con:assertion><con:assertion type="GroovyScriptAssertion" name="Verify attachment contents"><con:configuration><scriptText><![CDATA[/*
+ *  SOAPUI script to check GetCoverage response for the presence of one attachement
+ *  where the attchment contains the following regexps:
+ *     "<(*):RectifiedDataset"  and 
+ *     "</\1:RectifiedDataset" .
+ *    "<(*):lineage*RequestMessage<(*):GetCoverage*</\2:GetCoverage*</\1:lineage>"
+ *   Further, the attachment must contain a regexp "Content-Type: .* image/tiff".
+ *
+ *  Copyright (C) 2011 ANF DATA spol. s r.o. 
+ */
+
+assert messageExchange.responseAttachments.length == 1
+
+def istr =  messageExchange.responseAttachments[0].getInputStream()
+def attBytes = new byte[ messageExchange.responseAttachments[0].getSize()]
+def nr = istr.read(attBytes)
+def attachmentString  = new String(attBytes)
+
+def xmlStartStr = "<?xml"
+def xmlSection = attachmentString.substring(
+	attachmentString.indexOf(xmlStartStr))
+
+// A very simple check for a "RectifiedDataset" element,
+// by means of simple string manipulations
+def check1="RectifiedDataset"
+def firstRGC = xmlSection.indexOf(check1)
+def lastRGC = xmlSection.lastIndexOf(check1)
+assert firstRGC  > 0
+assert lastRGC>firstRGC
+def endofXml =  xmlSection.indexOf(">", lastRGC)
+xmlSection0 = xmlSection.substring(0,endofXml)
+assert  xmlSection0.matches("(?s).+?<\\s*([\\w]+):"+check1+".*</\\s*\\1:"+check1+".*")
+
+// Check for "lineage" element with a "GetCoverage":
+// "<(*):lineage<(*):RequestMessage<(*):GetCoverage*</\3:GetCoverage*</2RequestMessage*</\1:lineage>"
+def ck_lineage="lineage"
+def check3="RequestMessage"
+def check4="GetCoverage"
+assert  xmlSection0.matches(
+	"(?s).+?<\\s*([\\w]+):"+ck_lineage+
+	".*(?s).+?<\\s*([\\w]+):"+check3+
+	".*(?s).+?<\\s*([\\w]+):"+check4+
+	".*</\\s*\\3:"+check4+
+	".*</\\s*\\2:"+check3+
+	".*</\\s*\\1:"+ck_lineage+".*")
+
+// Check for id
+// 
+def ck_id="id=\"rect_dataset_a1bd5869b3904c788dc6020f70d5cf84\""
+xmlSection1 = xmlSection.substring(firstRGC,lastRGC)
+assert xmlSection1.indexOf(ck_id) > 0
+
+
+// Check for "Content-Type: image/tiff" at the end
+def imgTIffType = "image/tiff"
+def lastType = attachmentString.lastIndexOf("Content-Type:")
+assert attachmentString.indexOf(imgTIffType, lastType) > 0
+log.info "Verification OK: Attachment contains expected '"+check1+", id='"+ck_id+"', lineage, and "+imgTIffType
+
+
+
+
+]]></scriptText></con:configuration></con:assertion><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:wsaConfig action="ooosRP#GetCoverage" mustUnderstand="NONE" version="200508"/>
+<con:wsrmConfig version="1.2"/></con:request>
+</con:config>
+</con:testStep><con:properties/></con:testCase><con:testCase failOnError="true" failTestCaseOnErrors="true" keepSession="false" maxResults="0" name="Unknown Operation TestCase" searchProperties="true"><con:description>Test for gettting a soap fault in response to an unrecognised operation.</con:description><con:settings/><con:testStep type="request" name="BadOperation"><con:settings/><con:config xsi:type="con:RequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:interface>spSoapBinding</con:interface><con:operation>GetCapabilities</con:operation><con:request name="BadOperation"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding><con:endpoint>http://titania.eox.at/sp_uc2</con:endpoint><con:request><![CDATA[<soapenv:Envelope 
+  xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" 
+  xmlns:ns="http://www.opengis.net/wcs/2.0" 
+  xmlns:ns1="http://www.opengis.net/ows/2.0">
+   <soapenv:Header/>
+   <soapenv:Body>
+      <ns:BadOp updateSequence="u2001" service="WCS"/>
+   </soapenv:Body>
+</soapenv:Envelope>]]></con:request><con:assertion type="Not SOAP Fault Assertion" name="SOAP Fault"/><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:wsaConfig action="ooosRP#GetCapabilities" mustUnderstand="NONE" version="200508"/><con:wsrmConfig version="1.2"/></con:request></con:config></con:testStep><con:properties/></con:testCase><con:testCase failOnError="true" failTestCaseOnErrors="true" keepSession="false" maxResults="0" name="DescribeCoverage Bad Id TestCase" searchProperties="true"><con:description>Test for an ivalid ID in DescribeCoverage.</con:description><con:settings/>
+  <con:testStep type="request" name="BadId">
+    <con:settings/><con:config xsi:type="con:RequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:interface>spSoapBinding</con:interface><con:operation>DescribeCoverage</con:operation><con:request name="BadId">
+    <con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding>
+    <con:endpoint>http://titania.eox.at/sp_uc2</con:endpoint>
+    <con:request><![CDATA[<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
+   <soapenv:Header/>
+   <soapenv:Body>
+      <ns:DescribeCoverage service="WCS" version="2.0.0" 
+       xmlns:ns="http://www.opengis.net/wcs/2.0">
+         <ns:CoverageId>BadId</ns:CoverageId>
+      </ns:DescribeCoverage>
+   </soapenv:Body>
+</soapenv:Envelope>]]></con:request><con:assertion type="SOAP Fault Assertion" name="Not SOAP Fault"/><con:assertion type="XQuery Match" name="XQuery Match"><con:configuration><path>declare namespace ows='http://www.opengis.net/ows/2.0';
+//ows:Exception</path><content>&lt;ows:Exception locator="BadId" exceptionCode="NoSuchCoverage" xmlns:ows="http://www.opengis.net/ows/2.0">
+  &lt;ows:ExceptionText>No coverage with coverage id 'BadId' found&lt;/ows:ExceptionText>
+&lt;/ows:Exception></content><allowWildcards>false</allowWildcards></con:configuration></con:assertion><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:wsaConfig action="ooosRP#DescribeCoverage" mustUnderstand="NONE" version="200508"/>
+<con:wsrmConfig version="1.2"/></con:request></con:config></con:testStep><con:properties/></con:testCase><con:properties/></con:testSuite>
